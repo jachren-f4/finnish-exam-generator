@@ -23,6 +23,54 @@ export interface GeminiOCRResult {
   }
 }
 
+function attemptJsonRepair(text: string): string | null {
+  try {
+    console.log('Starting JSON repair attempt')
+    
+    // Extract potential JSON from markdown or raw text
+    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```\n([\s\S]*?)\n```/)
+    let jsonText = jsonMatch ? jsonMatch[1] : text
+    
+    // Find JSON boundaries
+    if (jsonText.includes('{')) {
+      const startIndex = jsonText.indexOf('{')
+      const lastBraceIndex = jsonText.lastIndexOf('}')
+      if (startIndex !== -1 && lastBraceIndex !== -1 && lastBraceIndex > startIndex) {
+        jsonText = jsonText.substring(startIndex, lastBraceIndex + 1)
+      }
+    }
+    
+    // Common repair patterns
+    let repaired = jsonText
+    
+    // Fix 1: Fix malformed field structures like "type": "fill_in_the_blank": "text"
+    // This handles the specific error in your example
+    repaired = repaired.replace(
+      /"type":\s*"([^"]+)":\s*"([^"]+)"/g,
+      '"type": "$1",\n      "question": "$2"'
+    )
+    
+    // Fix 2: Remove trailing commas before closing braces/brackets
+    repaired = repaired.replace(/,(\s*[}\]])/g, '$1')
+    
+    // Fix 3: Fix unescaped quotes in strings
+    repaired = repaired.replace(/([^\\])"([^"]*[^\\])"([^,}\]\s])/g, '$1\\"$2\\"$3')
+    
+    // Fix 4: Add missing commas between objects
+    repaired = repaired.replace(/}\s*{/g, '},\n    {')
+    
+    // Try to parse the repaired JSON
+    const parsed = JSON.parse(repaired)
+    console.log('JSON repair successful!')
+    
+    return JSON.stringify(parsed, null, 2)
+    
+  } catch (error) {
+    console.error('JSON repair failed:', error)
+    return null
+  }
+}
+
 export async function processImagesWithGemini(files: FileMetadata[], customPrompt?: string): Promise<GeminiOCRResult[]> {
   console.log(`Starting Gemini processing for ${files.length} files`)
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
@@ -128,9 +176,49 @@ Important: Only return the JSON object with the extracted text. Do not include a
     console.log(text)
     console.log('=== GEMINI API RESPONSE END ===')
     
-    // Simply use the raw response text from Gemini without any JSON parsing
-    console.log('Using raw Gemini response without JSON parsing')
-    const responseText = text
+    // Validate and potentially repair JSON if the response looks like JSON
+    console.log('Checking if response contains JSON that needs validation')
+    let responseText = text
+    
+    // Check if response contains JSON structure
+    if (text.includes('```json') || (text.includes('{') && text.includes('}'))) {
+      console.log('Response appears to contain JSON, attempting validation')
+      
+      try {
+        // Extract JSON from markdown if present
+        const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```\n([\s\S]*?)\n```/)
+        let jsonText = jsonMatch ? jsonMatch[1] : text
+        
+        // Find JSON object boundaries
+        if (jsonText.includes('{')) {
+          const startIndex = jsonText.indexOf('{')
+          const lastBraceIndex = jsonText.lastIndexOf('}')
+          if (startIndex !== -1 && lastBraceIndex !== -1 && lastBraceIndex > startIndex) {
+            jsonText = jsonText.substring(startIndex, lastBraceIndex + 1)
+          }
+        }
+        
+        // Try to parse - if successful, return cleaned JSON
+        const parsed = JSON.parse(jsonText)
+        console.log('JSON is valid, using parsed and re-stringified version')
+        responseText = JSON.stringify(parsed, null, 2)
+        
+      } catch (parseError) {
+        console.error('JSON validation failed, attempting repair:', parseError)
+        
+        // Attempt basic JSON repairs
+        const repairedJson = attemptJsonRepair(text)
+        if (repairedJson) {
+          console.log('JSON repair successful')
+          responseText = repairedJson
+        } else {
+          console.log('JSON repair failed, using raw response')
+          responseText = text
+        }
+      }
+    } else {
+      console.log('Response does not appear to contain JSON, using as-is')
+    }
 
     console.log('Final response text length:', responseText.length)
 
