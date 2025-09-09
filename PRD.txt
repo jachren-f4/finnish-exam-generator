@@ -54,7 +54,7 @@ A Next.js web app where users upload image files (JPEG, PNG, etc.), the backend 
 - Response must be valid JSON (schema enforced).
 
 ## 10. API Key Management
-- Provide a config section for Gemini API key, which is GEMINI_API_KEY=AIzaSyCL1snYl-qAGiTFNkELE38vTcAvFTuJFjw
+- Provide a config section for Gemini API key, which is GEMINI_API_KEY=your_api_key_here
 - Key is loaded from environment variables or a local config file.
 - Key should not be hardcoded into the frontend.
 
