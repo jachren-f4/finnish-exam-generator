@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { processImagesWithGemini } from '@/lib/gemini'
 import { FileMetadata } from '@/types'
 import { v4 as uuidv4 } from 'uuid'
-import formidable from 'formidable'
 import fs from 'fs/promises'
 import path from 'path'
 
@@ -194,7 +193,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Handle preflight requests for CORS
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS(_request: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {

@@ -7,61 +7,7 @@ if (!process.env.GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
-const OCR_COMPRESSION_PROMPT = `
-**EDUCATIONAL CONTEXT**: These images are from Swedish language textbooks used to teach Finnish elementary school students Swedish as a foreign language.
-
-Your task is to analyze these Swedish textbook pages and perform two operations:
-
-1. **Educational OCR with Translation Support**: 
-   - Extract all visible Swedish text from the images accurately
-   - Recognize that this is educational content for Finnish students learning Swedish
-   - Pay special attention to:
-     * Swedish vocabulary words and phrases
-     * Exercise instructions in Swedish
-     * Example sentences and dialogues
-     * Grammar explanations
-     * Any Finnish text that might appear as translations or instructions
-
-2. **Educational Directory Compression**: Create a compressed representation optimized for language learning content:
-   - **vocabulary.tokens**: Swedish words that appear frequently, prioritizing educational vocabulary
-   - **vocabulary.phrases**: Common Swedish phrases, expressions, and educational patterns (2-5 words)
-   - **body.segments**: References to reconstruct the original Swedish text using:
-     - "t": reference to a Swedish token (use "ref" field with index from tokens array)
-     - "p": reference to a Swedish phrase (use "ref" field with index from phrases array)  
-     - "raw": text that doesn't fit tokens/phrases, including Finnish translations if present
-     - "nl": newline character
-   - **stats**: Include compression metrics for the Swedish content
-
-**IMPORTANT**: Focus on preserving the educational structure - maintain the relationship between Swedish learning content and any Finnish explanations/translations that may be present.
-
-Return your response as a JSON object with this exact structure:
-{
-  "rawText": "the complete extracted Swedish text with any Finnish translations preserved",
-  "compressed": {
-    "vocabulary": {
-      "tokens": ["svenska", "ord", "exempel", "övning"],
-      "phrases": ["Vad heter du", "Jag kommer från", "På svenska"]
-    },
-    "body": {
-      "segments": [
-        {"type": "t", "ref": 0},
-        {"type": "raw", "content": " (Finnish: ruotsi) "},
-        {"type": "p", "ref": 1},
-        {"type": "nl"}
-      ]
-    },
-    "stats": {
-      "originalLength": 1000,
-      "compressedLength": 600,
-      "compressionRatio": 0.6,
-      "tokenCount": 50,
-      "phraseCount": 10
-    }
-  }
-}
-
-The compressed representation should be lossless and optimized for Swedish language learning materials while preserving any Finnish context that appears in the textbook.
-`
+// Unused OCR_COMPRESSION_PROMPT - removed to fix build
 
 export interface GeminiOCRResult {
   rawText: string

@@ -100,9 +100,6 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
     }
   }
 
-  const formatJson = (obj: any) => {
-    return JSON.stringify(obj, null, 2)
-  }
 
   const parseQuestions = (rawText: string) => {
     try {
@@ -117,16 +114,6 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
     return null
   }
 
-  const renderQuestions = (questions: any[]) => {
-    return (
-      <div className="space-y-6">
-        {questions.map((question, index) => (
-          <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800">
-            <div className="mb-3">
-              <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-600 text-white text-sm font-medium rounded-full mr-2">
-                {index + 1}
-              </span>
-              <span className="font-medium text-gray-900 dark:text-gray-100">{question.q}</span>
             </div>
             
             {question.choices && Array.isArray(question.choices) && (
