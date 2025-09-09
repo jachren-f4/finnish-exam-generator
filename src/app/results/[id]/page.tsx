@@ -114,34 +114,6 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
     return null
   }
 
-            </div>
-            
-            {question.choices && Array.isArray(question.choices) && (
-              <div className="mb-3 ml-8">
-                <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Vaihtoehdot:</div>
-                <div className="space-y-1">
-                  {question.choices.map((choice: string, choiceIndex: number) => (
-                    <div key={choiceIndex} className="flex items-center">
-                      <span className="w-6 text-sm text-gray-500 dark:text-gray-400">
-                        {String.fromCharCode(65 + choiceIndex)})
-                      </span>
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{choice}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <div className="ml-8 p-2 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 rounded">
-              <div className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">Vastaus:</div>
-              <div className="text-sm text-green-700 dark:text-green-300">{question.answer}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
-
   if (error) {
     return (
       <div className="max-w-4xl mx-auto">
