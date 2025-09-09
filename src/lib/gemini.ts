@@ -44,7 +44,13 @@ function attemptJsonRepair(text: string): string | null {
     let repaired = jsonText
     
     // Fix 1: Fix malformed field structures like "type": "fill_in_the_blank": "text"
-    // This handles the specific error in your example
+    // This handles cases where question field is missing and embedded in type field
+    repaired = repaired.replace(
+      /"type":\s*"([^"]+)":\s*"([^"]+)",/g,
+      '"type": "$1",\n      "question": "$2",'
+    )
+    
+    // Additional fix for cases without trailing comma
     repaired = repaired.replace(
       /"type":\s*"([^"]+)":\s*"([^"]+)"/g,
       '"type": "$1",\n      "question": "$2"'
