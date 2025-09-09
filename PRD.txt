@@ -1,0 +1,75 @@
+# PRD: OCR + Compression Web App (Single-Prompt Gemini)
+
+## 1. Summary
+A Next.js web app where users upload image files (JPEG, PNG, etc.), the backend sends them to Gemini 2.5 Flash-Lite in one prompt, and Gemini returns both OCR text and a compressed directory-based JSON representation. Results can be viewed in the browser and downloaded as JSONL. The app runs locally on localhost.
+
+## 2. Goals
+- Provide a single webpage interface running on localhost.
+- Upload images via browser.
+- Perform OCR and directory compression in the **same Gemini 2.5 Flash-Lite prompt**.
+- Return structured JSON results.
+- Allow export as JSONL only.
+
+## 3. Non-Goals
+- No local compression logic.
+- No advanced layout reconstruction.
+- No authentication or billing.
+- No history persistence.
+- No ZIP export.
+
+## 4. Flow
+1. User uploads up to 20 images.
+2. Backend creates a Gemini 2.5 Flash-Lite request containing images + prompt.
+3. Gemini extracts text and compresses into directory model.
+4. Backend stores results in memory and returns them as JSON to the frontend.
+
+## 5. Data
+- **File metadata**: id, filename, mime type, dimensions.
+- **Job**: batch request to Gemini, with status.
+- **Result**: raw OCR text + directory compression JSON.
+- **Artifact**: JSONL with all results, including `userId` and `stage`.
+
+## 6. Directory Compression Schema
+- `vocabulary.tokens`: most frequent tokens.
+- `vocabulary.phrases`: repeated multi-word phrases.
+- `body.segments`: ordered references (`t`, `p`, `raw`, `nl`).
+- `stats`: counts and compression ratio.
+
+## 7. API Endpoints
+- `POST /api/files/upload` – upload images.
+- `POST /api/ocr/jobs` – send images to Gemini, return job ID.
+- `GET /api/ocr/jobs/{id}` – job status.
+- `GET /api/ocr/jobs/{id}/results` – per-file results.
+- `GET /api/ocr/jobs/{id}/jsonl` – NDJSON export only.
+
+## 8. Frontend UX
+- **Uploader Page**: drag-and-drop, select images, start OCR+compression job.
+- **Results Page**: show raw text + compressed JSON, JSONL export button.
+
+## 9. Constraints
+- App runs on localhost only.
+- Max 20 files per job.
+- Max 10 MB per file.
+- Supported: JPEG, PNG, WebP, HEIC.
+- Response must be valid JSON (schema enforced).
+
+## 10. API Key Management
+- Provide a config section for Gemini API key, which is GEMINI_API_KEY=AIzaSyCL1snYl-qAGiTFNkELE38vTcAvFTuJFjw
+- Key is loaded from environment variables or a local config file.
+- Key should not be hardcoded into the frontend.
+
+## 11. Performance & Cost
+- Example: 1200×1600 image ≈ 1,548 input tokens.
+- With ~1,000 output tokens:
+  - **Flash-Lite only**: ≈ $0.00055/image.
+
+## 12. Acceptance
+- User uploads images, runs job, sees structured results.
+- JSON returned matches schema and is reversible.
+- JSONL download works.
+
+## 13. Milestones
+- M1: Upload + metadata.
+- M2: Single-prompt Gemini OCR + compression with Flash-Lite.
+- M3: Results page + JSONL export.
+- M4: Batch handling.

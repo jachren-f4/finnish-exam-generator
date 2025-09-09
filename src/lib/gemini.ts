@@ -1,0 +1,285 @@
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import { FileMetadata, CompressionSchema } from '@/types'
+
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error('GEMINI_API_KEY environment variable is required')
+}
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+
+const OCR_COMPRESSION_PROMPT = `
+**EDUCATIONAL CONTEXT**: These images are from Swedish language textbooks used to teach Finnish elementary school students Swedish as a foreign language.
+
+Your task is to analyze these Swedish textbook pages and perform two operations:
+
+1. **Educational OCR with Translation Support**: 
+   - Extract all visible Swedish text from the images accurately
+   - Recognize that this is educational content for Finnish students learning Swedish
+   - Pay special attention to:
+     * Swedish vocabulary words and phrases
+     * Exercise instructions in Swedish
+     * Example sentences and dialogues
+     * Grammar explanations
+     * Any Finnish text that might appear as translations or instructions
+
+2. **Educational Directory Compression**: Create a compressed representation optimized for language learning content:
+   - **vocabulary.tokens**: Swedish words that appear frequently, prioritizing educational vocabulary
+   - **vocabulary.phrases**: Common Swedish phrases, expressions, and educational patterns (2-5 words)
+   - **body.segments**: References to reconstruct the original Swedish text using:
+     - "t": reference to a Swedish token (use "ref" field with index from tokens array)
+     - "p": reference to a Swedish phrase (use "ref" field with index from phrases array)  
+     - "raw": text that doesn't fit tokens/phrases, including Finnish translations if present
+     - "nl": newline character
+   - **stats**: Include compression metrics for the Swedish content
+
+**IMPORTANT**: Focus on preserving the educational structure - maintain the relationship between Swedish learning content and any Finnish explanations/translations that may be present.
+
+Return your response as a JSON object with this exact structure:
+{
+  "rawText": "the complete extracted Swedish text with any Finnish translations preserved",
+  "compressed": {
+    "vocabulary": {
+      "tokens": ["svenska", "ord", "exempel", "övning"],
+      "phrases": ["Vad heter du", "Jag kommer från", "På svenska"]
+    },
+    "body": {
+      "segments": [
+        {"type": "t", "ref": 0},
+        {"type": "raw", "content": " (Finnish: ruotsi) "},
+        {"type": "p", "ref": 1},
+        {"type": "nl"}
+      ]
+    },
+    "stats": {
+      "originalLength": 1000,
+      "compressedLength": 600,
+      "compressionRatio": 0.6,
+      "tokenCount": 50,
+      "phraseCount": 10
+    }
+  }
+}
+
+The compressed representation should be lossless and optimized for Swedish language learning materials while preserving any Finnish context that appears in the textbook.
+`
+
+export interface GeminiOCRResult {
+  rawText: string
+  compressed: CompressionSchema
+}
+
+export async function processImagesWithGemini(files: FileMetadata[], customPrompt?: string): Promise<GeminiOCRResult[]> {
+  console.log(`Starting Gemini processing for ${files.length} files`)
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+  
+  try {
+    // Prepare image parts for Gemini
+    const imageParts = []
+    
+    for (const file of files) {
+      const fs = require('fs').promises
+      const path = require('path')
+      const filePath = path.join('/tmp', `${file.id}${path.extname(file.filename)}`)
+      
+      try {
+        console.log(`Reading file: ${filePath}`)
+        const imageBuffer = await fs.readFile(filePath)
+        const base64Data = imageBuffer.toString('base64')
+        console.log(`Successfully read file ${file.filename}, size: ${imageBuffer.length} bytes`)
+        
+        imageParts.push({
+          inlineData: {
+            data: base64Data,
+            mimeType: file.mimeType
+          }
+        })
+      } catch (error) {
+        console.error(`Error reading file ${file.filename} at ${filePath}:`, error)
+        throw new Error(`Failed to read file: ${file.filename}`)
+      }
+    }
+
+    // Use custom prompt if provided, otherwise use simple OCR prompt
+    const promptToUse = customPrompt ? `
+First, extract all visible text from the provided images accurately.
+
+Then, ${customPrompt}
+
+Important: Return only the JSON response as specified in the task instructions. Do not include any additional explanations or notes.
+` : `
+Extract all visible text from the provided images accurately.
+
+Return your response as a JSON object with this exact structure:
+{
+  "rawText": "the complete extracted text from all images"
+}
+
+Important: Only return the JSON object with the extracted text. Do not include any additional explanations or notes.
+`
+
+    // Send request to Gemini
+    const result = await model.generateContent([
+      promptToUse,
+      ...imageParts
+    ])
+
+    const response = await result.response
+    const text = response.text()
+    
+    // Extract usage metadata from the response
+    console.log('Full response object keys:', Object.keys(response))
+    console.log('Response usageMetadata:', response.usageMetadata)
+    console.log('Result object keys:', Object.keys(result))
+    console.log('Result usageMetadata:', result.usageMetadata)
+    
+    // Use response.usageMetadata as the primary source
+    const usageMetadata = response.usageMetadata || {}
+    
+    // If usage metadata is empty, estimate based on text length (for testing)
+    const estimatedInputTokens = Math.ceil(promptToUse.length / 4) // ~4 chars per token
+    const estimatedOutputTokens = Math.ceil(text.length / 4) // ~4 chars per token
+    
+    const promptTokenCount = usageMetadata.promptTokenCount || estimatedInputTokens
+    const candidatesTokenCount = usageMetadata.candidatesTokenCount || estimatedOutputTokens
+    const totalTokenCount = usageMetadata.totalTokenCount || promptTokenCount + candidatesTokenCount
+    
+    // Calculate estimated costs (Gemini 1.5 Flash pricing as of 2024)
+    const inputCostPer1M = 0.075  // $0.075 per 1M input tokens
+    const outputCostPer1M = 0.30  // $0.30 per 1M output tokens
+    const inputCost = (promptTokenCount / 1000000) * inputCostPer1M
+    const outputCost = (candidatesTokenCount / 1000000) * outputCostPer1M
+    const totalCost = inputCost + outputCost
+    
+    console.log('=== GEMINI API RESPONSE START ===')
+    console.log('Custom prompt was:', customPrompt ? 'YES' : 'NO')
+    console.log('Prompt sent to Gemini:')
+    console.log(promptToUse)
+    console.log('=== TOKEN USAGE ===')
+    console.log('Raw usageMetadata object:', JSON.stringify(usageMetadata, null, 2))
+    console.log('Using estimated values:', usageMetadata.promptTokenCount ? 'NO' : 'YES')
+    console.log('Input tokens:', promptTokenCount, usageMetadata.promptTokenCount ? '(real)' : '(estimated)')
+    console.log('Output tokens:', candidatesTokenCount, usageMetadata.candidatesTokenCount ? '(real)' : '(estimated)')
+    console.log('Total tokens:', totalTokenCount)
+    console.log('Estimated cost: $' + totalCost.toFixed(6))
+    console.log('Will include in result:', {
+      promptTokenCount,
+      candidatesTokenCount,
+      totalTokenCount,
+      estimatedCost: totalCost,
+      inputCost,
+      outputCost,
+      model: 'gemini-2.5-flash-lite'
+    })
+    console.log('=== RAW GEMINI RESPONSE ===')
+    console.log(text)
+    console.log('=== GEMINI API RESPONSE END ===')
+    
+    // Parse JSON response
+    let jsonResponse
+    try {
+      // Try to extract JSON from the response
+      const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```\n([\s\S]*?)\n```/)
+      let jsonText = jsonMatch ? jsonMatch[1] : text
+      
+      // If we have potential JSON, try to find just the JSON object part
+      if (jsonText.includes('{')) {
+        const startIndex = jsonText.indexOf('{')
+        const lastBraceIndex = jsonText.lastIndexOf('}')
+        if (startIndex !== -1 && lastBraceIndex !== -1 && lastBraceIndex > startIndex) {
+          jsonText = jsonText.substring(startIndex, lastBraceIndex + 1)
+        }
+      }
+      
+      console.log('Attempting to parse JSON:', jsonText.substring(0, 500) + (jsonText.length > 500 ? '...' : ''))
+      jsonResponse = JSON.parse(jsonText)
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response as JSON:', parseError)
+      console.error('Full raw response length:', text.length)
+      console.error('Full raw response:', text)
+      
+      // Try to find any JSON-like content in the response
+      const possibleJsonMatch = text.match(/\{[\s\S]*\}/)
+      if (possibleJsonMatch) {
+        console.log('Found possible JSON content:', possibleJsonMatch[0].substring(0, 200) + '...')
+        try {
+          jsonResponse = JSON.parse(possibleJsonMatch[0])
+          console.log('Successfully parsed alternative JSON!')
+        } catch (altParseError) {
+          console.error('Alternative JSON parsing also failed:', altParseError)
+          throw new Error('Gemini response was not valid JSON')
+        }
+      } else {
+        throw new Error('Gemini response was not valid JSON')
+      }
+    }
+
+    // Handle different response structures based on prompt type
+    let responseText: string
+    
+    if (jsonResponse.questions) {
+      // Questions format - convert to readable text
+      console.log('Detected questions format response')
+      responseText = JSON.stringify(jsonResponse, null, 2)
+    } else if (jsonResponse.rawText) {
+      // Raw text format
+      console.log('Detected rawText format response')
+      responseText = jsonResponse.rawText
+    } else {
+      // Fallback - use entire response as text
+      console.log('Using entire JSON response as text')
+      responseText = JSON.stringify(jsonResponse, null, 2)
+    }
+
+    console.log('Final processed response text length:', responseText.length)
+
+    // Create simple results without compression
+    return files.map(() => ({
+      rawText: responseText,
+      compressed: {
+        vocabulary: { tokens: [], phrases: [] },
+        body: { segments: [] },
+        stats: {
+          originalLength: responseText.length,
+          compressedLength: 0,
+          compressionRatio: 0,
+          tokenCount: 0,
+          phraseCount: 0
+        }
+      },
+      geminiUsage: {
+        promptTokenCount,
+        candidatesTokenCount,
+        totalTokenCount,
+        estimatedCost: totalCost,
+        inputCost,
+        outputCost,
+        model: 'gemini-2.5-flash-lite'
+      }
+    }))
+    
+  } catch (error) {
+    console.error('Error processing images with Gemini:', error)
+    throw error
+  }
+}
+
+export function validateCompressionSchema(compressed: any): boolean {
+  try {
+    return (
+      compressed &&
+      compressed.vocabulary &&
+      Array.isArray(compressed.vocabulary.tokens) &&
+      Array.isArray(compressed.vocabulary.phrases) &&
+      compressed.body &&
+      Array.isArray(compressed.body.segments) &&
+      compressed.stats &&
+      typeof compressed.stats.originalLength === 'number' &&
+      typeof compressed.stats.compressedLength === 'number' &&
+      typeof compressed.stats.compressionRatio === 'number' &&
+      typeof compressed.stats.tokenCount === 'number' &&
+      typeof compressed.stats.phraseCount === 'number'
+    )
+  } catch {
+    return false
+  }
+}
