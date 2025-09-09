@@ -87,15 +87,15 @@ Important: Only return the JSON object with the extracted text. Do not include a
     console.log('Result object keys:', Object.keys(result))
     
     // Use response.usageMetadata as the primary source
-    const usageMetadata = response.usageMetadata || {}
+    const usageMetadata = response.usageMetadata
     
     // If usage metadata is empty, estimate based on text length (for testing)
     const estimatedInputTokens = Math.ceil(promptToUse.length / 4) // ~4 chars per token
     const estimatedOutputTokens = Math.ceil(text.length / 4) // ~4 chars per token
     
-    const promptTokenCount = usageMetadata.promptTokenCount || estimatedInputTokens
-    const candidatesTokenCount = usageMetadata.candidatesTokenCount || estimatedOutputTokens
-    const totalTokenCount = usageMetadata.totalTokenCount || promptTokenCount + candidatesTokenCount
+    const promptTokenCount = usageMetadata?.promptTokenCount || estimatedInputTokens
+    const candidatesTokenCount = usageMetadata?.candidatesTokenCount || estimatedOutputTokens
+    const totalTokenCount = usageMetadata?.totalTokenCount || promptTokenCount + candidatesTokenCount
     
     // Calculate estimated costs (Gemini 1.5 Flash pricing as of 2024)
     const inputCostPer1M = 0.075  // $0.075 per 1M input tokens
@@ -110,9 +110,9 @@ Important: Only return the JSON object with the extracted text. Do not include a
     console.log(promptToUse)
     console.log('=== TOKEN USAGE ===')
     console.log('Raw usageMetadata object:', JSON.stringify(usageMetadata, null, 2))
-    console.log('Using estimated values:', usageMetadata.promptTokenCount ? 'NO' : 'YES')
-    console.log('Input tokens:', promptTokenCount, usageMetadata.promptTokenCount ? '(real)' : '(estimated)')
-    console.log('Output tokens:', candidatesTokenCount, usageMetadata.candidatesTokenCount ? '(real)' : '(estimated)')
+    console.log('Using estimated values:', usageMetadata?.promptTokenCount ? 'NO' : 'YES')
+    console.log('Input tokens:', promptTokenCount, usageMetadata?.promptTokenCount ? '(real)' : '(estimated)')
+    console.log('Output tokens:', candidatesTokenCount, usageMetadata?.candidatesTokenCount ? '(real)' : '(estimated)')
     console.log('Total tokens:', totalTokenCount)
     console.log('Estimated cost: $' + totalCost.toFixed(6))
     console.log('Will include in result:', {
