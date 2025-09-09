@@ -85,7 +85,6 @@ Important: Only return the JSON object with the extracted text. Do not include a
     console.log('Full response object keys:', Object.keys(response))
     console.log('Response usageMetadata:', response.usageMetadata)
     console.log('Result object keys:', Object.keys(result))
-    console.log('Result usageMetadata:', result.usageMetadata)
     
     // Use response.usageMetadata as the primary source
     const usageMetadata = response.usageMetadata || {}
