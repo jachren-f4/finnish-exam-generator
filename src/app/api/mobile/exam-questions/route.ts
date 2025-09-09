@@ -82,12 +82,42 @@ export async function POST(request: NextRequest) {
     // Process images and create file metadata
     const fileMetadataList: FileMetadata[] = []
     
+    // Helper function to detect proper MIME type from file extension
+    const getProperMimeType = (fileName: string, providedMimeType: string): string => {
+      // If provided MIME type is valid image type, use it
+      const validImageMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic']
+      if (validImageMimeTypes.includes(providedMimeType.toLowerCase())) {
+        return providedMimeType
+      }
+      
+      // Fall back to file extension detection
+      const ext = path.extname(fileName).toLowerCase()
+      const mimeTypeMap: { [key: string]: string } = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.webp': 'image/webp',
+        '.heic': 'image/heic',
+        '.heif': 'image/heic'
+      }
+      
+      return mimeTypeMap[ext] || 'image/jpeg' // Default to JPEG for safety
+    }
+    
     for (let i = 0; i < images.length; i++) {
       const image = images[i]
       const fileId = uuidv4()
       const fileExtension = path.extname(image.name) || '.jpg'
       const fileName = `${fileId}${fileExtension}`
       const filePath = path.join('/tmp', fileName)
+      
+      // Fix MIME type issue - detect proper MIME type
+      const properMimeType = getProperMimeType(image.name, image.type)
+      
+      console.log(`Processing image ${i + 1}:`)
+      console.log(`  - Original MIME type: ${image.type}`)
+      console.log(`  - Corrected MIME type: ${properMimeType}`)
+      console.log(`  - File extension: ${fileExtension}`)
       
       // Ensure tmp directory exists (usually exists in serverless environments)
       await fs.mkdir('/tmp', { recursive: true })
@@ -101,7 +131,7 @@ export async function POST(request: NextRequest) {
       fileMetadataList.push({
         id: fileId,
         filename: image.name,
-        mimeType: image.type,
+        mimeType: properMimeType,
         size: buffer.byteLength,
         uploadedAt: new Date()
       })
