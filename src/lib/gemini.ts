@@ -12,6 +12,15 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 export interface GeminiOCRResult {
   rawText: string
   compressed: CompressionSchema
+  geminiUsage?: {
+    promptTokenCount: number
+    candidatesTokenCount: number
+    totalTokenCount: number
+    estimatedCost: number
+    inputCost: number
+    outputCost: number
+    model: string
+  }
 }
 
 export async function processImagesWithGemini(files: FileMetadata[], customPrompt?: string): Promise<GeminiOCRResult[]> {
