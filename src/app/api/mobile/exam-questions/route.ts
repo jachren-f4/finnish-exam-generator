@@ -157,49 +157,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Parse and format response for mobile
+    // Get the raw response from Gemini
     const result = geminiResults[0] // Take first result since we process all images together
-    let examQuestions
-    
-    try {
-      // Try to parse as structured exam questions
-      const parsedResponse = JSON.parse(result.rawText)
-      if (parsedResponse.questions && Array.isArray(parsedResponse.questions)) {
-        examQuestions = parsedResponse
-      } else {
-        // Fallback: treat as raw text
-        examQuestions = {
-          questions: [{
-            id: 1,
-            type: "text_analysis",
-            question: "Analyze the following extracted text",
-            content: result.rawText,
-            explanation: "Raw text extracted from the provided images"
-          }],
-          topic: "Text Analysis",
-          difficulty: "general"
-        }
-      }
-    } catch (parseError) {
-      console.log('Failed to parse as structured questions, using raw text fallback')
-      examQuestions = {
-        questions: [{
-          id: 1,
-          type: "text_analysis", 
-          question: "Analyze the following extracted text",
-          content: result.rawText,
-          explanation: "Raw text extracted from the provided images"
-        }],
-        topic: "Text Analysis",
-        difficulty: "general"
-      }
-    }
+    console.log('Using raw Gemini response directly without parsing')
 
-    // Return mobile-optimized response
+    // Return mobile-optimized response with raw Gemini text
     return NextResponse.json({
       success: true,
       data: {
-        examQuestions,
+        rawResponse: result.rawText, // Direct raw response from Gemini
         metadata: {
           processingTime,
           imageCount: images.length,

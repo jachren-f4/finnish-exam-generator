@@ -128,63 +128,11 @@ Important: Only return the JSON object with the extracted text. Do not include a
     console.log(text)
     console.log('=== GEMINI API RESPONSE END ===')
     
-    // Parse JSON response
-    let jsonResponse
-    try {
-      // Try to extract JSON from the response
-      const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```\n([\s\S]*?)\n```/)
-      let jsonText = jsonMatch ? jsonMatch[1] : text
-      
-      // If we have potential JSON, try to find just the JSON object part
-      if (jsonText.includes('{')) {
-        const startIndex = jsonText.indexOf('{')
-        const lastBraceIndex = jsonText.lastIndexOf('}')
-        if (startIndex !== -1 && lastBraceIndex !== -1 && lastBraceIndex > startIndex) {
-          jsonText = jsonText.substring(startIndex, lastBraceIndex + 1)
-        }
-      }
-      
-      console.log('Attempting to parse JSON:', jsonText.substring(0, 500) + (jsonText.length > 500 ? '...' : ''))
-      jsonResponse = JSON.parse(jsonText)
-    } catch (parseError) {
-      console.error('Failed to parse Gemini response as JSON:', parseError)
-      console.error('Full raw response length:', text.length)
-      console.error('Full raw response:', text)
-      
-      // Try to find any JSON-like content in the response
-      const possibleJsonMatch = text.match(/\{[\s\S]*\}/)
-      if (possibleJsonMatch) {
-        console.log('Found possible JSON content:', possibleJsonMatch[0].substring(0, 200) + '...')
-        try {
-          jsonResponse = JSON.parse(possibleJsonMatch[0])
-          console.log('Successfully parsed alternative JSON!')
-        } catch (altParseError) {
-          console.error('Alternative JSON parsing also failed:', altParseError)
-          throw new Error('Gemini response was not valid JSON')
-        }
-      } else {
-        throw new Error('Gemini response was not valid JSON')
-      }
-    }
+    // Simply use the raw response text from Gemini without any JSON parsing
+    console.log('Using raw Gemini response without JSON parsing')
+    const responseText = text
 
-    // Handle different response structures based on prompt type
-    let responseText: string
-    
-    if (jsonResponse.questions) {
-      // Questions format - convert to readable text
-      console.log('Detected questions format response')
-      responseText = JSON.stringify(jsonResponse, null, 2)
-    } else if (jsonResponse.rawText) {
-      // Raw text format
-      console.log('Detected rawText format response')
-      responseText = jsonResponse.rawText
-    } else {
-      // Fallback - use entire response as text
-      console.log('Using entire JSON response as text')
-      responseText = JSON.stringify(jsonResponse, null, 2)
-    }
-
-    console.log('Final processed response text length:', responseText.length)
+    console.log('Final response text length:', responseText.length)
 
     // Create simple results without compression
     return files.map(() => ({
