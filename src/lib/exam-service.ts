@@ -211,7 +211,8 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
         exam_id: examId,
         grade_scale: '4-10',
         grading_json: gradingResult,
-        final_grade: gradingResult.final_grade
+        final_grade: gradingResult.final_grade,
+        grading_prompt: GEMINI_GRADING_PROMPT
       })
 
     if (gradingError) {
@@ -472,7 +473,8 @@ async function gradeExam(exam: DbExam, studentAnswers: StudentAnswer[]): Promise
         rule_based_graded: ruleBasedGradedCount,
         primary_method: geminiGradedCount > ruleBasedGradedCount ? 'gemini' : 'rule-based',
         gemini_available: !!process.env.GEMINI_API_KEY,
-        total_gemini_usage: totalGeminiUsage
+        total_gemini_usage: totalGeminiUsage,
+        grading_prompt: GEMINI_GRADING_PROMPT
       }
     }
 

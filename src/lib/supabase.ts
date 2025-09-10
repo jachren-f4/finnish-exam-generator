@@ -83,6 +83,7 @@ export interface GradingResult {
     primary_method: 'gemini' | 'rule-based'
     gemini_available: boolean
     total_gemini_usage?: any
+    grading_prompt?: string
   }
 }
 
