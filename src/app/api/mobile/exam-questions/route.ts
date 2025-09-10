@@ -161,17 +161,27 @@ export async function POST(request: NextRequest) {
     const result = geminiResults[0] // Take first result since we process all images together
     console.log('Using raw Gemini response directly without parsing')
 
-    // Return mobile-optimized response with raw Gemini text
+    // Create web exam from the response
+    const { createExam } = await import('@/lib/exam-service')
+    const examResult = await createExam(result.rawText)
+
+    // Return mobile-optimized response with both raw response and exam URLs
     return NextResponse.json({
       success: true,
       data: {
-        rawResponse: result.rawText, // Direct raw response from Gemini
+        rawResponse: result.rawText, // Keep existing for backward compatibility
         metadata: {
           processingTime,
           imageCount: images.length,
           promptUsed: customPrompt && customPrompt.trim() !== '' ? 'custom' : 'default',
           geminiUsage: result.geminiUsage
-        }
+        },
+        // Add new exam web page URLs
+        ...(examResult ? {
+          exam_url: examResult.examUrl,
+          exam_id: examResult.examId,
+          grading_url: examResult.gradingUrl
+        } : {})
       }
     })
 
