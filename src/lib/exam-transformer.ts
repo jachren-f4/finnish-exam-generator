@@ -93,6 +93,18 @@ export function transformGeminiToDatabase(geminiData: GeminiExamData): DatabaseE
  */
 export function processGeminiResponse(rawResponse: string): DatabaseExamData | null {
   try {
+    // Check for HTML/DOCTYPE responses (common error case)
+    if (rawResponse.includes('<!DOCTYPE') || rawResponse.includes('<html>') || rawResponse.includes('<HTML>')) {
+      console.error('Gemini returned HTML instead of JSON:', rawResponse.substring(0, 200));
+      throw new Error('Gemini returned HTML response instead of JSON');
+    }
+    
+    // Check for other non-JSON indicators
+    if (rawResponse.trim().startsWith('<') && !rawResponse.includes('```json')) {
+      console.error('Gemini returned XML/HTML instead of JSON:', rawResponse.substring(0, 200));
+      throw new Error('Gemini returned non-JSON response');
+    }
+    
     // Parse the raw response
     let rawData: any;
     
