@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
       console.error('Error creating exam:', examError)
     }
 
-    // Return mobile-optimized response with both raw response and exam URLs
+    // Return mobile-optimized response with exam URLs at root level
     return NextResponse.json({
       success: true,
       data: {
@@ -182,14 +182,14 @@ export async function POST(request: NextRequest) {
           imageCount: images.length,
           promptUsed: customPrompt && customPrompt.trim() !== '' ? 'custom' : 'default',
           geminiUsage: result.geminiUsage
-        },
-        // Add new exam web page URLs
-        ...(examResult ? {
-          exam_url: examResult.examUrl,
-          exam_id: examResult.examId,
-          grading_url: examResult.gradingUrl
-        } : {})
-      }
+        }
+      },
+      // Add exam URLs at root level for Flutter app
+      ...(examResult ? {
+        exam_url: examResult.examUrl,
+        exam_id: examResult.examId,
+        grading_url: examResult.gradingUrl
+      } : {})
     })
 
   } catch (error) {
