@@ -77,6 +77,13 @@ export interface GradingResult {
   questions_correct: number
   questions_partial: number
   questions_incorrect: number
+  grading_metadata?: {
+    gemini_graded: number
+    rule_based_graded: number
+    primary_method: 'gemini' | 'rule-based'
+    gemini_available: boolean
+    total_gemini_usage?: any
+  }
 }
 
 export interface GradedQuestion {
@@ -90,4 +97,7 @@ export interface GradedQuestion {
   percentage: number
   question_type: string
   options?: string[]
+  grade_reasoning?: string
+  grading_method?: 'gemini' | 'rule-based'
+  usage_metadata?: any
 }
