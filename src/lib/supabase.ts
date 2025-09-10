@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// Provide fallbacks during build time to prevent initialization errors
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ptxwrdgvewdfrcacrdwc.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB0eHdyZGd2ZXdkZnJjYWNyZHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzNjY3NDIsImV4cCI6MjA1MTk0Mjc0Mn0.nABZV_pFH2Bd9rCNLOJGJBYh_J_A3V6Q9dH6c3b_BYs'
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
