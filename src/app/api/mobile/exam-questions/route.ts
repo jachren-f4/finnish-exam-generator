@@ -181,11 +181,10 @@ export async function POST(request: NextRequest) {
       console.error('Error stack:', examError instanceof Error ? examError.stack : 'No stack trace')
     }
 
-    // Return mobile-optimized response with exam URLs at root level
+    // Return clean mobile response with exam URLs at root level
     return NextResponse.json({
       success: true,
       data: {
-        rawResponse: result.rawText, // Keep existing for backward compatibility
         metadata: {
           processingTime,
           imageCount: images.length,
