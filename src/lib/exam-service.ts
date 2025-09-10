@@ -4,13 +4,33 @@ import { processGeminiResponse, createFallbackExam } from './exam-transformer'
 // Create a new exam from Gemini response
 export async function createExam(geminiResponse: string): Promise<{ examId: string; examUrl: string; gradingUrl: string } | null> {
   try {
+    console.log('=== CREATE EXAM DEBUG ===')
+    console.log('Input response length:', geminiResponse?.length || 0)
+    console.log('Input preview:', geminiResponse?.substring(0, 100) || 'No input')
+    
     // Transform Gemini response to database format
     let examData = processGeminiResponse(geminiResponse)
+    console.log('processGeminiResponse result:', examData ? 'SUCCESS' : 'FAILED')
     
     // Create fallback if Gemini response is invalid
     if (!examData) {
+      console.log('Creating fallback exam')
       examData = createFallbackExam(geminiResponse)
+      console.log('Fallback exam result:', examData ? 'SUCCESS' : 'FAILED')
     }
+    
+    if (!examData) {
+      console.error('ERROR: Both processGeminiResponse and createFallbackExam failed')
+      return null
+    }
+    
+    console.log('About to insert into Supabase...')
+    console.log('Exam data structure check:', {
+      hasExam: !!examData.exam,
+      hasSubject: !!examData.exam?.subject,
+      hasGrade: !!examData.exam?.grade,
+      questionsCount: examData.exam?.questions?.length || 0
+    })
 
     // Insert exam into database
     const { data: exam, error } = await supabase
@@ -25,8 +45,14 @@ export async function createExam(geminiResponse: string): Promise<{ examId: stri
       .single()
 
     if (error) {
+      console.error('SUPABASE INSERT ERROR:', error)
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
+      console.error('Error details:', error.details)
       return null
     }
+    
+    console.log('Supabase insert successful! Exam ID:', exam?.exam_id)
 
     const examId = exam.exam_id
     const baseUrl = 'https://exam-generator.vercel.app'

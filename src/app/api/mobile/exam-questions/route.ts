@@ -163,13 +163,22 @@ export async function POST(request: NextRequest) {
 
     // Create web exam from the response
     console.log('=== ATTEMPTING TO CREATE EXAM ===')
+    console.log('Raw text length:', result.rawText?.length || 0)
+    console.log('Raw text preview:', result.rawText?.substring(0, 200) || 'No raw text')
+    
     let examResult = null
     try {
       const { createExam } = await import('@/lib/exam-service')
+      console.log('createExam function imported successfully')
       examResult = await createExam(result.rawText)
-      console.log('Exam creation result:', examResult)
+      console.log('Exam creation result:', examResult ? 'SUCCESS' : 'NULL')
+      if (!examResult) {
+        console.log('WARNING: Exam creation returned null - check exam processing and Supabase connection')
+      }
     } catch (examError) {
-      console.error('Error creating exam:', examError)
+      console.error('Error creating exam - full error:', examError)
+      console.error('Error message:', examError instanceof Error ? examError.message : 'Unknown error')
+      console.error('Error stack:', examError instanceof Error ? examError.stack : 'No stack trace')
     }
 
     // Return mobile-optimized response with exam URLs at root level
