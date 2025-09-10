@@ -3,10 +3,11 @@ import { submitAnswers } from '@/lib/exam-service'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const examId = params.id
+    const resolvedParams = await params
+    const examId = resolvedParams.id
 
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i

@@ -1,4 +1,4 @@
-import { supabase, DbExam, DbAnswer, DbGrading, ExamData, StudentAnswer, GradingResult } from './supabase'
+import { supabase, DbExam, ExamData, StudentAnswer, GradingResult } from './supabase'
 import { processGeminiResponse, createFallbackExam } from './exam-transformer'
 
 // Create a new exam from Gemini response
