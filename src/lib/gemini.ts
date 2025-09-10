@@ -25,7 +25,6 @@ export interface GeminiOCRResult {
 
 function attemptJsonRepair(text: string): string | null {
   try {
-    console.log('Starting JSON repair attempt')
     
     // Extract potential JSON from markdown or raw text
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```\n([\s\S]*?)\n```/)
@@ -61,18 +60,15 @@ function attemptJsonRepair(text: string): string | null {
     
     // Try to parse the repaired JSON
     const parsed = JSON.parse(repaired)
-    console.log('JSON repair successful!')
     
     return JSON.stringify(parsed, null, 2)
     
   } catch (error) {
-    console.error('JSON repair failed:', error)
     return null
   }
 }
 
 export async function processImagesWithGemini(files: FileMetadata[], customPrompt?: string): Promise<GeminiOCRResult[]> {
-  console.log(`Starting Gemini processing for ${files.length} files`)
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
   
   try {
@@ -85,10 +81,8 @@ export async function processImagesWithGemini(files: FileMetadata[], customPromp
       const filePath = path.join('/tmp', `${file.id}${path.extname(file.filename)}`)
       
       try {
-        console.log(`Reading file: ${filePath}`)
         const imageBuffer = await fs.readFile(filePath)
         const base64Data = imageBuffer.toString('base64')
-        console.log(`Successfully read file ${file.filename}, size: ${imageBuffer.length} bytes`)
         
         imageParts.push({
           inlineData: {
@@ -97,7 +91,6 @@ export async function processImagesWithGemini(files: FileMetadata[], customPromp
           }
         })
       } catch (error) {
-        console.error(`Error reading file ${file.filename} at ${filePath}:`, error)
         throw new Error(`Failed to read file: ${file.filename}`)
       }
     }
@@ -130,9 +123,6 @@ Important: Only return the JSON object with the extracted text. Do not include a
     const text = response.text()
     
     // Extract usage metadata from the response
-    console.log('Full response object keys:', Object.keys(response))
-    console.log('Response usageMetadata:', response.usageMetadata)
-    console.log('Result object keys:', Object.keys(result))
     
     // Use response.usageMetadata as the primary source
     const usageMetadata = response.usageMetadata
@@ -152,37 +142,12 @@ Important: Only return the JSON object with the extracted text. Do not include a
     const outputCost = (candidatesTokenCount / 1000000) * outputCostPer1M
     const totalCost = inputCost + outputCost
     
-    console.log('=== GEMINI API RESPONSE START ===')
-    console.log('Custom prompt was:', customPrompt ? 'YES' : 'NO')
-    console.log('Prompt sent to Gemini:')
-    console.log(promptToUse)
-    console.log('=== TOKEN USAGE ===')
-    console.log('Raw usageMetadata object:', JSON.stringify(usageMetadata, null, 2))
-    console.log('Using estimated values:', usageMetadata?.promptTokenCount ? 'NO' : 'YES')
-    console.log('Input tokens:', promptTokenCount, usageMetadata?.promptTokenCount ? '(real)' : '(estimated)')
-    console.log('Output tokens:', candidatesTokenCount, usageMetadata?.candidatesTokenCount ? '(real)' : '(estimated)')
-    console.log('Total tokens:', totalTokenCount)
-    console.log('Estimated cost: $' + totalCost.toFixed(6))
-    console.log('Will include in result:', {
-      promptTokenCount,
-      candidatesTokenCount,
-      totalTokenCount,
-      estimatedCost: totalCost,
-      inputCost,
-      outputCost,
-      model: 'gemini-2.5-flash-lite'
-    })
-    console.log('=== RAW GEMINI RESPONSE ===')
-    console.log(text)
-    console.log('=== GEMINI API RESPONSE END ===')
     
     // Validate and potentially repair JSON if the response looks like JSON
-    console.log('Checking if response contains JSON that needs validation')
     let responseText = text
     
     // Check if response contains JSON structure
     if (text.includes('```json') || (text.includes('{') && text.includes('}'))) {
-      console.log('Response appears to contain JSON, attempting validation')
       
       try {
         // Extract JSON from markdown if present
@@ -200,27 +165,21 @@ Important: Only return the JSON object with the extracted text. Do not include a
         
         // Try to parse - if successful, return cleaned JSON
         const parsed = JSON.parse(jsonText)
-        console.log('JSON is valid, using parsed and re-stringified version')
         responseText = JSON.stringify(parsed, null, 2)
         
       } catch (parseError) {
-        console.error('JSON validation failed, attempting repair:', parseError)
         
         // Attempt basic JSON repairs
         const repairedJson = attemptJsonRepair(text)
         if (repairedJson) {
-          console.log('JSON repair successful')
           responseText = repairedJson
         } else {
-          console.log('JSON repair failed, using raw response')
           responseText = text
         }
       }
     } else {
-      console.log('Response does not appear to contain JSON, using as-is')
     }
 
-    console.log('Final response text length:', responseText.length)
 
     // Create simple results without compression
     return files.map(() => ({
@@ -248,7 +207,6 @@ Important: Only return the JSON object with the extracted text. Do not include a
     }))
     
   } catch (error) {
-    console.error('Error processing images with Gemini:', error)
     throw error
   }
 }

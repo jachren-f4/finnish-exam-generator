@@ -19,7 +19,6 @@ setInterval(() => {
   for (const [jobId, job] of jobs.entries()) {
     if (now.getTime() - job.createdAt.getTime() > JOB_EXPIRY) {
       jobs.delete(jobId)
-      console.log(`Cleaned up expired job: ${jobId}`)
     }
   }
 }, CLEANUP_INTERVAL)
@@ -35,16 +34,11 @@ export function createJob(files: FileMetadata[], customPrompt?: string): Job {
   }
   
   jobs.set(jobId, job)
-  console.log(`Job created with ID: ${jobId}, total jobs in memory: ${jobs.size}`)
   return job
 }
 
 export function getJob(jobId: string): Job | null {
   const job = jobs.get(jobId) || null
-  console.log(`Getting job ${jobId}: ${job ? 'found' : 'not found'}, total jobs: ${jobs.size}`)
-  if (jobs.size > 0) {
-    console.log('Available job IDs:', Array.from(jobs.keys()))
-  }
   return job
 }
 

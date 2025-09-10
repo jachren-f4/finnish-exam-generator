@@ -87,7 +87,6 @@ export function transformGeminiToDatabase(geminiData: GeminiExamData): DatabaseE
  */
 export function processGeminiResponse(rawResponse: string): DatabaseExamData | null {
   try {
-    console.log('=== PROCESSING GEMINI RESPONSE ===')
     // Parse the raw response
     let geminiData: GeminiExamData;
     
@@ -116,7 +115,6 @@ export function processGeminiResponse(rawResponse: string): DatabaseExamData | n
     return transformGeminiToDatabase(geminiData);
     
   } catch (error) {
-    console.error('Failed to process Gemini response:', error);
     return null;
   }
 }

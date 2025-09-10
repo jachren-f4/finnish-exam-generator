@@ -4,25 +4,13 @@ import { processGeminiResponse, createFallbackExam } from './exam-transformer'
 // Create a new exam from Gemini response
 export async function createExam(geminiResponse: string): Promise<{ examId: string; examUrl: string; gradingUrl: string } | null> {
   try {
-    console.log('=== CREATING EXAM DEBUG START ===')
-    console.log('Gemini response length:', geminiResponse.length)
-    console.log('First 200 chars:', geminiResponse.substring(0, 200))
-    
     // Transform Gemini response to database format
     let examData = processGeminiResponse(geminiResponse)
-    console.log('processGeminiResponse result:', examData ? 'SUCCESS' : 'FAILED')
     
     // Create fallback if Gemini response is invalid
     if (!examData) {
-      console.log('Creating fallback exam from raw response')
       examData = createFallbackExam(geminiResponse)
-      console.log('Fallback exam created:', examData ? 'SUCCESS' : 'FAILED')
     }
-
-    console.log('About to insert exam into Supabase...')
-    console.log('SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log('SUPABASE_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Present' : 'Missing')
-    console.log('Exam data structure:', JSON.stringify(examData, null, 2))
 
     // Insert exam into database
     const { data: exam, error } = await supabase
@@ -37,7 +25,6 @@ export async function createExam(geminiResponse: string): Promise<{ examId: stri
       .single()
 
     if (error) {
-      console.error('Failed to create exam:', error)
       return null
     }
 
@@ -51,7 +38,6 @@ export async function createExam(geminiResponse: string): Promise<{ examId: stri
     }
 
   } catch (error) {
-    console.error('Error creating exam:', error)
     return null
   }
 }
@@ -67,7 +53,6 @@ export async function getExamForTaking(examId: string): Promise<ExamData | null>
       .single()
 
     if (error || !exam) {
-      console.error('Exam not found or not available:', error)
       return null
     }
 
@@ -96,7 +81,6 @@ export async function getExamForTaking(examId: string): Promise<ExamData | null>
     }
 
   } catch (error) {
-    console.error('Error fetching exam:', error)
     return null
   }
 }
@@ -113,7 +97,6 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
       .single()
 
     if (examError || !exam) {
-      console.error('Exam not found or already answered:', examError)
       return null
     }
 
@@ -126,7 +109,6 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
       })
 
     if (answerError) {
-      console.error('Failed to save answers:', answerError)
       return null
     }
 
@@ -147,7 +129,6 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
       })
 
     if (gradingError) {
-      console.error('Failed to save grading:', gradingError)
       return null
     }
 
@@ -160,7 +141,6 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
     return gradingResult
 
   } catch (error) {
-    console.error('Error submitting answers:', error)
     return null
   }
 }
@@ -288,7 +268,6 @@ async function gradeExam(exam: DbExam, studentAnswers: StudentAnswer[]): Promise
     }
 
   } catch (error) {
-    console.error('Error grading exam:', error)
     return null
   }
 }
@@ -306,14 +285,12 @@ export async function getGradingResults(examId: string): Promise<GradingResult |
       .single()
 
     if (error || !grading) {
-      console.error('Grading results not found:', error)
       return null
     }
 
     return grading.grading_json as GradingResult
 
   } catch (error) {
-    console.error('Error fetching grading results:', error)
     return null
   }
 }
