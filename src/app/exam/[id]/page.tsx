@@ -233,7 +233,7 @@ export default function ExamPage() {
               onChange={(e) => handleAnswerChange(currentQ.id, e.target.value)}
               placeholder="Kirjoita vastauksesi tähän..."
               rows={4}
-              className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
             />
           )}
         </div>
