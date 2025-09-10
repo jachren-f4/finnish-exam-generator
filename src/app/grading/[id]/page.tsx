@@ -240,7 +240,16 @@ export default function GradingPage() {
               
               {grading.grading_metadata.total_gemini_usage && grading.grading_metadata.total_gemini_usage.totalTokenCount > 0 && (
                 <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
-                  <span className="font-medium">AI-arvioinnin resurssinkäyttö:</span> {grading.grading_metadata.total_gemini_usage.totalTokenCount} tokenia
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-medium">AI-arvioinnin resurssinkäyttö:</span>
+                    <span className="font-mono">{grading.grading_metadata.total_gemini_usage.totalTokenCount} tokenia</span>
+                  </div>
+                  {grading.grading_metadata.total_gemini_usage.estimatedCost > 0 && (
+                    <div className="flex justify-between items-center border-t border-gray-200 pt-1">
+                      <span className="font-medium">Arvioitu kustannus:</span>
+                      <span className="font-mono">${grading.grading_metadata.total_gemini_usage.estimatedCost.toFixed(6)}</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

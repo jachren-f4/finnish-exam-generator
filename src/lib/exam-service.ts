@@ -245,7 +245,7 @@ async function gradeQuestionWithGemini(
   usage_metadata?: any;
 } | null> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
     
     const contextPrompt = `${GEMINI_GRADING_PROMPT}
 
@@ -266,11 +266,25 @@ Arvioi vastaus ja anna pisteet välillä 0-${maxPoints}.`
     
     // Log API usage for cost tracking
     const usageMetadata = result.response.usageMetadata
+    
+    // Calculate cost (Gemini 2.5 Flash pricing)
+    const inputCostPer1M = 0.075  // $0.075 per 1M input tokens
+    const outputCostPer1M = 0.30  // $0.30 per 1M output tokens
+    
+    const promptTokenCount = usageMetadata?.promptTokenCount || 0
+    const candidatesTokenCount = usageMetadata?.candidatesTokenCount || 0
+    const totalTokenCount = usageMetadata?.totalTokenCount || promptTokenCount + candidatesTokenCount
+    
+    const inputCost = (promptTokenCount / 1000000) * inputCostPer1M
+    const outputCost = (candidatesTokenCount / 1000000) * outputCostPer1M
+    const estimatedCost = inputCost + outputCost
+    
     if (usageMetadata) {
       console.log('Gemini grading API usage:', {
-        promptTokenCount: usageMetadata.promptTokenCount,
-        candidatesTokenCount: usageMetadata.candidatesTokenCount,
-        totalTokenCount: usageMetadata.totalTokenCount
+        promptTokenCount,
+        candidatesTokenCount,
+        totalTokenCount,
+        estimatedCost: estimatedCost.toFixed(6)
       })
     }
     
@@ -287,8 +301,14 @@ Arvioi vastaus ja anna pisteet välillä 0-${maxPoints}.`
     gradingResult.points_awarded = Math.max(0, Math.min(maxPoints, gradingResult.points_awarded || 0))
     gradingResult.percentage = Math.round((gradingResult.points_awarded / maxPoints) * 100)
     
-    // Add usage metadata for cost tracking
-    gradingResult.usage_metadata = usageMetadata
+    // Add usage metadata with cost calculations for tracking
+    gradingResult.usage_metadata = {
+      ...usageMetadata,
+      inputCost,
+      outputCost,
+      estimatedCost,
+      model: 'gemini-2.5-flash-lite'
+    }
     
     return gradingResult
     
@@ -446,9 +466,19 @@ async function gradeExam(exam: DbExam, studentAnswers: StudentAnswer[]): Promise
         return {
           promptTokenCount: (acc.promptTokenCount || 0) + (usage?.promptTokenCount || 0),
           candidatesTokenCount: (acc.candidatesTokenCount || 0) + (usage?.candidatesTokenCount || 0),
-          totalTokenCount: (acc.totalTokenCount || 0) + (usage?.totalTokenCount || 0)
+          totalTokenCount: (acc.totalTokenCount || 0) + (usage?.totalTokenCount || 0),
+          inputCost: (acc.inputCost || 0) + (usage?.inputCost || 0),
+          outputCost: (acc.outputCost || 0) + (usage?.outputCost || 0),
+          estimatedCost: (acc.estimatedCost || 0) + (usage?.estimatedCost || 0)
         }
-      }, { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 })
+      }, { 
+        promptTokenCount: 0, 
+        candidatesTokenCount: 0, 
+        totalTokenCount: 0,
+        inputCost: 0,
+        outputCost: 0,
+        estimatedCost: 0
+      })
 
     return {
       exam_id: exam.exam_id,
