@@ -227,6 +227,7 @@ async function gradeQuestionWithGemini(
   percentage: number;
   feedback: string;
   grade_reasoning: string;
+  usage_metadata?: any;
 } | null> {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' })
