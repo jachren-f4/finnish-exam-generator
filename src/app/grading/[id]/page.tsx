@@ -192,7 +192,17 @@ export default function GradingPage() {
                     question.percentage > 0 ? 'bg-yellow-50 border-l-4 border-yellow-400' :
                     'bg-red-50 border-l-4 border-red-400'
                   }`}>
-                    <p className="text-sm text-gray-700">{question.feedback}</p>
+                    <p className="text-sm text-gray-700 mb-2">{question.feedback}</p>
+                    {question.grade_reasoning && (
+                      <div className="border-t pt-2 mt-2">
+                        <p className="text-xs font-medium text-gray-600 mb-1">Arvioinnin perustelu:</p>
+                        <p className="text-xs text-gray-600">{question.grade_reasoning}</p>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+                      <span>Arviointitapa: {question.grading_method === 'gemini' ? '🤖 AI-arviointi' : '📏 Sääntöpohjainen'}</span>
+                      <span>Kysymystyyppi: {question.question_type}</span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -203,7 +213,7 @@ export default function GradingPage() {
         {/* Metadata */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <h3 className="font-semibold text-gray-900 mb-4">Kokeen tiedot</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
             <div>
               <p><span className="font-medium">Koe luotu:</span> {new Date(grading.created_at).toLocaleString('fi-FI')}</p>
               <p><span className="font-medium">Vastaukset lähetetty:</span> {new Date(grading.submitted_at).toLocaleString('fi-FI')}</p>
@@ -213,6 +223,28 @@ export default function GradingPage() {
               <p><span className="font-medium">Kokeen tunnus:</span> {grading.exam_id.slice(0, 8)}...</p>
             </div>
           </div>
+          
+          {grading.grading_metadata && (
+            <div className="border-t pt-4">
+              <h4 className="font-medium text-gray-800 mb-2">Arviointitiedot</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                <div>
+                  <p><span className="font-medium">Pääasiallinen arviointitapa:</span> {grading.grading_metadata.primary_method === 'gemini' ? '🤖 AI-arviointi' : '📏 Sääntöpohjainen'}</p>
+                  <p><span className="font-medium">AI-arvioitu:</span> {grading.grading_metadata.gemini_graded || 0} kysymystä</p>
+                </div>
+                <div>
+                  <p><span className="font-medium">Sääntöpohjainen:</span> {grading.grading_metadata.rule_based_graded || 0} kysymystä</p>
+                  <p><span className="font-medium">AI saatavilla:</span> {grading.grading_metadata.gemini_available ? '✅ Kyllä' : '❌ Ei'}</p>
+                </div>
+              </div>
+              
+              {grading.grading_metadata.total_gemini_usage && grading.grading_metadata.total_gemini_usage.totalTokenCount > 0 && (
+                <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
+                  <span className="font-medium">AI-arvioinnin resurssinkäyttö:</span> {grading.grading_metadata.total_gemini_usage.totalTokenCount} tokenia
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Actions */}

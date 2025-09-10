@@ -13,26 +13,47 @@ export default function FileUpload() {
   const [customPrompt, setCustomPrompt] = useState(`Your task:
 - Based on the text, generate exactly **10 exam questions in Finnish**.
 
-Requirements for the questions:
-- Use correct Finnish grammar (do not leave broken fragments in the text).
-- Only create questions that are relevant to the topic that the text refers to.
-- Do not include irrelevant references unless the concept is clearly defined in the text.
-- Avoid overly general or vague questions. Each question must be anchored in the content of the text.
-- Questions can be multiple choice or open-ended.
-- Provide correct answers for each question.
+CRITICAL Requirements for the questions:
+- **ONLY use correct Finnish language**: All words, grammar, and sentences must be proper Finnish. Do not use Swedish, English, or made-up words.
+- **Verify OCR accuracy**: If the source text contains non-Finnish words or OCR errors, interpret the context and use correct Finnish equivalents.
+- **Perfect grammar**: Use correct Finnish grammar, spelling, and sentence structure. No broken fragments or incomplete sentences.
+- **Topic relevance**: Only create questions directly related to the main topic and content of the text.
+- **Varied question types**: Use multiple choice, true/false, short answer, fill-in-the-blank in balanced proportions.
+- **Appropriate difficulty**: Target elementary/middle school students (ages 7-15).
+- **Complete answers**: Include correct answers and explanations for every question.
 
 Output format:
-Return a JSON object with the following structure:
-
+Return your response as a JSON object with this exact structure:
 {
   "questions": [
     {
-      "q": "Question in Finnish",
-      "choices": ["option1", "option2", "option3"],  // optional for multiple choice
-      "answer": "Correct answer in Finnish"
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Question text in Finnish",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_answer": "Option A",
+      "explanation": "Brief explanation in Finnish"
+    },
+    {
+      "id": 2,
+      "type": "true_false",
+      "question": "Statement in Finnish",
+      "correct_answer": true,
+      "explanation": "Brief explanation in Finnish"
+    },
+    {
+      "id": 3,
+      "type": "short_answer",
+      "question": "Question in Finnish",
+      "correct_answer": "Expected answer",
+      "explanation": "Brief explanation in Finnish"
     }
-  ]
-}`)
+  ],
+  "topic": "Brief description of the main topic covered",
+  "difficulty": "elementary|middle_school|high_school"
+}
+
+Important: Return only the JSON object. Do not include any additional explanations or markdown formatting.`)
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -108,52 +129,44 @@ Return a JSON object with the following structure:
 
     setUploading(true)
     try {
-      // Step 1: Upload files
+      // Create form data for mobile API endpoint
       const formData = new FormData()
       files.forEach((file) => {
-        formData.append('file', file)
+        formData.append('images', file)
       })
+      
+      // Add custom prompt if provided
+      if (customPrompt.trim()) {
+        formData.append('prompt', customPrompt.trim())
+      }
 
-      const uploadResponse = await fetch('/api/files/upload', {
+      const response = await fetch('/api/mobile/exam-questions', {
         method: 'POST',
         body: formData,
       })
 
-      if (!uploadResponse.ok) {
-        throw new Error(`Upload failed: ${uploadResponse.statusText}`)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `Request failed: ${response.statusText}`)
       }
 
-      const uploadResult = await uploadResponse.json()
-      console.log('Upload successful:', uploadResult)
-      
-      // Step 2: Start OCR job
-      const jobResponse = await fetch('/api/ocr/jobs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          files: uploadResult.files,
-          customPrompt: customPrompt.trim() || undefined
-        }),
-      })
-
-      if (!jobResponse.ok) {
-        throw new Error(`OCR job creation failed: ${jobResponse.statusText}`)
-      }
-
-      const jobResult = await jobResponse.json()
-      console.log('OCR job created:', jobResult)
+      const result = await response.json()
+      console.log('Exam creation successful:', result)
       
       // Clear files after successful upload
       setFiles([])
       
-      // Redirect to results page
-      window.location.href = `/results/${jobResult.jobId}`
+      // Check if we got exam URLs
+      if (result.exam_url && result.exam_id) {
+        // Redirect to exam page
+        window.location.href = result.exam_url
+      } else {
+        alert('Exam created successfully, but no URL was returned. Please check the console for details.')
+      }
       
     } catch (error) {
       console.error('Process error:', error)
-      alert('Processing failed. Please try again.')
+      alert(`Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setUploading(false)
     }
@@ -288,7 +301,7 @@ Return a JSON object with the following structure:
                   Uploading...
                 </>
               ) : (
-                'Start OCR Processing'
+                'Generate Finnish Exam'
               )}
             </button>
           </div>

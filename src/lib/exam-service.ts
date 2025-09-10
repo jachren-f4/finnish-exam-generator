@@ -1,5 +1,36 @@
 import { supabase, DbExam, ExamData, StudentAnswer, GradingResult } from './supabase'
 import { processGeminiResponse, createFallbackExam } from './exam-transformer'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+
+const GEMINI_GRADING_PROMPT = `Arvioi seuraava opiskelijan vastaus suomenkielisessä kokeessa.
+
+TEHTÄVÄ: Arvioi vastaus suomalaisessa koulutusjärjestelmässä käytettävän asteikon 4-10 mukaan ja anna yksityiskohtainen palaute suomeksi.
+
+ARVIOINTI KRITEERIT:
+- 10: Täydellinen vastaus, osoittaa syvää ymmärrystä
+- 9: Erinomainen vastaus, pieniä puutteita
+- 8: Hyvä vastaus, sisältää oleelliset asiat
+- 7: Tyydyttävä vastaus, joitain aukkoja
+- 6: Välttävä vastaus, perustiedot hallussa
+- 5: Heikko vastaus, merkittäviä puutteita
+- 4: Hylätty, ei osoita ymmärrystä
+
+OHJEITA:
+- Arvioi sisältöä, ei pelkkää kielioppia
+- Huomioi osittain oikeat vastaukset
+- Anna rakentavaa palautetta suomeksi
+- Ole johdonmukainen pisteytyksen kanssa
+- Hyväksy synonyymit ja vaihtoehtoiset ilmaisutavat
+
+Palauta VAIN JSON-objekti:
+{
+  "points_awarded": [0-max_points välillä],
+  "percentage": [0-100],
+  "feedback": "Yksityiskohtainen palaute suomeksi",
+  "grade_reasoning": "Lyhyt perustelu arvosanalle"
+}`
 
 // Create a new exam from Gemini response
 export async function createExam(geminiResponse: string, promptUsed?: string): Promise<{ examId: string; examUrl: string; gradingUrl: string } | null> {
@@ -51,7 +82,10 @@ export async function createExam(geminiResponse: string, promptUsed?: string): P
         subject: examData.exam.subject,
         grade: examData.exam.grade,
         exam_json: examDataWithPrompt,
-        status: 'created'
+        status: 'created',
+        prompt_text: promptUsed || null,
+        prompt_type: promptUsed && promptUsed.trim() !== '' ? 'custom' : 'default',
+        prompt_length: promptUsed?.length || 0
       })
       .select('exam_id')
       .single()
@@ -183,6 +217,71 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
   }
 }
 
+// Grade a single question using Gemini AI
+async function gradeQuestionWithGemini(
+  question: any,
+  studentAnswer: string,
+  maxPoints: number
+): Promise<{
+  points_awarded: number;
+  percentage: number;
+  feedback: string;
+  grade_reasoning: string;
+} | null> {
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' })
+    
+    const contextPrompt = `${GEMINI_GRADING_PROMPT}
+
+KYSYMYKSEN TIEDOT:
+Kysymys: "${question.question_text}"
+Kysymystyyppi: ${question.question_type}
+Malliovastaus: "${question.answer_text}"
+Maksimipisteet: ${maxPoints}
+${question.options ? `Vastausvaihtoehdot: ${question.options.join(', ')}` : ''}
+${question.explanation ? `Selitys: ${question.explanation}` : ''}
+
+OPISKELIJAN VASTAUS: "${studentAnswer}"
+
+Arvioi vastaus ja anna pisteet välillä 0-${maxPoints}.`
+
+    const result = await model.generateContent(contextPrompt)
+    const responseText = result.response.text()
+    
+    // Log API usage for cost tracking
+    const usageMetadata = result.response.usageMetadata
+    if (usageMetadata) {
+      console.log('Gemini grading API usage:', {
+        promptTokenCount: usageMetadata.promptTokenCount,
+        candidatesTokenCount: usageMetadata.candidatesTokenCount,
+        totalTokenCount: usageMetadata.totalTokenCount
+      })
+    }
+    
+    // Parse Gemini response
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      console.error('No JSON found in Gemini grading response:', responseText)
+      return null
+    }
+    
+    const gradingResult = JSON.parse(jsonMatch[0])
+    
+    // Validate and constrain points
+    gradingResult.points_awarded = Math.max(0, Math.min(maxPoints, gradingResult.points_awarded || 0))
+    gradingResult.percentage = Math.round((gradingResult.points_awarded / maxPoints) * 100)
+    
+    // Add usage metadata for cost tracking
+    gradingResult.usage_metadata = usageMetadata
+    
+    return gradingResult
+    
+  } catch (error) {
+    console.error('Error in Gemini grading:', error)
+    return null
+  }
+}
+
 // Grade an exam by comparing student answers to correct answers
 async function gradeExam(exam: DbExam, studentAnswers: StudentAnswer[]): Promise<GradingResult | null> {
   try {
@@ -195,66 +294,97 @@ async function gradeExam(exam: DbExam, studentAnswers: StudentAnswer[]): Promise
     let partialCount = 0
     let incorrectCount = 0
 
-    const gradedQuestions = questions.map((q: any) => {
+    // Grade questions using Gemini AI with fallback to rule-based
+    const gradedQuestions = await Promise.all(questions.map(async (q: any) => {
       const studentAnswer = studentAnswers.find(a => a.question_id === q.id)
-      const studentText = studentAnswer?.answer_text?.trim().toLowerCase() || ''
-      const correctText = q.answer_text?.trim().toLowerCase() || ''
-      
+      const studentText = studentAnswer?.answer_text?.trim() || ''
       let pointsAwarded = 0
       let feedback = ''
+      let gradeReasoning = ''
+      let gradingMethod = 'rule-based' // Track which method was used
+      let usageMetadata = null
 
-      // Grading logic based on question type
-      switch (q.question_type) {
-        case 'multiple_choice':
-          if (studentText === correctText) {
-            pointsAwarded = q.max_points
-            feedback = 'Oikein! Hyvä vastaus.'
-            correctCount++
-          } else {
-            pointsAwarded = 0
-            feedback = `Väärin. Oikea vastaus: ${q.answer_text}`
-            incorrectCount++
+      // Try Gemini grading first
+      if (studentText && process.env.GEMINI_API_KEY) {
+        try {
+          const geminiResult = await gradeQuestionWithGemini(q, studentText, q.max_points)
+          if (geminiResult) {
+            pointsAwarded = geminiResult.points_awarded
+            feedback = geminiResult.feedback
+            gradeReasoning = geminiResult.grade_reasoning
+            gradingMethod = 'gemini'
+            usageMetadata = geminiResult.usage_metadata
+            console.log(`Question ${q.id} graded by Gemini: ${pointsAwarded}/${q.max_points} points`)
           }
-          break
+        } catch (error) {
+          console.warn(`Gemini grading failed for question ${q.id}, falling back to rule-based:`, error)
+        }
+      }
 
-        case 'true_false':
-          if (studentText === correctText || 
-              (correctText === 'true' && ['tosi', 'kyllä', 'oikein'].includes(studentText)) ||
-              (correctText === 'false' && ['epätosi', 'ei', 'väärin'].includes(studentText))) {
-            pointsAwarded = q.max_points
-            feedback = 'Oikein!'
-            correctCount++
-          } else {
-            pointsAwarded = 0
-            feedback = `Väärin. Oikea vastaus: ${correctText === 'true' ? 'Tosi' : 'Epätosi'}`
-            incorrectCount++
-          }
-          break
+      // Fallback to rule-based grading if Gemini failed or no API key
+      if (gradingMethod === 'rule-based') {
+        const correctText = q.answer_text?.trim().toLowerCase() || ''
+        const studentTextLower = studentText.toLowerCase()
 
-        case 'short_answer':
-        case 'fill_in_the_blank':
-          // Simple keyword matching for now
-          if (studentText.includes(correctText) || correctText.includes(studentText)) {
-            if (studentText === correctText) {
+        switch (q.question_type) {
+          case 'multiple_choice':
+            if (studentTextLower === correctText) {
               pointsAwarded = q.max_points
-              feedback = 'Oikein! Täydellinen vastaus.'
+              feedback = 'Oikein! Hyvä vastaus.'
               correctCount++
             } else {
-              pointsAwarded = Math.ceil(q.max_points * 0.7) // Partial credit
-              feedback = `Osittain oikein. Malliovastaus: ${q.answer_text}`
-              partialCount++
+              pointsAwarded = 0
+              feedback = `Väärin. Oikea vastaus: ${q.answer_text}`
+              incorrectCount++
             }
-          } else {
-            pointsAwarded = 0
-            feedback = `Katso malliovastausta: ${q.answer_text}`
-            incorrectCount++
-          }
-          break
+            break
 
-        default:
-          pointsAwarded = 0
-          feedback = 'Tuntematon kysymystyyppi'
-          incorrectCount++
+          case 'true_false':
+            if (studentTextLower === correctText || 
+                (correctText === 'true' && ['tosi', 'kyllä', 'oikein'].includes(studentTextLower)) ||
+                (correctText === 'false' && ['epätosi', 'ei', 'väärin'].includes(studentTextLower))) {
+              pointsAwarded = q.max_points
+              feedback = 'Oikein!'
+              correctCount++
+            } else {
+              pointsAwarded = 0
+              feedback = `Väärin. Oikea vastaus: ${correctText === 'true' ? 'Tosi' : 'Epätosi'}`
+              incorrectCount++
+            }
+            break
+
+          case 'short_answer':
+          case 'fill_in_the_blank':
+            if (studentTextLower.includes(correctText) || correctText.includes(studentTextLower)) {
+              if (studentTextLower === correctText) {
+                pointsAwarded = q.max_points
+                feedback = 'Oikein! Täydellinen vastaus.'
+                correctCount++
+              } else {
+                pointsAwarded = Math.ceil(q.max_points * 0.7)
+                feedback = `Osittain oikein. Malliovastaus: ${q.answer_text}`
+                partialCount++
+              }
+            } else {
+              pointsAwarded = 0
+              feedback = `Katso malliovastausta: ${q.answer_text}`
+              incorrectCount++
+            }
+            break
+
+          default:
+            pointsAwarded = 0
+            feedback = 'Tuntematon kysymystyyppi'
+            incorrectCount++
+        }
+      }
+
+      // Update counters for Gemini grading
+      if (gradingMethod === 'gemini') {
+        const percentage = (pointsAwarded / q.max_points) * 100
+        if (percentage >= 95) correctCount++
+        else if (percentage >= 50) partialCount++
+        else incorrectCount++
       }
 
       totalPoints += pointsAwarded
@@ -268,11 +398,14 @@ async function gradeExam(exam: DbExam, studentAnswers: StudentAnswer[]): Promise
         points_awarded: pointsAwarded,
         max_points: q.max_points,
         feedback,
+        grade_reasoning: gradeReasoning,
         percentage: Math.round((pointsAwarded / q.max_points) * 100),
         question_type: q.question_type,
-        options: q.options
+        options: q.options,
+        grading_method: gradingMethod,
+        usage_metadata: usageMetadata
       }
-    })
+    }))
 
     // Calculate final grade (Finnish scale 4-10)
     const percentage = (totalPoints / maxTotalPoints) * 100
@@ -284,6 +417,22 @@ async function gradeExam(exam: DbExam, studentAnswers: StudentAnswer[]): Promise
     else if (percentage >= 50) finalGrade = '6'
     else if (percentage >= 40) finalGrade = '5'
     else finalGrade = '4'
+
+    // Calculate grading method statistics and API usage
+    const geminiGradedCount = gradedQuestions.filter(q => q.grading_method === 'gemini').length
+    const ruleBasedGradedCount = gradedQuestions.filter(q => q.grading_method === 'rule-based').length
+    
+    // Aggregate Gemini API usage for cost tracking
+    const totalGeminiUsage = gradedQuestions
+      .filter(q => q.usage_metadata)
+      .reduce((acc, q) => {
+        const usage = q.usage_metadata
+        return {
+          promptTokenCount: (acc.promptTokenCount || 0) + (usage?.promptTokenCount || 0),
+          candidatesTokenCount: (acc.candidatesTokenCount || 0) + (usage?.candidatesTokenCount || 0),
+          totalTokenCount: (acc.totalTokenCount || 0) + (usage?.totalTokenCount || 0)
+        }
+      }, { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 })
 
     return {
       exam_id: exam.exam_id,
@@ -302,7 +451,14 @@ async function gradeExam(exam: DbExam, studentAnswers: StudentAnswer[]): Promise
       questions_count: questions.length,
       questions_correct: correctCount,
       questions_partial: partialCount,
-      questions_incorrect: incorrectCount
+      questions_incorrect: incorrectCount,
+      grading_metadata: {
+        gemini_graded: geminiGradedCount,
+        rule_based_graded: ruleBasedGradedCount,
+        primary_method: geminiGradedCount > ruleBasedGradedCount ? 'gemini' : 'rule-based',
+        gemini_available: !!process.env.GEMINI_API_KEY,
+        total_gemini_usage: totalGeminiUsage
+      }
     }
 
   } catch (error) {

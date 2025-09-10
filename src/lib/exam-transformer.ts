@@ -94,23 +94,49 @@ export function transformGeminiToDatabase(geminiData: GeminiExamData): DatabaseE
 export function processGeminiResponse(rawResponse: string): DatabaseExamData | null {
   try {
     // Parse the raw response
-    let geminiData: GeminiExamData;
+    let rawData: any;
     
     // Handle both raw JSON and markdown-wrapped JSON
     if (rawResponse.includes('```json')) {
       const jsonMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/);
       if (jsonMatch) {
-        geminiData = JSON.parse(jsonMatch[1]);
+        rawData = JSON.parse(jsonMatch[1]);
       } else {
         throw new Error('Could not extract JSON from markdown');
       }
     } else {
-      geminiData = JSON.parse(rawResponse);
+      rawData = JSON.parse(rawResponse);
     }
 
     // Validate required fields
-    if (!geminiData.questions || !Array.isArray(geminiData.questions)) {
+    if (!rawData.questions || !Array.isArray(rawData.questions)) {
       throw new Error('Invalid questions format');
+    }
+
+    // Handle backward compatibility - convert old format to new format
+    let geminiData: GeminiExamData;
+    
+    // Check if this is the old format (has "q" field instead of "question")
+    const isOldFormat = rawData.questions.some((q: any) => q.q && !q.question);
+    
+    if (isOldFormat) {
+      console.log('Detected old JSON format, converting to new format');
+      // Convert old format to new format
+      geminiData = {
+        questions: rawData.questions.map((q: any, index: number) => ({
+          id: index + 1,
+          type: q.choices ? 'multiple_choice' : 'short_answer',
+          question: q.q || q.question,
+          options: q.choices,
+          correct_answer: q.answer || q.correct_answer,
+          explanation: q.explanation || 'Selvitys ei ole saatavilla'
+        })),
+        topic: rawData.topic || 'Yleinen aihe',
+        difficulty: rawData.difficulty || 'general'
+      };
+    } else {
+      // New format, use as-is
+      geminiData = rawData as GeminiExamData;
     }
 
     // Set defaults for missing fields
@@ -121,6 +147,7 @@ export function processGeminiResponse(rawResponse: string): DatabaseExamData | n
     return transformGeminiToDatabase(geminiData);
     
   } catch (error) {
+    console.error('Error processing Gemini response:', error);
     return null;
   }
 }
