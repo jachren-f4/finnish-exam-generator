@@ -21,6 +21,7 @@ CRITICAL Requirements for the questions:
 - **Varied question types**: Use multiple choice, true/false, short answer, fill-in-the-blank in balanced proportions.
 - **Appropriate difficulty**: Target elementary/middle school students (ages 7-15).
 - **Complete answers**: Include correct answers and explanations for every question.
+- **SELF-CONTAINED QUESTIONS ONLY**: Every question must make complete sense without any additional context. NEVER use phrases like "in this context", "according to the text", "in the passage above", or "what does X mean here". If a question needs background information, include that information WITHIN the question itself. Transform contextual references into standalone scenarios that students can understand independently.
 
 Output format:
 Return your response as a JSON object with this exact structure:
