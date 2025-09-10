@@ -20,6 +20,8 @@ export async function createExam(geminiResponse: string): Promise<{ examId: stri
     }
 
     console.log('About to insert exam into Supabase...')
+    console.log('SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('SUPABASE_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Present' : 'Missing')
     console.log('Exam data structure:', JSON.stringify(examData, null, 2))
 
     // Insert exam into database
