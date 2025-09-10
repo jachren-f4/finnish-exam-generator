@@ -8,12 +8,14 @@ import path from 'path'
 const DEFAULT_EXAM_PROMPT = `Your task:
 - Based on the text, generate exactly **10 exam questions in Finnish**.
 
-Requirements for the questions:
-- Use correct Finnish grammar (do not leave broken fragments in the text).
-- Only create questions that are relevant to the topic that the text refers to.
-- Use varied question types: multiple choice, true/false, short answer, fill-in-the-blank.
-- Make questions at appropriate difficulty level for elementary/middle school students.
-- Include correct answers for each question.
+CRITICAL Requirements for the questions:
+- **ONLY use correct Finnish language**: All words, grammar, and sentences must be proper Finnish. Do not use Swedish, English, or made-up words.
+- **Verify OCR accuracy**: If the source text contains non-Finnish words or OCR errors, interpret the context and use correct Finnish equivalents.
+- **Perfect grammar**: Use correct Finnish grammar, spelling, and sentence structure. No broken fragments or incomplete sentences.
+- **Topic relevance**: Only create questions directly related to the main topic and content of the text.
+- **Varied question types**: Use multiple choice, true/false, short answer, fill-in-the-blank in balanced proportions.
+- **Appropriate difficulty**: Target elementary/middle school students (ages 7-15).
+- **Complete answers**: Include correct answers and explanations for every question.
 
 Output format:
 Return your response as a JSON object with this exact structure:
@@ -77,7 +79,12 @@ export async function POST(request: NextRequest) {
     // Use custom prompt or fallback to default
     const promptToUse = customPrompt && customPrompt.trim() !== '' ? customPrompt : DEFAULT_EXAM_PROMPT
     console.log('Using prompt type:', customPrompt && customPrompt.trim() !== '' ? 'CUSTOM' : 'DEFAULT')
-    console.log('Prompt preview:', promptToUse.substring(0, 100) + '...')
+    
+    // Log full prompt for quality analysis and optimization
+    console.log('=== FULL PROMPT SENT TO GEMINI ===')
+    console.log(promptToUse)
+    console.log('=== END PROMPT ===')
+    console.log('Prompt length:', promptToUse.length, 'characters')
 
     // Process images and create file metadata
     const fileMetadataList: FileMetadata[] = []
@@ -170,7 +177,7 @@ export async function POST(request: NextRequest) {
     try {
       const { createExam } = await import('@/lib/exam-service')
       console.log('createExam function imported successfully')
-      examResult = await createExam(result.rawText)
+      examResult = await createExam(result.rawText, promptToUse)
       console.log('Exam creation result:', examResult ? 'SUCCESS' : 'NULL')
       if (!examResult) {
         console.log('WARNING: Exam creation returned null - check exam processing and Supabase connection')

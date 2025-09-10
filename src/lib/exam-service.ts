@@ -2,7 +2,7 @@ import { supabase, DbExam, ExamData, StudentAnswer, GradingResult } from './supa
 import { processGeminiResponse, createFallbackExam } from './exam-transformer'
 
 // Create a new exam from Gemini response
-export async function createExam(geminiResponse: string): Promise<{ examId: string; examUrl: string; gradingUrl: string } | null> {
+export async function createExam(geminiResponse: string, promptUsed?: string): Promise<{ examId: string; examUrl: string; gradingUrl: string } | null> {
   try {
     console.log('=== CREATE EXAM DEBUG ===')
     console.log('Input response length:', geminiResponse?.length || 0)
@@ -29,8 +29,20 @@ export async function createExam(geminiResponse: string): Promise<{ examId: stri
       hasExam: !!examData.exam,
       hasSubject: !!examData.exam?.subject,
       hasGrade: !!examData.exam?.grade,
-      questionsCount: examData.exam?.questions?.length || 0
+      questionsCount: examData.exam?.questions?.length || 0,
+      hasPrompt: !!promptUsed
     })
+
+    // Add prompt to exam data for analysis
+    const examDataWithPrompt = {
+      ...examData,
+      metadata: {
+        ...examData.metadata,
+        prompt_used: promptUsed,
+        prompt_length: promptUsed?.length || 0,
+        created_at: new Date().toISOString()
+      }
+    }
 
     // Insert exam into database
     const { data: exam, error } = await supabase
@@ -38,7 +50,7 @@ export async function createExam(geminiResponse: string): Promise<{ examId: stri
       .insert({
         subject: examData.exam.subject,
         grade: examData.exam.grade,
-        exam_json: examData,
+        exam_json: examDataWithPrompt,
         status: 'created'
       })
       .select('exam_id')

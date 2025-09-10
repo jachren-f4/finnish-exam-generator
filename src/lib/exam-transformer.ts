@@ -22,6 +22,12 @@ export interface DatabaseExamData {
     grade: string;
     questions: DatabaseQuestion[];
   };
+  metadata?: {
+    prompt_used?: string;
+    prompt_length?: number;
+    created_at?: string;
+    [key: string]: any;
+  };
 }
 
 export interface DatabaseQuestion {
