@@ -4,32 +4,46 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
-const GEMINI_GRADING_PROMPT = `Arvioi seuraava opiskelijan vastaus suomenkielisessä kokeessa.
+const GEMINI_GRADING_PROMPT = `Arvioi seuraava opiskelijan vastaus suomenkielisessä kokeessa älykkäästi ja oikeudenmukaisesti.
 
-TEHTÄVÄ: Arvioi vastaus suomalaisessa koulutusjärjestelmässä käytettävän asteikon 4-10 mukaan ja anna yksityiskohtainen palaute suomeksi.
+KRIITTINEN PROSESSI:
+1. ANALYSOI KYSYMYS ENSIN:
+   - Mitä kysymys tarkalleen ottaen pyytää? (määrä, tyyppi, formaatti)
+   - Onko kysymyksessä määrällistä vaatimusta? (esim. "kaksi", "kolme", "yksi")
+   - Mikä on kysymyksen ydinasia ja tavoite?
 
-ARVIOINTI KRITEERIT:
-- 10: Täydellinen vastaus, osoittaa syvää ymmärrystä
-- 9: Erinomainen vastaus, pieniä puutteita
+2. VERTAA MALLIVASTAUS KYSYMYKSEEN:
+   - Vastaako mallivastaus kysymyksen vaatimuksia?
+   - Jos mallivastaus sisältää enemmän vaihtoehtoja kuin pyydetty, tulkitse se järkevästi
+   - Huomioi että "tai" tarkoittaa vaihtoehtoja, ei kaikkia yhdessä
+
+3. ARVIOI OPISKELIJAN VASTAUS:
+   - Täyttääkö vastaus kysymyksen vaatimukset?
+   - Jos opiskelija antaa oikean määrän oikeita vastauksia, anna täydet pisteet
+   - ÄLYKÄS TULKINTA: Jos kysytään "kaksi soitinta" ja opiskelija antaa tarkalleen kaksi oikeaa soitinta, se on täydellinen vastaus riippumatta malliovastauksen muotoilusta
+
+ARVIOINTI KRITEERIT (Suomalainen asteikko 4-10):
+- 10: Täydellinen vastaus, täyttää kysymyksen vaatimukset täysin
+- 9: Erinomainen vastaus, pieniä muotoiluvirheitä
 - 8: Hyvä vastaus, sisältää oleelliset asiat
 - 7: Tyydyttävä vastaus, joitain aukkoja
 - 6: Välttävä vastaus, perustiedot hallussa
 - 5: Heikko vastaus, merkittäviä puutteita
-- 4: Hylätty, ei osoita ymmärrystä
+- 4: Hylätty, ei täytä kysymyksen perusvaatimuksia
 
-OHJEITA:
-- Arvioi sisältöä, ei pelkkää kielioppia
-- Huomioi osittain oikeat vastaukset
-- Anna rakentavaa palautetta suomeksi
-- Ole johdonmukainen pisteytyksen kanssa
+TÄRKEÄT OHJEET:
+- PRIORISOI KYSYMYKSEN VAATIMUKSET mallivastauksen yli
 - Hyväksy synonyymit ja vaihtoehtoiset ilmaisutavat
+- Jos opiskelijan vastaus täyttää kysymyksen vaatimukset paremmin kuin mallivastaus antaa ymmärtää, anna oikeudenmukainen arviointi
+- Anna rakentavaa palautetta suomeksi
+- Selitä päättelysi selkeästi
 
 Palauta VAIN JSON-objekti:
 {
   "points_awarded": [0-max_points välillä],
   "percentage": [0-100],
   "feedback": "Yksityiskohtainen palaute suomeksi",
-  "grade_reasoning": "Lyhyt perustelu arvosanalle"
+  "grade_reasoning": "Selitä miksi annoit juuri nämä pisteet, erityisesti jos kysymyksen vaatimukset vs mallivastaus eroavat"
 }`
 
 // Create a new exam from Gemini response
