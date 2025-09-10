@@ -162,8 +162,15 @@ export async function POST(request: NextRequest) {
     console.log('Using raw Gemini response directly without parsing')
 
     // Create web exam from the response
-    const { createExam } = await import('@/lib/exam-service')
-    const examResult = await createExam(result.rawText)
+    console.log('=== ATTEMPTING TO CREATE EXAM ===')
+    let examResult = null
+    try {
+      const { createExam } = await import('@/lib/exam-service')
+      examResult = await createExam(result.rawText)
+      console.log('Exam creation result:', examResult)
+    } catch (examError) {
+      console.error('Error creating exam:', examError)
+    }
 
     // Return mobile-optimized response with both raw response and exam URLs
     return NextResponse.json({

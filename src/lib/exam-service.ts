@@ -4,14 +4,23 @@ import { processGeminiResponse, createFallbackExam } from './exam-transformer'
 // Create a new exam from Gemini response
 export async function createExam(geminiResponse: string): Promise<{ examId: string; examUrl: string; gradingUrl: string } | null> {
   try {
+    console.log('=== CREATING EXAM DEBUG START ===')
+    console.log('Gemini response length:', geminiResponse.length)
+    console.log('First 200 chars:', geminiResponse.substring(0, 200))
+    
     // Transform Gemini response to database format
     let examData = processGeminiResponse(geminiResponse)
+    console.log('processGeminiResponse result:', examData ? 'SUCCESS' : 'FAILED')
     
     // Create fallback if Gemini response is invalid
     if (!examData) {
       console.log('Creating fallback exam from raw response')
       examData = createFallbackExam(geminiResponse)
+      console.log('Fallback exam created:', examData ? 'SUCCESS' : 'FAILED')
     }
+
+    console.log('About to insert exam into Supabase...')
+    console.log('Exam data structure:', JSON.stringify(examData, null, 2))
 
     // Insert exam into database
     const { data: exam, error } = await supabase

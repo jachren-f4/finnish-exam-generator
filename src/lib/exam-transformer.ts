@@ -41,6 +41,7 @@ export function transformGeminiToDatabase(geminiData: GeminiExamData): DatabaseE
   // Map difficulty to Finnish grade levels
   const difficultyToGrade: Record<string, string> = {
     'elementary': '1-6. luokka',
+    'elementary_school': '1-6. luokka',
     'middle_school': '7-9. luokka', 
     'high_school': '10-12. luokka',
     'general': 'Yleinen taso'
@@ -86,6 +87,7 @@ export function transformGeminiToDatabase(geminiData: GeminiExamData): DatabaseE
  */
 export function processGeminiResponse(rawResponse: string): DatabaseExamData | null {
   try {
+    console.log('=== PROCESSING GEMINI RESPONSE ===')
     // Parse the raw response
     let geminiData: GeminiExamData;
     
