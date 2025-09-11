@@ -184,7 +184,8 @@ function parseJsonRobustly(jsonStr: string): any {
       console.log(`Trying JSON parsing strategy ${i + 1}...`);
       return strategies[i]();
     } catch (error) {
-      console.log(`Strategy ${i + 1} failed:`, error.message);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.log(`Strategy ${i + 1} failed:`, errorMessage);
       lastError = error;
       continue;
     }
