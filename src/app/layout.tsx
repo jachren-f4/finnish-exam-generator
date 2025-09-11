@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -18,7 +19,9 @@ export default function RootLayout({
           <header className="border-b border-gray-200 dark:border-gray-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex justify-between items-center py-6">
-                <h1 className="text-2xl font-bold">Finnish Exam Generator</h1>
+                <Link href="/" className="text-2xl font-bold hover:text-blue-600 transition-colors cursor-pointer">
+                  <h1>Finnish Exam Generator</h1>
+                </Link>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   AI-Powered Question Generation
                 </p>
