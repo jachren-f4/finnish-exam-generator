@@ -170,9 +170,10 @@ export async function POST(request: NextRequest) {
           imageBuffers.push(buffer)
         }
         
-        // Upload images to storage
-        diagnosticImageUrls = await SupabaseStorageManager.uploadMultipleDiagnosticImages(imageBuffers, examId)
-        console.log('Uploaded diagnostic images:', diagnosticImageUrls.length)
+        // Upload images to storage - DISABLED to save storage costs
+        // diagnosticImageUrls = await SupabaseStorageManager.uploadMultipleDiagnosticImages(imageBuffers, examId)
+        // console.log('Uploaded diagnostic images:', diagnosticImageUrls.length)
+        console.log('Diagnostic image uploads disabled - keeping OCR text only')
         
         // Extract raw OCR text separately
         const imageParts = []
