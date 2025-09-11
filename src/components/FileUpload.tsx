@@ -10,6 +10,7 @@ export default function FileUpload() {
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
+  const [structuredMode, setStructuredMode] = useState(true) // Default to new structured mode
   const [customPrompt, setCustomPrompt] = useState(`Your task:
 - Based on the text, generate exactly **10 exam questions in Finnish**.
 
@@ -140,6 +141,9 @@ Important: Return only the JSON object. Do not include any additional explanatio
       if (customPrompt.trim()) {
         formData.append('prompt', customPrompt.trim())
       }
+      
+      // Add structured mode toggle
+      formData.append('structured_mode', structuredMode.toString())
 
       const response = await fetch('/api/mobile/exam-questions', {
         method: 'POST',
@@ -175,6 +179,33 @@ Important: Return only the JSON object. Do not include any additional explanatio
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
+      {/* Processing Mode Toggle */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100">Processing Mode</h3>
+            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+              {structuredMode 
+                ? "Topic-aware: Separates different subjects to prevent mixed questions" 
+                : "Legacy: Processes all images together (may mix topics)"
+              }
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={structuredMode}
+              onChange={(e) => setStructuredMode(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <span className="ml-3 text-sm font-medium text-blue-900 dark:text-blue-100">
+              {structuredMode ? "Structured" : "Legacy"}
+            </span>
+          </label>
+        </div>
+      </div>
+
       {/* Custom Prompt Field */}
       <div>
         <label htmlFor="custom-prompt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
