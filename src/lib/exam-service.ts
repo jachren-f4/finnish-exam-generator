@@ -171,6 +171,73 @@ export async function getExamForTaking(examId: string): Promise<ExamData | null>
   }
 }
 
+// Get exam state for reuse/review - checks if exam has been completed at least once
+export async function getExamState(examId: string): Promise<{
+  exam: ExamData | null,
+  hasBeenCompleted: boolean,
+  latestGrading: any | null,
+  canReuse: boolean
+} | null> {
+  try {
+    // First check if exam exists (any status)
+    const { data: exam, error: examError } = await supabase
+      .from('exams')
+      .select('*')
+      .eq('exam_id', examId)
+      .single()
+
+    if (examError || !exam) {
+      return null
+    }
+
+    // Check if exam has been completed (has grading data)
+    const { data: grading, error: gradingError } = await supabase
+      .from('grading')
+      .select('*')
+      .eq('exam_id', examId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    const hasBeenCompleted = !gradingError && grading && grading.length > 0
+    const latestGrading = hasBeenCompleted ? grading[0] : null
+
+    // Transform database exam to display format (remove answers for fresh attempts)
+    const examJson = exam.exam_json
+    const questions = examJson.exam.questions.map((q: any) => ({
+      id: q.id,
+      question_text: q.question_text,
+      question_type: q.question_type,
+      options: q.options,
+      max_points: q.max_points
+      // Note: answer_text and explanation excluded for exam taking
+    }))
+
+    const totalPoints = questions.reduce((sum: number, q: any) => sum + q.max_points, 0)
+
+    const examData: ExamData = {
+      exam_id: exam.exam_id,
+      subject: exam.subject,
+      grade: exam.grade,
+      status: exam.status,
+      created_at: exam.created_at,
+      questions,
+      total_questions: questions.length,
+      max_total_points: totalPoints
+    }
+
+    return {
+      exam: examData,
+      hasBeenCompleted,
+      latestGrading,
+      canReuse: hasBeenCompleted // Only allow reuse if completed at least once
+    }
+
+  } catch (error) {
+    console.error('Error getting exam state:', error)
+    return null
+  }
+}
+
 // Submit student answers and trigger grading
 export async function submitAnswers(examId: string, answers: StudentAnswer[]): Promise<GradingResult | null> {
   try {

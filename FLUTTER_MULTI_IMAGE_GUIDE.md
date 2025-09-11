@@ -60,11 +60,11 @@ Your custom prompt text here (optional)
 - **Prompt field**: Use `prompt` (not `custom_prompt`)
 
 ### ✅ **File Specifications**
-- **Format**: JPEG recommended (HEIC/HEIF converted to JPEG)
+- **Format**: JPEG recommended (Flutter should convert HEIC/HEIF to JPEG)
 - **Size limit**: 10MB per image maximum
 - **Count limit**: 1-20 images per request
-- **Resolution**: 2000px width optimal (maintains aspect ratio)
-- **Quality**: 75% JPEG compression for OCR optimization
+- **Resolution**: 2000px width optimal (Flutter should optimize before upload)
+- **Quality**: 75% JPEG compression for OCR optimization (Flutter responsibility)
 
 ### ✅ **Request Limits**
 - **Total size**: Up to 100MB per request

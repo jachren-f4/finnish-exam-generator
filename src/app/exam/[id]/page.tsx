@@ -4,18 +4,25 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import type { ExamData, StudentAnswer } from '@/lib/supabase'
 
+interface ExamState extends ExamData {
+  canReuse: boolean
+  hasBeenCompleted: boolean
+  latestGrading?: any
+}
+
 export default function ExamPage() {
   const params = useParams()
   const router = useRouter()
   const examId = params?.id as string
 
-  const [exam, setExam] = useState<ExamData | null>(null)
+  const [exam, setExam] = useState<ExamState | null>(null)
   const [answers, setAnswers] = useState<{[questionId: string]: string}>({})
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [mode, setMode] = useState<'take' | 'review'>('take')
 
   useEffect(() => {
     if (examId) {
@@ -35,6 +42,14 @@ export default function ExamPage() {
 
       const examData = await response.json()
       setExam(examData)
+      
+      // Determine initial mode based on exam state
+      if (examData.hasBeenCompleted && examData.latestGrading) {
+        setMode('review')
+      } else {
+        setMode('take')
+      }
+      
       setError('')
     } catch (err) {
       console.error('Error fetching exam:', err)
@@ -160,8 +175,51 @@ export default function ExamPage() {
         </div>
       </div>
 
-      {/* Question Navigation */}
-      <div className="max-w-4xl mx-auto px-4 py-4">
+      {/* Mode Selection - only show if exam can be reused */}
+      {exam.canReuse && (
+        <div className="bg-blue-50 border-b">
+          <div className="max-w-4xl mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <p className="text-sm text-gray-700">Tämä koe on jo suoritettu kerran. Valitse toiminto:</p>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setMode('take')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      mode === 'take'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border'
+                    }`}
+                  >
+                    🔄 Suorita uudelleen
+                  </button>
+                  <button
+                    onClick={() => setMode('review')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      mode === 'review'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border'
+                    }`}
+                  >
+                    📊 Näytä tulokset
+                  </button>
+                </div>
+              </div>
+              <button
+                onClick={() => router.push(`/grading/${examId}`)}
+                className="text-sm text-blue-600 hover:text-blue-700 underline"
+              >
+                Siirry yksityiskohtaisiin tuloksiin →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Content based on mode */}
+      {mode === 'take' ? (
+        // Exam Taking Interface
+        <div className="max-w-4xl mx-auto px-4 py-4">
         <div className="flex flex-wrap gap-2 mb-6">
           {exam.questions.map((q, index) => (
             <button
@@ -305,7 +363,71 @@ export default function ExamPage() {
             </div>
           </div>
         </div>
-      )}
+        </div>
+        ) : (
+          // Review Mode - Show grading results
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            {exam.latestGrading ? (
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <div className="text-center mb-6">
+                  <div className="text-6xl font-bold text-blue-600 mb-2">
+                    {exam.latestGrading.grading_json?.final_grade || 'N/A'}
+                  </div>
+                  <p className="text-xl text-gray-700 mb-2">
+                    Arvosana asteikolla {exam.latestGrading.grade_scale}
+                  </p>
+                  <p className="text-lg text-gray-600">
+                    {exam.latestGrading.grading_json?.total_points || 0} / {exam.latestGrading.grading_json?.max_total_points || 0} pistettä 
+                    ({Math.round(((exam.latestGrading.grading_json?.total_points || 0) / (exam.latestGrading.grading_json?.max_total_points || 1)) * 100)}%)
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600 mb-1">
+                      {exam.latestGrading.grading_json?.questions_correct || 0}
+                    </div>
+                    <p className="text-gray-600">Oikein</p>
+                  </div>
+                  <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                    <div className="text-2xl font-bold text-yellow-600 mb-1">
+                      {exam.latestGrading.grading_json?.questions_partial || 0}
+                    </div>
+                    <p className="text-gray-600">Osittain oikein</p>
+                  </div>
+                  <div className="text-center p-4 bg-red-50 rounded-lg">
+                    <div className="text-2xl font-bold text-red-600 mb-1">
+                      {exam.latestGrading.grading_json?.questions_incorrect || 0}
+                    </div>
+                    <p className="text-gray-600">Väärin</p>
+                  </div>
+                </div>
+
+                <div className="text-center mb-4">
+                  <p className="text-gray-600 mb-2">Suoritettu: {new Date(exam.latestGrading.created_at).toLocaleString('fi-FI')}</p>
+                  <button
+                    onClick={() => router.push(`/grading/${examId}`)}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Näytä yksityiskohtaiset tulokset
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+                <div className="text-gray-500 text-4xl mb-4">📊</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Ei tuloksia saatavilla</h3>
+                <p className="text-gray-600 mb-4">Tätä koetta ei ole vielä arvosteltu.</p>
+                <button
+                  onClick={() => setMode('take')}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  Suorita koe
+                </button>
+              </div>
+            )}
+          </div>
+        )}
     </div>
   )
 }

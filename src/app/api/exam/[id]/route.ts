@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getExamForTaking } from '@/lib/exam-service'
+import { getExamForTaking, getExamState } from '@/lib/exam-service'
 
 export async function GET(
   request: NextRequest,
@@ -18,16 +18,31 @@ export async function GET(
       )
     }
 
-    const exam = await getExamForTaking(examId)
+    // First try to get exam state (includes completion status)
+    const examState = await getExamState(examId)
     
-    if (!exam) {
+    if (!examState) {
       return NextResponse.json(
         { error: 'Koetta ei löytynyt', details: 'Koe ei ole saatavilla tai sitä ei ole olemassa' },
         { status: 404 }
       )
     }
 
-    return NextResponse.json(exam)
+    // If exam hasn't been completed yet, only allow if status is 'created'
+    if (!examState.canReuse && examState.exam?.status !== 'created') {
+      return NextResponse.json(
+        { error: 'Koe ei ole saatavilla', details: 'Koe ei ole vielä valmis tai sitä ei voida suorittaa uudelleen' },
+        { status: 403 }
+      )
+    }
+
+    // Return exam data along with state information
+    return NextResponse.json({
+      ...examState.exam,
+      canReuse: examState.canReuse,
+      hasBeenCompleted: examState.hasBeenCompleted,
+      latestGrading: examState.latestGrading
+    })
 
   } catch (error) {
     console.error('Error fetching exam:', error)
