@@ -93,12 +93,17 @@ export function transformGeminiToDatabase(geminiData: GeminiExamData): DatabaseE
  */
 function sanitizeJsonString(jsonStr: string): string {
   return jsonStr
+    // Remove BOM and other invisible characters at the start
+    .replace(/^\uFEFF/, '') // Remove UTF-8 BOM
+    .replace(/^[\x00-\x1F]+/, '') // Remove any control characters at start
     // Remove control characters that break JSON parsing (but preserve valid whitespace)
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove problematic control characters
     // Handle common newline issues in JSON strings
     .replace(/\r\n/g, '\\n') // Convert CRLF to escaped newline
     .replace(/\r/g, '\\n')   // Convert CR to escaped newline  
     .replace(/\n/g, '\\n')   // Convert LF to escaped newline
+    // Trim whitespace
+    .trim()
 }
 
 /**
@@ -132,6 +137,8 @@ export function processGeminiResponse(rawResponse: string): DatabaseExamData | n
       }
     } else {
       const cleanedJson = sanitizeJsonString(rawResponse);
+      console.log('Attempting to parse JSON, first 200 chars:', cleanedJson.substring(0, 200));
+      console.log('Character codes at start:', Array.from(cleanedJson.substring(0, 10)).map(c => c.charCodeAt(0)));
       rawData = JSON.parse(cleanedJson);
     }
 
