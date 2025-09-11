@@ -1,19 +1,6 @@
 import { supabase } from './supabase'
-import { createClient } from '@supabase/supabase-js'
 
 const DIAGNOSTIC_BUCKET = 'diagnostic-images'
-
-// Service role client for storage operations (bypasses RLS)
-function getServiceRoleClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
-}
 
 export interface ImageUploadResult {
   url: string | null
@@ -31,10 +18,7 @@ export class SupabaseStorageManager {
       const timestamp = Date.now()
       const filename = `${examId}_${timestamp}_${imageIndex}.jpg`
 
-      // Use service role client to bypass RLS
-      const serviceClient = getServiceRoleClient()
-      
-      const { data, error } = await serviceClient.storage
+      const { data, error } = await supabase.storage
         .from(DIAGNOSTIC_BUCKET)
         .upload(filename, buffer, {
           contentType: mimeType,
@@ -47,7 +31,7 @@ export class SupabaseStorageManager {
       }
 
       // Get the public URL
-      const { data: urlData } = serviceClient.storage
+      const { data: urlData } = supabase.storage
         .from(DIAGNOSTIC_BUCKET)
         .getPublicUrl(data.path)
 
@@ -82,10 +66,7 @@ export class SupabaseStorageManager {
         return parts[parts.length - 1]
       })
 
-      // Use service role client to bypass RLS
-      const serviceClient = getServiceRoleClient()
-      
-      const { error } = await serviceClient.storage
+      const { error } = await supabase.storage
         .from(DIAGNOSTIC_BUCKET)
         .remove(filenames)
 

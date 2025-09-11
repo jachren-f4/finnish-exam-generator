@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { processImagesWithGemini, extractRawTextFromImages } from '@/lib/gemini'
+import { processImagesWithGemini, extractRawTextFromImages, extractTextWithTopicDetection, generateStructuredQuestions } from '@/lib/gemini'
 import { FileMetadata } from '@/types'
 import { v4 as uuidv4 } from 'uuid'
 import fs from 'fs/promises'
@@ -60,9 +60,11 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const customPrompt = formData.get('prompt') as string
     const images = formData.getAll('images') as File[]
+    const useStructuredMode = formData.get('structured_mode') === 'true' // New toggle parameter
     
     console.log('Received custom prompt:', customPrompt ? 'YES' : 'NO')
     console.log('Number of images received:', images.length)
+    console.log('Processing mode:', useStructuredMode ? 'STRUCTURED (Topic-aware)' : 'LEGACY (Standard)')
     
     if (!images || images.length === 0) {
       return NextResponse.json(
@@ -196,13 +198,55 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Process with Gemini
+    // Process with Gemini using appropriate method
     console.log('Starting Gemini processing...')
     const startTime = Date.now()
-    const geminiResults = await processImagesWithGemini(fileMetadataList, promptToUse)
+    
+    let result: any
+    let structuredTopicData: any = null
+    
+    if (useStructuredMode) {
+      console.log('=== USING STRUCTURED TOPIC-AWARE MODE ===')
+      
+      // Prepare image parts for topic detection
+      const imageParts = []
+      for (const fileMetadata of fileMetadataList) {
+        const filePath = path.join('/tmp', `${fileMetadata.id}${path.extname(fileMetadata.filename)}`)
+        const buffer = await fs.readFile(filePath)
+        const base64Data = buffer.toString('base64')
+        
+        imageParts.push({
+          inlineData: {
+            data: base64Data,
+            mimeType: fileMetadata.mimeType
+          }
+        })
+      }
+      
+      // Step 1: Extract text and detect topics
+      console.log('Step 1: Topic detection and OCR...')
+      const topicResult = await extractTextWithTopicDetection(imageParts)
+      structuredTopicData = topicResult
+      
+      console.log('Detected topics:', Object.keys(topicResult.topics))
+      for (const [key, topic] of Object.entries(topicResult.topics)) {
+        console.log(`  - ${key}: ${topic.subject} (images ${topic.images.join(', ')})`)
+      }
+      
+      // Step 2: Generate structured questions
+      console.log('Step 2: Structured question generation...')
+      result = await generateStructuredQuestions(topicResult.topics, promptToUse)
+      
+    } else {
+      console.log('=== USING LEGACY MODE ===')
+      
+      // Use original processing method
+      const geminiResults = await processImagesWithGemini(fileMetadataList, promptToUse)
+      result = geminiResults[0] // Take first result since we process all images together
+    }
+    
     const endTime = Date.now()
     const processingTime = endTime - startTime
-    
     console.log(`Gemini processing completed in ${processingTime}ms`)
 
     // Clean up uploaded files
@@ -216,9 +260,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get the raw response from Gemini
-    const result = geminiResults[0] // Take first result since we process all images together
-    console.log('Using raw Gemini response directly without parsing')
+    console.log('Using Gemini response for exam creation')
 
     // Create web exam from the response
     console.log('=== ATTEMPTING TO CREATE EXAM ===')
@@ -256,7 +298,20 @@ export async function POST(request: NextRequest) {
           processingTime,
           imageCount: images.length,
           promptUsed: customPrompt && customPrompt.trim() !== '' ? 'custom' : 'default',
+          processingMode: useStructuredMode ? 'structured' : 'legacy',
           geminiUsage: result.geminiUsage,
+          ...(useStructuredMode && structuredTopicData && {
+            structuredTopics: {
+              topicCount: Object.keys(structuredTopicData.topics).length,
+              topics: Object.entries(structuredTopicData.topics).map(([key, topic]: [string, any]) => ({
+                id: key,
+                subject: topic.subject,
+                imageCount: topic.images.length,
+                keywords: topic.keywords
+              })),
+              topicDetectionUsage: structuredTopicData.usage
+            }
+          }),
           ...(diagnosticModeEnabled && {
             diagnostic: {
               enabled: true,
