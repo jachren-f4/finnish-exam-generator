@@ -101,9 +101,10 @@ function sanitizeJsonString(jsonStr: string): string {
     // Fix common JSON syntax issues
     .replace(/,\s*}/g, '}') // Remove trailing commas before closing braces
     .replace(/,\s*]/g, ']') // Remove trailing commas before closing brackets
-    // Fix literal \n strings that should be actual newlines in JSON structure
-    .replace(/\\n/g, '\n')  // Convert literal \n back to actual newlines
-    // Only fix newlines INSIDE string values, not JSON structure newlines  
+    // CRITICAL FIX: Handle literal \n in JSON structure (not in string values)
+    // This fixes the case where Gemini returns JSON with literal \n characters
+    .replace(/\\\s*n\s*/g, ' ') // Convert literal \n (with optional spaces) to space in JSON structure
+    // Only fix newlines INSIDE string values, preserve escaped \n in string content
     .replace(/"([^"]*)\r\n([^"]*)"/g, '"$1\\n$2"') // Fix CRLF inside string values
     .replace(/"([^"]*)\r([^"]*)"/g, '"$1\\n$2"')   // Fix CR inside string values
     .replace(/"([^"]*)\n([^"]*)"/g, '"$1\\n$2"')   // Fix LF inside string values
