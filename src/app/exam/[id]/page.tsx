@@ -150,8 +150,6 @@ export default function ExamPage() {
     )
   }
 
-  const currentQ = exam.questions[currentQuestion]
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -240,9 +238,13 @@ export default function ExamPage() {
 
         {/* Current Question */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-blue-600 bg-blue-100 px-3 py-1 rounded-full">
-              {currentQ.question_type === 'multiple_choice' && 'Monivalinta'}
+          {(() => {
+            const currentQ = exam.questions[currentQuestion]
+            return (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-blue-600 bg-blue-100 px-3 py-1 rounded-full">
+                    {currentQ.question_type === 'multiple_choice' && 'Monivalinta'}
               {currentQ.question_type === 'true_false' && 'Tosi vai epätosi'}
               {currentQ.question_type === 'short_answer' && 'Lyhyt vastaus'}
               {currentQ.question_type === 'fill_in_the_blank' && 'Täydennä lause'}
