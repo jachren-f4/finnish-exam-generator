@@ -98,12 +98,19 @@ function sanitizeJsonString(jsonStr: string): string {
     .replace(/^[\x00-\x1F]+/, '') // Remove any control characters at start
     // Remove problematic control characters but preserve valid JSON formatting
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove problematic control characters
+    // Fix common JSON syntax issues
+    .replace(/,\s*}/g, '}') // Remove trailing commas before closing braces
+    .replace(/,\s*]/g, ']') // Remove trailing commas before closing brackets
     // Fix literal \n strings that should be actual newlines in JSON structure
     .replace(/\\n/g, '\n')  // Convert literal \n back to actual newlines
     // Only fix newlines INSIDE string values, not JSON structure newlines  
     .replace(/"([^"]*)\r\n([^"]*)"/g, '"$1\\n$2"') // Fix CRLF inside string values
     .replace(/"([^"]*)\r([^"]*)"/g, '"$1\\n$2"')   // Fix CR inside string values
     .replace(/"([^"]*)\n([^"]*)"/g, '"$1\\n$2"')   // Fix LF inside string values
+    // Fix common JSON property name issues
+    .replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":') // Quote unquoted property names
+    // Fix multiple consecutive whitespace
+    .replace(/\s+/g, ' ')
     // Trim whitespace
     .trim()
 }
@@ -147,7 +154,14 @@ export function processGeminiResponse(rawResponse: string): DatabaseExamData | n
       if (jsonMatch) {
         const cleanedJson = sanitizeJsonString(jsonMatch[1]);
         console.log('Extracted JSON from markdown, first 200 chars:', cleanedJson.substring(0, 200));
-        rawData = JSON.parse(cleanedJson);
+        try {
+          rawData = JSON.parse(cleanedJson);
+        } catch (parseError) {
+          console.error('JSON.parse failed after markdown extraction:', parseError);
+          console.error('Problematic JSON around position 24:', cleanedJson.substring(15, 35));
+          console.error('Character codes around position 24:', Array.from(cleanedJson.substring(15, 35)).map(c => `${c}(${c.charCodeAt(0)})`));
+          throw parseError;
+        }
       } else {
         console.error('Could not extract JSON from markdown. Raw response:', rawResponse.substring(0, 300));
         throw new Error('Could not extract JSON from markdown');
@@ -156,7 +170,14 @@ export function processGeminiResponse(rawResponse: string): DatabaseExamData | n
       const cleanedJson = sanitizeJsonString(rawResponse);
       console.log('Attempting to parse JSON, first 200 chars:', cleanedJson.substring(0, 200));
       console.log('Character codes at start:', Array.from(cleanedJson.substring(0, 10)).map(c => c.charCodeAt(0)));
-      rawData = JSON.parse(cleanedJson);
+      try {
+        rawData = JSON.parse(cleanedJson);
+      } catch (parseError) {
+        console.error('JSON.parse failed on raw response:', parseError);
+        console.error('Problematic JSON around position 24:', cleanedJson.substring(15, 35));
+        console.error('Character codes around position 24:', Array.from(cleanedJson.substring(15, 35)).map(c => `${c}(${c.charCodeAt(0)})`));
+        throw parseError;
+      }
     }
 
     // Validate required fields
