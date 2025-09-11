@@ -108,11 +108,18 @@ function attemptJsonRepair(text: string): string | null {
 export async function extractTextWithTopicDetection(imageParts: any[]): Promise<StructuredOCRResult> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
   
-  const topicDetectionPrompt = `Extract text from all provided images and organize it by topics.
+  const topicDetectionPrompt = `CRITICAL: You are performing OCR (Optical Character Recognition) - extract the EXACT text as it appears in the images, word for word. Do NOT summarize, paraphrase, or rewrite anything.
 
-First, accurately extract all visible text from each image (numbered 0, 1, 2, etc. in order).
+STEP 1: Perform literal OCR text extraction
+- Extract ALL visible text from each image exactly as written
+- Preserve original spelling, punctuation, and formatting
+- Include titles, headers, paragraphs, captions - everything visible
+- Do NOT correct spelling errors or translate words
+- Do NOT summarize or condense content
 
-Then, analyze the content and identify distinct topics/subjects. Group related images together and separate unrelated topics.
+STEP 2: Topic organization
+- Group images by topic only AFTER extracting all text literally
+- Keep unrelated subjects completely separate
 
 Return your response as a JSON object with this exact structure:
 {
@@ -121,23 +128,23 @@ Return your response as a JSON object with this exact structure:
       "images": [0, 1],
       "subject": "Brief topic description",
       "keywords": ["keyword1", "keyword2", "keyword3"],
-      "content": "All text content from these images combined"
+      "content": "EXACT verbatim text from these images - no summarization"
     },
     "topic_2": {
       "images": [2, 3],
       "subject": "Brief topic description", 
       "keywords": ["keyword1", "keyword2"],
-      "content": "All text content from these images combined"
+      "content": "EXACT verbatim text from these images - no summarization"
     }
   }
 }
 
-IMPORTANT: 
-- Only group images that are clearly about the same topic
-- Keep unrelated subjects separate (e.g., don't mix sound/physics with plant biology)
-- Include ALL extracted text in the appropriate topic's content field
-- If an image covers multiple topics, choose the primary one
-- Use descriptive subject names and relevant keywords
+CRITICAL REQUIREMENTS:
+- The content field MUST contain the complete, literal, verbatim text from the images
+- Do NOT summarize, rewrite, or interpret the text
+- Preserve all original text exactly as it appears
+- Only group images about the same topic
+- Keep different subjects separate
 
 Return only the JSON object. No additional explanations.`
 
