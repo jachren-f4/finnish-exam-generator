@@ -10,7 +10,7 @@ export default function FileUpload() {
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
-  const [structuredMode, setStructuredMode] = useState(true) // Default to new structured mode
+  const [structuredMode, setStructuredMode] = useState(false) // Default to legacy mode
   const [customPrompt, setCustomPrompt] = useState(`Your task:
 - Based on the text, generate exactly **10 exam questions in Finnish**.
 
