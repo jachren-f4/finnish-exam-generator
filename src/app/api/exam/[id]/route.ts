@@ -28,8 +28,20 @@ export async function GET(
       )
     }
 
+    console.log('Exam access check:', {
+      examId,
+      canReuse: examState.canReuse,
+      status: examState.exam?.status,
+      hasBeenCompleted: examState.hasBeenCompleted
+    })
+
     // If exam hasn't been completed yet, only allow if status is 'created'
     if (!examState.canReuse && examState.exam?.status !== 'created') {
+      console.log('Access denied:', {
+        canReuse: examState.canReuse,
+        status: examState.exam?.status,
+        reason: 'Exam not reusable and not in created status'
+      })
       return NextResponse.json(
         { error: 'Koe ei ole saatavilla', details: 'Koe ei ole vielä valmis tai sitä ei voida suorittaa uudelleen' },
         { status: 403 }
