@@ -96,12 +96,12 @@ function sanitizeJsonString(jsonStr: string): string {
     // Remove BOM and other invisible characters at the start
     .replace(/^\uFEFF/, '') // Remove UTF-8 BOM
     .replace(/^[\x00-\x1F]+/, '') // Remove any control characters at start
-    // Remove control characters that break JSON parsing (but preserve valid whitespace)
+    // Remove problematic control characters but preserve valid JSON formatting
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove problematic control characters
-    // Handle common newline issues in JSON strings
-    .replace(/\r\n/g, '\\n') // Convert CRLF to escaped newline
-    .replace(/\r/g, '\\n')   // Convert CR to escaped newline  
-    .replace(/\n/g, '\\n')   // Convert LF to escaped newline
+    // Only fix newlines INSIDE string values, not JSON structure newlines
+    .replace(/"([^"]*)\r\n([^"]*)"/g, '"$1\\n$2"') // Fix CRLF inside string values
+    .replace(/"([^"]*)\r([^"]*)"/g, '"$1\\n$2"')   // Fix CR inside string values
+    .replace(/"([^"]*)\n([^"]*)"/g, '"$1\\n$2"')   // Fix LF inside string values
     // Trim whitespace
     .trim()
 }
