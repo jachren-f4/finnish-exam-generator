@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import fs from 'fs/promises'
 import path from 'path'
 import { SupabaseStorageManager } from '@/lib/storage'
+import { supabase } from '@/lib/supabase'
 
 const DEFAULT_EXAM_PROMPT = `Your task:
 - Based on the text, generate exactly **10 exam questions in Finnish**.
@@ -151,6 +152,7 @@ export async function POST(request: NextRequest) {
     // Diagnostic Mode Processing
     let diagnosticImageUrls: string[] = []
     let rawOcrText: string = ''
+    let structuredOcrData: string = '' // For storing complete structured topic data
     const diagnosticModeEnabled = SupabaseStorageManager.isDiagnosticModeEnabled()
     
     if (diagnosticModeEnabled) {
@@ -237,6 +239,22 @@ export async function POST(request: NextRequest) {
       console.log('Step 2: Structured question generation...')
       result = await generateStructuredQuestions(topicResult.topics, promptToUse)
       
+      // Prepare structured OCR data for storage in ocr_raw_text field
+      structuredOcrData = JSON.stringify({
+        processing_mode: 'structured',
+        topic_detection: {
+          topics: topicResult.topics,
+          usage: topicResult.usage
+        },
+        question_generation: {
+          prompt_used: result.fullPromptUsed,
+          usage: result.geminiUsage
+        },
+        timestamp: new Date().toISOString()
+      }, null, 2)
+      
+      console.log('Structured OCR data length:', structuredOcrData.length)
+      
     } else {
       console.log('=== USING LEGACY MODE ===')
       
@@ -275,9 +293,13 @@ export async function POST(request: NextRequest) {
       // Prepare diagnostic data if available
       const diagnosticDataToPass = diagnosticModeEnabled ? {
         imageUrls: diagnosticImageUrls,
-        rawOcrText: rawOcrText,
+        rawOcrText: useStructuredMode ? structuredOcrData : rawOcrText, // Use structured data when in structured mode
         diagnosticEnabled: true
-      } : undefined
+      } : (useStructuredMode ? {
+        imageUrls: [],
+        rawOcrText: structuredOcrData, // Store structured data even if diagnostic mode is off
+        diagnosticEnabled: false
+      } : undefined)
 
       examResult = await createExam(result.rawText, promptToUse, diagnosticDataToPass)
       console.log('Exam creation result:', examResult ? 'SUCCESS' : 'NULL')

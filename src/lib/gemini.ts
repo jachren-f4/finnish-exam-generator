@@ -434,7 +434,11 @@ Important: Only return the JSON object with the extracted text. Do not include a
   }
 }
 
-export async function generateStructuredQuestions(topics: TopicGrouping['topics'], customPrompt?: string): Promise<GeminiOCRResult> {
+export interface StructuredQuestionResult extends GeminiOCRResult {
+  fullPromptUsed: string // The complete prompt sent to Gemini
+}
+
+export async function generateStructuredQuestions(topics: TopicGrouping['topics'], customPrompt?: string): Promise<StructuredQuestionResult> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
   
   // Create structured content with clear topic separation
@@ -574,7 +578,8 @@ ${basePrompt}`
         inputCost,
         outputCost,
         model: 'gemini-2.5-flash-lite'
-      }
+      },
+      fullPromptUsed: fullPrompt
     }
   } catch (error) {
     throw new Error(`Structured question generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)

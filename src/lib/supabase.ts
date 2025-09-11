@@ -36,6 +36,7 @@ export interface DbGrading {
   graded_at: string
 }
 
+
 // Enhanced types for our current Gemini format
 export interface ExamData {
   exam_id: string
