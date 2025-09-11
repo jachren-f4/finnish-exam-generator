@@ -98,7 +98,9 @@ function sanitizeJsonString(jsonStr: string): string {
     .replace(/^[\x00-\x1F]+/, '') // Remove any control characters at start
     // Remove problematic control characters but preserve valid JSON formatting
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove problematic control characters
-    // Only fix newlines INSIDE string values, not JSON structure newlines
+    // Fix literal \n strings that should be actual newlines in JSON structure
+    .replace(/\\n/g, '\n')  // Convert literal \n back to actual newlines
+    // Only fix newlines INSIDE string values, not JSON structure newlines  
     .replace(/"([^"]*)\r\n([^"]*)"/g, '"$1\\n$2"') // Fix CRLF inside string values
     .replace(/"([^"]*)\r([^"]*)"/g, '"$1\\n$2"')   // Fix CR inside string values
     .replace(/"([^"]*)\n([^"]*)"/g, '"$1\\n$2"')   // Fix LF inside string values
