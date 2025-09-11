@@ -89,31 +89,108 @@ export function transformGeminiToDatabase(geminiData: GeminiExamData): DatabaseE
 }
 
 /**
- * Clean JSON string by removing control characters that break JSON.parse()
+ * Aggressively clean JSON string with multiple sanitization passes
  */
 function sanitizeJsonString(jsonStr: string): string {
-  return jsonStr
-    // Remove BOM and other invisible characters at the start
+  let cleaned = jsonStr;
+  
+  // Pass 1: Remove BOM and control characters
+  cleaned = cleaned
     .replace(/^\uFEFF/, '') // Remove UTF-8 BOM
     .replace(/^[\x00-\x1F]+/, '') // Remove any control characters at start
-    // Remove problematic control characters but preserve valid JSON formatting
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove problematic control characters
-    // Fix common JSON syntax issues
-    .replace(/,\s*}/g, '}') // Remove trailing commas before closing braces
-    .replace(/,\s*]/g, ']') // Remove trailing commas before closing brackets
-    // CRITICAL FIX: Handle literal \n in JSON structure (not in string values)
-    // This fixes the case where Gemini returns JSON with literal \n characters
-    .replace(/\\\s*n\s*/g, ' ') // Convert literal \n (with optional spaces) to space in JSON structure
-    // Only fix newlines INSIDE string values, preserve escaped \n in string content
-    .replace(/"([^"]*)\r\n([^"]*)"/g, '"$1\\n$2"') // Fix CRLF inside string values
-    .replace(/"([^"]*)\r([^"]*)"/g, '"$1\\n$2"')   // Fix CR inside string values
-    .replace(/"([^"]*)\n([^"]*)"/g, '"$1\\n$2"')   // Fix LF inside string values
-    // Fix common JSON property name issues
-    .replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":') // Quote unquoted property names
-    // Fix multiple consecutive whitespace
+    .trim();
+
+  // Pass 2: Fix the most common Gemini JSON issues
+  cleaned = cleaned
+    // CRITICAL: Replace ALL variations of literal \n with spaces
+    .replace(/\\n/g, ' ')           // Direct literal \n
+    .replace(/\\\s+n/g, ' ')        // Literal \ followed by space(s) and n
+    .replace(/\\\r?\n/g, ' ')       // Literal \ followed by actual newline
+    // Fix trailing commas
+    .replace(/,(\s*[}\]])/g, '$1')  // Remove trailing commas before } or ]
+    // Fix unquoted property names
+    .replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')
+    // Normalize whitespace
     .replace(/\s+/g, ' ')
-    // Trim whitespace
-    .trim()
+    .trim();
+
+  return cleaned;
+}
+
+/**
+ * Try multiple JSON parsing strategies with progressive sanitization
+ */
+function parseJsonRobustly(jsonStr: string): any {
+  const strategies = [
+    // Strategy 1: Basic sanitization
+    () => JSON.parse(sanitizeJsonString(jsonStr)),
+    
+    // Strategy 2: More aggressive newline handling
+    () => {
+      let cleaned = sanitizeJsonString(jsonStr)
+        .replace(/[\r\n]/g, ' ')           // Remove all actual newlines
+        .replace(/\\+n/g, ' ')             // Remove any escaped n variations
+        .replace(/\s*{\s*/g, '{')          // Clean up brace spacing
+        .replace(/\s*}\s*/g, '}')
+        .replace(/\s*\[\s*/g, '[')         // Clean up bracket spacing
+        .replace(/\s*\]\s*/g, ']')
+        .replace(/\s*:\s*/g, ':')          // Clean up colon spacing
+        .replace(/\s*,\s*/g, ',');         // Clean up comma spacing
+      return JSON.parse(cleaned);
+    },
+    
+    // Strategy 3: Character-by-character reconstruction
+    () => {
+      let result = '';
+      let inString = false;
+      let escapeNext = false;
+      
+      for (let i = 0; i < jsonStr.length; i++) {
+        const char = jsonStr[i];
+        const nextChar = jsonStr[i + 1];
+        
+        if (escapeNext) {
+          if (char === 'n' && !inString) {
+            result += ' '; // Convert \n to space outside strings
+          } else {
+            result += char;
+          }
+          escapeNext = false;
+        } else if (char === '\\') {
+          if (nextChar === 'n' && !inString) {
+            escapeNext = true; // Will be handled in next iteration
+          } else {
+            result += char;
+          }
+        } else if (char === '"') {
+          inString = !inString;
+          result += char;
+        } else if (char === '\n' || char === '\r') {
+          result += ' '; // Convert actual newlines to spaces
+        } else {
+          result += char;
+        }
+      }
+      
+      return JSON.parse(result.replace(/\s+/g, ' ').trim());
+    }
+  ];
+
+  let lastError;
+  
+  for (let i = 0; i < strategies.length; i++) {
+    try {
+      console.log(`Trying JSON parsing strategy ${i + 1}...`);
+      return strategies[i]();
+    } catch (error) {
+      console.log(`Strategy ${i + 1} failed:`, error.message);
+      lastError = error;
+      continue;
+    }
+  }
+  
+  throw lastError;
 }
 
 /**
@@ -153,32 +230,17 @@ export function processGeminiResponse(rawResponse: string): DatabaseExamData | n
       }
       
       if (jsonMatch) {
-        const cleanedJson = sanitizeJsonString(jsonMatch[1]);
-        console.log('Extracted JSON from markdown, first 200 chars:', cleanedJson.substring(0, 200));
-        try {
-          rawData = JSON.parse(cleanedJson);
-        } catch (parseError) {
-          console.error('JSON.parse failed after markdown extraction:', parseError);
-          console.error('Problematic JSON around position 24:', cleanedJson.substring(15, 35));
-          console.error('Character codes around position 24:', Array.from(cleanedJson.substring(15, 35)).map(c => `${c}(${c.charCodeAt(0)})`));
-          throw parseError;
-        }
+        console.log('Extracted JSON from markdown, first 200 chars:', jsonMatch[1].substring(0, 200));
+        console.log('Character codes at start:', Array.from(jsonMatch[1].substring(0, 20)).map(c => `${c}(${c.charCodeAt(0)})`));
+        rawData = parseJsonRobustly(jsonMatch[1]);
       } else {
         console.error('Could not extract JSON from markdown. Raw response:', rawResponse.substring(0, 300));
         throw new Error('Could not extract JSON from markdown');
       }
     } else {
-      const cleanedJson = sanitizeJsonString(rawResponse);
-      console.log('Attempting to parse JSON, first 200 chars:', cleanedJson.substring(0, 200));
-      console.log('Character codes at start:', Array.from(cleanedJson.substring(0, 10)).map(c => c.charCodeAt(0)));
-      try {
-        rawData = JSON.parse(cleanedJson);
-      } catch (parseError) {
-        console.error('JSON.parse failed on raw response:', parseError);
-        console.error('Problematic JSON around position 24:', cleanedJson.substring(15, 35));
-        console.error('Character codes around position 24:', Array.from(cleanedJson.substring(15, 35)).map(c => `${c}(${c.charCodeAt(0)})`));
-        throw parseError;
-      }
+      console.log('Attempting to parse raw JSON, first 200 chars:', rawResponse.substring(0, 200));
+      console.log('Character codes at start:', Array.from(rawResponse.substring(0, 20)).map(c => `${c}(${c.charCodeAt(0)})`));
+      rawData = parseJsonRobustly(rawResponse);
     }
 
     // Validate required fields
