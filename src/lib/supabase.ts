@@ -14,6 +14,9 @@ export interface DbExam {
   exam_json: any // JSONB field
   created_at: string
   status: 'created' | 'answered' | 'graded'
+  diagnostic_image_urls?: string[] // Array of Supabase Storage URLs
+  ocr_raw_text?: string // Raw OCR output before question processing
+  diagnostic_enabled?: boolean
 }
 
 export interface DbAnswer {
@@ -43,6 +46,9 @@ export interface ExamData {
   questions: QuestionData[]
   total_questions: number
   max_total_points: number
+  diagnostic_image_urls?: string[]
+  ocr_raw_text?: string
+  diagnostic_enabled?: boolean
 }
 
 export interface QuestionData {

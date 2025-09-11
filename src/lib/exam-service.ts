@@ -47,7 +47,15 @@ Palauta VAIN JSON-objekti:
 }`
 
 // Create a new exam from Gemini response
-export async function createExam(geminiResponse: string, promptUsed?: string): Promise<{ examId: string; examUrl: string; gradingUrl: string } | null> {
+export async function createExam(
+  geminiResponse: string, 
+  promptUsed?: string,
+  diagnosticData?: {
+    imageUrls: string[]
+    rawOcrText: string
+    diagnosticEnabled: boolean
+  }
+): Promise<{ examId: string; examUrl: string; gradingUrl: string } | null> {
   try {
     console.log('=== CREATE EXAM DEBUG ===')
     console.log('Input response length:', geminiResponse?.length || 0)
@@ -90,17 +98,30 @@ export async function createExam(geminiResponse: string, promptUsed?: string): P
     }
 
     // Insert exam into database
+    const insertData: any = {
+      subject: examData.exam.subject,
+      grade: examData.exam.grade,
+      exam_json: examDataWithPrompt,
+      status: 'created',
+      prompt_text: promptUsed || null,
+      prompt_type: promptUsed && promptUsed.trim() !== '' ? 'custom' : 'default',
+      prompt_length: promptUsed?.length || 0
+    }
+
+    // Add diagnostic data if available
+    if (diagnosticData?.diagnosticEnabled) {
+      insertData.diagnostic_image_urls = diagnosticData.imageUrls
+      insertData.ocr_raw_text = diagnosticData.rawOcrText
+      insertData.diagnostic_enabled = true
+      console.log('Including diagnostic data:', {
+        imageUrls: diagnosticData.imageUrls.length,
+        rawOcrTextLength: diagnosticData.rawOcrText.length
+      })
+    }
+
     const { data: exam, error } = await supabase
       .from('exams')
-      .insert({
-        subject: examData.exam.subject,
-        grade: examData.exam.grade,
-        exam_json: examDataWithPrompt,
-        status: 'created',
-        prompt_text: promptUsed || null,
-        prompt_type: promptUsed && promptUsed.trim() !== '' ? 'custom' : 'default',
-        prompt_length: promptUsed?.length || 0
-      })
+      .insert(insertData)
       .select('exam_id')
       .single()
 

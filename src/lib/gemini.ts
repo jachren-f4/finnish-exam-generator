@@ -23,6 +23,19 @@ export interface GeminiOCRResult {
   }
 }
 
+export interface RawOCRResult {
+  rawText: string
+  usage: {
+    promptTokenCount: number
+    candidatesTokenCount: number
+    totalTokenCount: number
+    estimatedCost: number
+    inputCost: number
+    outputCost: number
+    model: string
+  }
+}
+
 function attemptJsonRepair(text: string): string | null {
   try {
     
@@ -65,6 +78,83 @@ function attemptJsonRepair(text: string): string | null {
     
   } catch (error) {
     return null
+  }
+}
+
+export async function extractRawTextFromImages(imageParts: any[]): Promise<RawOCRResult> {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+  
+  const ocrPrompt = `Extract all visible text from the provided images accurately.
+
+Return your response as a JSON object with this exact structure:
+{
+  "rawText": "the complete extracted text from all images"
+}
+
+Important: Only return the JSON object with the extracted text. Do not include any additional explanations or notes.`
+
+  try {
+    const result = await model.generateContent([
+      ocrPrompt,
+      ...imageParts
+    ])
+
+    const response = await result.response
+    const text = response.text()
+    
+    // Extract usage metadata
+    const usageMetadata = response.usageMetadata
+    const estimatedInputTokens = Math.ceil(ocrPrompt.length / 4)
+    const estimatedOutputTokens = Math.ceil(text.length / 4)
+    
+    const promptTokenCount = usageMetadata?.promptTokenCount || estimatedInputTokens
+    const candidatesTokenCount = usageMetadata?.candidatesTokenCount || estimatedOutputTokens
+    const totalTokenCount = usageMetadata?.totalTokenCount || promptTokenCount + candidatesTokenCount
+    
+    // Calculate costs
+    const inputCostPer1M = 0.075
+    const outputCostPer1M = 0.30
+    const inputCost = (promptTokenCount / 1000000) * inputCostPer1M
+    const outputCost = (candidatesTokenCount / 1000000) * outputCostPer1M
+    const totalCost = inputCost + outputCost
+
+    // Extract raw text from response
+    let rawText = text
+    if (text.includes('```json') || (text.includes('{') && text.includes('}'))) {
+      try {
+        const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```\n([\s\S]*?)\n```/)
+        let jsonText = jsonMatch ? jsonMatch[1] : text
+        
+        if (jsonText.includes('{')) {
+          const startIndex = jsonText.indexOf('{')
+          const lastBraceIndex = jsonText.lastIndexOf('}')
+          if (startIndex !== -1 && lastBraceIndex !== -1) {
+            jsonText = jsonText.substring(startIndex, lastBraceIndex + 1)
+          }
+        }
+        
+        const parsed = JSON.parse(jsonText)
+        rawText = parsed.rawText || text
+      } catch (parseError) {
+        // If JSON parsing fails, use the original text
+        rawText = text
+      }
+    }
+
+    return {
+      rawText,
+      usage: {
+        promptTokenCount,
+        candidatesTokenCount,
+        totalTokenCount,
+        estimatedCost: totalCost,
+        inputCost,
+        outputCost,
+        model: 'gemini-2.5-flash-lite'
+      }
+    }
+  } catch (error) {
+    throw new Error(`Raw OCR extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 

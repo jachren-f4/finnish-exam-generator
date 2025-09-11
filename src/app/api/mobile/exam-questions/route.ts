@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { processImagesWithGemini } from '@/lib/gemini'
+import { processImagesWithGemini, extractRawTextFromImages } from '@/lib/gemini'
 import { FileMetadata } from '@/types'
 import { v4 as uuidv4 } from 'uuid'
 import fs from 'fs/promises'
 import path from 'path'
+import { SupabaseStorageManager } from '@/lib/storage'
 
 const DEFAULT_EXAM_PROMPT = `Your task:
 - Based on the text, generate exactly **10 exam questions in Finnish**.
@@ -145,6 +146,56 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Diagnostic Mode Processing
+    let diagnosticImageUrls: string[] = []
+    let rawOcrText: string = ''
+    const diagnosticModeEnabled = SupabaseStorageManager.isDiagnosticModeEnabled()
+    
+    if (diagnosticModeEnabled) {
+      console.log('=== DIAGNOSTIC MODE ENABLED ===')
+      
+      try {
+        // Upload images to Supabase Storage for visual inspection
+        const examId = uuidv4() // Generate exam ID early for diagnostic purposes
+        console.log('Generated exam ID for diagnostic:', examId)
+        
+        const imageBuffers: Buffer[] = []
+        for (const fileMetadata of fileMetadataList) {
+          const filePath = path.join('/tmp', `${fileMetadata.id}${path.extname(fileMetadata.filename)}`)
+          const buffer = await fs.readFile(filePath)
+          imageBuffers.push(buffer)
+        }
+        
+        // Upload images to storage
+        diagnosticImageUrls = await SupabaseStorageManager.uploadMultipleDiagnosticImages(imageBuffers, examId)
+        console.log('Uploaded diagnostic images:', diagnosticImageUrls.length)
+        
+        // Extract raw OCR text separately
+        const imageParts = []
+        for (const fileMetadata of fileMetadataList) {
+          const filePath = path.join('/tmp', `${fileMetadata.id}${path.extname(fileMetadata.filename)}`)
+          const buffer = await fs.readFile(filePath)
+          const base64Data = buffer.toString('base64')
+          
+          imageParts.push({
+            inlineData: {
+              data: base64Data,
+              mimeType: fileMetadata.mimeType
+            }
+          })
+        }
+        
+        const ocrResult = await extractRawTextFromImages(imageParts)
+        rawOcrText = ocrResult.rawText
+        console.log('Raw OCR text length:', rawOcrText.length)
+        console.log('Raw OCR preview:', rawOcrText.substring(0, 300))
+        
+      } catch (diagnosticError) {
+        console.error('Diagnostic mode error:', diagnosticError)
+        // Don't fail the entire request, just log the error
+      }
+    }
+
     // Process with Gemini
     console.log('Starting Gemini processing...')
     const startTime = Date.now()
@@ -178,7 +229,15 @@ export async function POST(request: NextRequest) {
     try {
       const { createExam } = await import('@/lib/exam-service')
       console.log('createExam function imported successfully')
-      examResult = await createExam(result.rawText, promptToUse)
+      
+      // Prepare diagnostic data if available
+      const diagnosticDataToPass = diagnosticModeEnabled ? {
+        imageUrls: diagnosticImageUrls,
+        rawOcrText: rawOcrText,
+        diagnosticEnabled: true
+      } : undefined
+
+      examResult = await createExam(result.rawText, promptToUse, diagnosticDataToPass)
       console.log('Exam creation result:', examResult ? 'SUCCESS' : 'NULL')
       if (!examResult) {
         console.log('WARNING: Exam creation returned null - check exam processing and Supabase connection')
@@ -197,7 +256,15 @@ export async function POST(request: NextRequest) {
           processingTime,
           imageCount: images.length,
           promptUsed: customPrompt && customPrompt.trim() !== '' ? 'custom' : 'default',
-          geminiUsage: result.geminiUsage
+          geminiUsage: result.geminiUsage,
+          ...(diagnosticModeEnabled && {
+            diagnostic: {
+              enabled: true,
+              imageUrls: diagnosticImageUrls,
+              rawOcrTextLength: rawOcrText.length,
+              rawOcrPreview: rawOcrText.substring(0, 200)
+            }
+          })
         }
       },
       // Add exam URLs at root level for Flutter app
