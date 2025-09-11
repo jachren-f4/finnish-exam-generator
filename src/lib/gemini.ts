@@ -327,17 +327,32 @@ export async function processImagesWithGemini(files: FileMetadata[], customPromp
 
     // Use custom prompt if provided, otherwise use simple OCR prompt
     const promptToUse = customPrompt ? `
-First, extract all visible text from the provided images accurately.
+STEP 1: Extract text from each image separately
+- Process each image individually (numbered 0, 1, 2, etc.)
+- Preserve ALL text exactly as it appears: titles, headers, paragraphs, captions
+- Maintain page boundaries - do NOT merge or mix content between different images
+- Keep each page's content distinct and separate
 
-Then, ${customPrompt}
+STEP 2: Generate questions
+${customPrompt}
+
+CRITICAL: When generating questions, respect page boundaries. If images contain different topics or subjects, generate questions that are clearly focused on specific content rather than mixing concepts from different pages.
 
 Important: Return only the JSON response as specified in the task instructions. Do not include any additional explanations or notes.
 ` : `
-Extract all visible text from the provided images accurately.
+CRITICAL: Extract text from each image while maintaining clear page separation.
+
+Instructions:
+- Process images individually (image 0, image 1, etc.)
+- Extract ALL visible text exactly as written: titles, headers, body text, captions
+- Do NOT merge or summarize content between different images
+- Preserve the distinct content and context of each page
+- Include page numbers, chapter titles, and section headers
+- Maintain the natural flow and structure of each individual page
 
 Return your response as a JSON object with this exact structure:
 {
-  "rawText": "the complete extracted text from all images"
+  "rawText": "the complete extracted text from all images, with clear page separations maintained"
 }
 
 Important: Only return the JSON object with the extracted text. Do not include any additional explanations or notes.
