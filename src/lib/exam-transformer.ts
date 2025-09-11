@@ -128,11 +128,26 @@ export function processGeminiResponse(rawResponse: string): DatabaseExamData | n
     
     // Handle both raw JSON and markdown-wrapped JSON
     if (rawResponse.includes('```json')) {
-      const jsonMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/);
+      // Try multiple markdown patterns
+      const patterns = [
+        /```json\s*\n([\s\S]*?)\n```/,  // Original pattern
+        /```json\s*([\s\S]*?)```/,      // More flexible pattern
+        /```json\s*\n([\s\S]*?)```/,    // No closing newline
+        /```json([\s\S]*?)```/          // No whitespace after json
+      ];
+      
+      let jsonMatch = null;
+      for (const pattern of patterns) {
+        jsonMatch = rawResponse.match(pattern);
+        if (jsonMatch) break;
+      }
+      
       if (jsonMatch) {
         const cleanedJson = sanitizeJsonString(jsonMatch[1]);
+        console.log('Extracted JSON from markdown, first 200 chars:', cleanedJson.substring(0, 200));
         rawData = JSON.parse(cleanedJson);
       } else {
+        console.error('Could not extract JSON from markdown. Raw response:', rawResponse.substring(0, 300));
         throw new Error('Could not extract JSON from markdown');
       }
     } else {
