@@ -89,6 +89,19 @@ export function transformGeminiToDatabase(geminiData: GeminiExamData): DatabaseE
 }
 
 /**
+ * Clean JSON string by removing control characters that break JSON.parse()
+ */
+function sanitizeJsonString(jsonStr: string): string {
+  return jsonStr
+    // Remove control characters that break JSON parsing (but preserve valid whitespace)
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove problematic control characters
+    // Handle common newline issues in JSON strings
+    .replace(/\r\n/g, '\\n') // Convert CRLF to escaped newline
+    .replace(/\r/g, '\\n')   // Convert CR to escaped newline  
+    .replace(/\n/g, '\\n')   // Convert LF to escaped newline
+}
+
+/**
  * Validate and repair Gemini JSON, then transform to database format
  */
 export function processGeminiResponse(rawResponse: string): DatabaseExamData | null {
@@ -112,12 +125,14 @@ export function processGeminiResponse(rawResponse: string): DatabaseExamData | n
     if (rawResponse.includes('```json')) {
       const jsonMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/);
       if (jsonMatch) {
-        rawData = JSON.parse(jsonMatch[1]);
+        const cleanedJson = sanitizeJsonString(jsonMatch[1]);
+        rawData = JSON.parse(cleanedJson);
       } else {
         throw new Error('Could not extract JSON from markdown');
       }
     } else {
-      rawData = JSON.parse(rawResponse);
+      const cleanedJson = sanitizeJsonString(rawResponse);
+      rawData = JSON.parse(cleanedJson);
     }
 
     // Validate required fields
