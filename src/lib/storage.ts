@@ -79,6 +79,6 @@ export class SupabaseStorageManager {
   }
 
   static isDiagnosticModeEnabled(): boolean {
-    return process.env.NEXT_PUBLIC_DIAGNOSTIC_MODE === 'true'
+    return false // Disabled for performance - OCR diagnostic step was taking 168 seconds
   }
 }
