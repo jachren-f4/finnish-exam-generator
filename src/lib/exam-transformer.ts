@@ -216,26 +216,60 @@ export function processGeminiResponse(rawResponse: string): DatabaseExamData | n
     
     // Handle both raw JSON and markdown-wrapped JSON
     if (rawResponse.includes('```json')) {
-      // Try multiple markdown patterns
-      const patterns = [
-        /```json\s*\n([\s\S]*?)\n```/,  // Original pattern
-        /```json\s*([\s\S]*?)```/,      // More flexible pattern
-        /```json\s*\n([\s\S]*?)```/,    // No closing newline
-        /```json([\s\S]*?)```/          // No whitespace after json
-      ];
+      // For large responses, use string splitting instead of regex to avoid performance issues
+      console.log('Attempting to extract JSON from markdown (response size:', rawResponse.length, 'chars)');
       
-      let jsonMatch = null;
-      for (const pattern of patterns) {
-        jsonMatch = rawResponse.match(pattern);
-        if (jsonMatch) break;
+      let extractedJson = null;
+      
+      // Strategy 1: Find the first ```json and last ``` markers
+      const startMarkerIndex = rawResponse.indexOf('```json');
+      const endMarkerIndex = rawResponse.lastIndexOf('```');
+      
+      if (startMarkerIndex !== -1 && endMarkerIndex !== -1 && endMarkerIndex > startMarkerIndex) {
+        // Find the actual start of JSON (after the opening marker and any whitespace)
+        let jsonStart = startMarkerIndex + 7; // Length of '```json'
+        while (jsonStart < rawResponse.length && /\s/.test(rawResponse[jsonStart])) {
+          jsonStart++;
+        }
+        
+        // Extract JSON content
+        extractedJson = rawResponse.substring(jsonStart, endMarkerIndex).trim();
+        console.log('Extracted JSON using string splitting, first 200 chars:', extractedJson.substring(0, 200));
       }
       
-      if (jsonMatch) {
-        console.log('Extracted JSON from markdown, first 200 chars:', jsonMatch[1].substring(0, 200));
-        console.log('Character codes at start:', Array.from(jsonMatch[1].substring(0, 20)).map(c => `${c}(${c.charCodeAt(0)})`));
-        rawData = parseJsonRobustly(jsonMatch[1]);
+      // Strategy 2: Fall back to regex patterns for smaller responses or if string splitting failed
+      if (!extractedJson) {
+        console.log('String splitting failed, trying regex patterns...');
+        const patterns = [
+          /```json\s*\n([\s\S]*?)\n```/,  // Original pattern
+          /```json\s*([\s\S]*?)```/,      // More flexible pattern
+          /```json\s*\n([\s\S]*?)```/,    // No closing newline
+          /```json([\s\S]*?)```/          // No whitespace after json
+        ];
+        
+        let jsonMatch = null;
+        for (const pattern of patterns) {
+          try {
+            jsonMatch = rawResponse.match(pattern);
+            if (jsonMatch) {
+              extractedJson = jsonMatch[1];
+              console.log('Extracted JSON using regex pattern, first 200 chars:', extractedJson.substring(0, 200));
+              break;
+            }
+          } catch (regexError) {
+            console.log('Regex pattern failed:', regexError instanceof Error ? regexError.message : 'Unknown error');
+            continue;
+          }
+        }
+      }
+      
+      if (extractedJson) {
+        console.log('Character codes at start:', Array.from(extractedJson.substring(0, 20)).map(c => `${c}(${c.charCodeAt(0)})`));
+        rawData = parseJsonRobustly(extractedJson);
       } else {
         console.error('Could not extract JSON from markdown. Raw response:', rawResponse.substring(0, 300));
+        console.error('Response contains ```json:', rawResponse.includes('```json'));
+        console.error('Response contains ```:', rawResponse.includes('```'));
         throw new Error('Could not extract JSON from markdown');
       }
     } else {
