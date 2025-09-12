@@ -1,0 +1,340 @@
+import { v4 as uuidv4 } from 'uuid'
+import { FileProcessor, ProcessedFile } from '../utils/file-handler'
+import { OperationTimer } from '../utils/performance-logger'
+import { SupabaseStorageManager } from '../storage'
+import { PROMPTS } from '../config'
+import { processImagesWithGemini } from '../gemini'
+import { createExam } from '../exam-service'
+
+export interface MobileApiRequest {
+  images: File[]
+  customPrompt?: string
+  processingId: string
+}
+
+export interface DiagnosticData {
+  imageUrls: string[]
+  rawOcrText: string
+  diagnosticEnabled: boolean
+}
+
+export interface MobileApiResult {
+  success: boolean
+  data?: {
+    metadata: {
+      processingTime: number
+      geminiProcessingTime: number
+      imageCount: number
+      promptUsed: 'custom' | 'default'
+      processingMode: string
+      geminiUsage: any
+      performanceBreakdown: any
+      diagnostic?: {
+        enabled: boolean
+        imageUrls: string[]
+        rawOcrTextLength: number
+        rawOcrPreview: string
+      }
+    }
+  }
+  examUrl?: string
+  examId?: string
+  gradingUrl?: string
+  error?: string
+  details?: string
+}
+
+/**
+ * Mobile API Service - Handles the complete exam generation workflow
+ * Extracted from mobile API route to separate business logic from HTTP handling
+ */
+export class MobileApiService {
+  /**
+   * Process the complete exam generation workflow
+   */
+  static async generateExam(request: MobileApiRequest): Promise<MobileApiResult> {
+    const timer = new OperationTimer('Mobile API Processing')
+    const { images, customPrompt, processingId } = request
+
+    try {
+      console.log('=== MOBILE API ENDPOINT CALLED ===')
+      console.log('Processing ID:', processingId)
+
+      // Process files using FileProcessor
+      timer.startPhase('File Processing')
+      const processedFiles = await FileProcessor.save(images, uuidv4)
+      const fileMetadataList = processedFiles.map(file => file.metadata)
+      
+      // Log file processing statistics
+      FileProcessor.logStats(images, processedFiles)
+      timer.endPhase('File Processing')
+
+      // Handle diagnostic mode if enabled
+      const diagnosticData = await this.handleDiagnosticMode(
+        fileMetadataList,
+        timer
+      )
+
+      // Process with Gemini
+      const geminiResult = await this.processWithGemini(
+        fileMetadataList,
+        customPrompt,
+        timer
+      )
+
+      if (!geminiResult.success) {
+        return geminiResult
+      }
+
+      // Create exam from Gemini response
+      const examResult = await this.createExamFromResponse(
+        geminiResult.data!,
+        customPrompt,
+        diagnosticData,
+        timer
+      )
+
+      // Clean up files
+      await this.cleanupFiles(fileMetadataList, timer)
+
+      // Build final response
+      const breakdown = timer.complete({
+        imageCount: images.length,
+        promptType: customPrompt && customPrompt.trim() !== '' ? 'custom' : 'default',
+        geminiProcessingTime: geminiResult.processingTime!,
+        examCreated: !!examResult
+      })
+
+      return this.buildSuccessResponse(
+        breakdown,
+        geminiResult,
+        diagnosticData,
+        examResult,
+        request
+      )
+
+    } catch (error) {
+      console.error('Error in mobile API processing:', error)
+      return {
+        success: false,
+        error: 'Internal server error processing images',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }
+    }
+  }
+
+  /**
+   * Handle diagnostic mode processing if enabled
+   */
+  private static async handleDiagnosticMode(
+    fileMetadataList: any[],
+    timer: OperationTimer
+  ): Promise<DiagnosticData | undefined> {
+    const diagnosticModeEnabled = SupabaseStorageManager.isDiagnosticModeEnabled()
+    
+    if (!diagnosticModeEnabled) {
+      return undefined
+    }
+
+    console.log('=== DIAGNOSTIC MODE ENABLED ===')
+    const diagnosticStartTime = Date.now()
+    let diagnosticImageUrls: string[] = []
+    let rawOcrText: string = ''
+
+    try {
+      const examId = uuidv4()
+      console.log('Generated exam ID for diagnostic:', examId)
+
+      // Note: Diagnostic image uploads are disabled to save storage costs
+      console.log('Diagnostic image uploads disabled - keeping OCR text only')
+
+      // Extract raw OCR text separately
+      const fs = require('fs').promises
+      const path = require('path')
+      const imageParts = []
+      
+      for (const fileMetadata of fileMetadataList) {
+        const filePath = path.join('/tmp', `${fileMetadata.id}${path.extname(fileMetadata.filename)}`)
+        const buffer = await fs.readFile(filePath)
+        const base64Data = buffer.toString('base64')
+        
+        imageParts.push({
+          inlineData: {
+            data: base64Data,
+            mimeType: fileMetadata.mimeType
+          }
+        })
+      }
+      
+      const { extractRawTextFromImages } = await import('../gemini')
+      const ocrResult = await extractRawTextFromImages(imageParts)
+      rawOcrText = ocrResult.rawText
+      
+      console.log('Raw OCR text length:', rawOcrText.length)
+      console.log('Raw OCR preview:', rawOcrText.substring(0, 300))
+      console.log(`⏱️  [TIMER] Diagnostic processing: ${Date.now() - diagnosticStartTime}ms`)
+      
+      return {
+        imageUrls: diagnosticImageUrls,
+        rawOcrText,
+        diagnosticEnabled: true
+      }
+      
+    } catch (diagnosticError) {
+      console.error('Diagnostic mode error:', diagnosticError)
+      return undefined
+    }
+  }
+
+  /**
+   * Process images with Gemini AI
+   */
+  private static async processWithGemini(
+    fileMetadataList: any[],
+    customPrompt: string | undefined,
+    timer: OperationTimer
+  ): Promise<{ success: true; data: any; processingTime: number } | { success: false; error: string; details: string }> {
+    try {
+      // Use custom prompt or fallback to default
+      const promptToUse = customPrompt && customPrompt.trim() !== '' ? customPrompt : PROMPTS.DEFAULT_EXAM_GENERATION
+      console.log('Using prompt type:', customPrompt && customPrompt.trim() !== '' ? 'CUSTOM' : 'FALLBACK')
+      
+      // Log full prompt for quality analysis
+      console.log('=== FULL PROMPT SENT TO GEMINI ===')
+      console.log(promptToUse)
+      console.log('=== END PROMPT ===')
+      console.log('Prompt length:', promptToUse.length, 'characters')
+
+      console.log('Starting Gemini processing...')
+      console.log('=== USING LEGACY MODE ===')
+      const geminiStartTime = Date.now()
+      console.log(`⏱️  [TIMER] Gemini processing started with prompt length: ${promptToUse.length} chars`)
+      
+      // Use legacy processing method
+      const geminiResults = await processImagesWithGemini(fileMetadataList, promptToUse)
+      const result = geminiResults[0] // Take first result since we process all images together
+      
+      const geminiEndTime = Date.now()
+      const geminiProcessingTime = geminiEndTime - geminiStartTime
+      console.log(`⏱️  [TIMER] Gemini processing completed: ${geminiProcessingTime}ms`)
+      console.log(`⏱️  [TIMER] Gemini tokens - Input: ${result.geminiUsage?.promptTokenCount}, Output: ${result.geminiUsage?.candidatesTokenCount}, Cost: $${result.geminiUsage?.estimatedCost?.toFixed(6)}`)
+
+      return {
+        success: true,
+        data: result,
+        processingTime: geminiProcessingTime
+      }
+
+    } catch (error) {
+      console.error('Error in Gemini processing:', error)
+      return {
+        success: false,
+        error: 'Gemini processing failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }
+    }
+  }
+
+  /**
+   * Create exam from Gemini response
+   */
+  private static async createExamFromResponse(
+    geminiData: any,
+    customPrompt: string | undefined,
+    diagnosticData: DiagnosticData | undefined,
+    timer: OperationTimer
+  ): Promise<any> {
+    console.log('=== ATTEMPTING TO CREATE EXAM ===')
+    const examCreationStartTime = Date.now()
+    console.log('Raw text length:', geminiData.rawText?.length || 0)
+    console.log('Raw text preview:', geminiData.rawText?.substring(0, 200) || 'No raw text')
+    
+    try {
+      console.log('Using Gemini response for exam creation')
+      
+      // Use the prompt that was sent to Gemini
+      const actualPromptUsed = customPrompt && customPrompt.trim() !== '' ? customPrompt : PROMPTS.DEFAULT_EXAM_GENERATION
+      
+      const examResult = await createExam(
+        geminiData.rawText, 
+        actualPromptUsed, 
+        diagnosticData, 
+        geminiData.geminiUsage
+      )
+      
+      console.log(`⏱️  [TIMER] Exam creation: ${Date.now() - examCreationStartTime}ms`)
+      console.log('Exam creation result:', examResult ? 'SUCCESS' : 'NULL')
+      
+      if (!examResult) {
+        console.log('WARNING: Exam creation returned null - check exam processing and Supabase connection')
+      }
+      
+      return examResult
+      
+    } catch (examError) {
+      console.error('Error creating exam - full error:', examError)
+      console.error('Error message:', examError instanceof Error ? examError.message : 'Unknown error')
+      console.error('Error stack:', examError instanceof Error ? examError.stack : 'No stack trace')
+      return null
+    }
+  }
+
+  /**
+   * Clean up temporary files
+   */
+  private static async cleanupFiles(
+    fileMetadataList: any[],
+    timer: OperationTimer
+  ): Promise<void> {
+    timer.startPhase('File Cleanup')
+    const cleanupResult = await FileProcessor.cleanupByMetadata(fileMetadataList)
+    console.log(`Cleaned up ${cleanupResult.cleaned} files${cleanupResult.errors.length > 0 ? ` (${cleanupResult.errors.length} errors)` : ''}`)
+    if (cleanupResult.errors.length > 0) {
+      console.warn('Cleanup errors:', cleanupResult.errors)
+    }
+    timer.endPhase('File Cleanup')
+  }
+
+  /**
+   * Build success response in the expected format
+   */
+  private static buildSuccessResponse(
+    breakdown: any,
+    geminiResult: any,
+    diagnosticData: DiagnosticData | undefined,
+    examResult: any,
+    request: MobileApiRequest
+  ): MobileApiResult {
+    const response: MobileApiResult = {
+      success: true,
+      data: {
+        metadata: {
+          processingTime: breakdown.totalDuration,
+          geminiProcessingTime: geminiResult.processingTime,
+          imageCount: request.images.length,
+          promptUsed: request.customPrompt && request.customPrompt.trim() !== '' ? 'custom' : 'default',
+          processingMode: 'legacy',
+          geminiUsage: geminiResult.data.geminiUsage,
+          performanceBreakdown: breakdown.phases,
+          ...(diagnosticData && {
+            diagnostic: {
+              enabled: true,
+              imageUrls: diagnosticData.imageUrls,
+              rawOcrTextLength: diagnosticData.rawOcrText.length,
+              rawOcrPreview: diagnosticData.rawOcrText.substring(0, 200)
+            }
+          })
+        }
+      }
+    }
+
+    // Add exam URLs at root level for Flutter app
+    if (examResult) {
+      response.examUrl = examResult.examUrl
+      response.examId = examResult.examId
+      response.gradingUrl = examResult.gradingUrl
+    }
+
+    return response
+  }
+}
