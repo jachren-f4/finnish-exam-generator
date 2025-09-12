@@ -224,12 +224,33 @@ Return only the JSON object. No additional explanations.`
 export async function extractRawTextFromImages(imageParts: any[]): Promise<RawOCRResult> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
   
-  const ocrPrompt = `Extract all visible text from the provided images accurately.
+  const ocrPrompt = `STEP 1: Extract text from each image separately
+- Process each image individually (numbered 0, 1, 2, etc.)
+- Preserve ALL text exactly as it appears: titles, headers, paragraphs, captions
+- Maintain page boundaries - do NOT merge or mix content between different images
+- Keep each page's content distinct and separate
+
+STEP 2: MANDATORY TOPIC ANALYSIS
+Before finalizing the output, you MUST:
+1. Examine each image/page separately and identify its main academic subject
+2. Determine if all pages belong to the same subject area (e.g., all physics, all biology, all history)
+3. If pages contain DIFFERENT academic subjects, note this clearly
+4. State your analysis: "Topic detected: [SUBJECT NAME]" or "Mixed topics detected: [LIST SUBJECTS]"
+
+STEP 3: Format output with clear page separation
+- Use "=== PAGE X ===" markers to separate different images/pages
+- Include your topic analysis in the output
+- Preserve original text structure and formatting
 
 Return your response as a JSON object with this exact structure:
 {
-  "rawText": "the complete extracted text from all images"
+  "rawText": "=== PAGE 0 ===\\n[text from first image]\\n\\n=== PAGE 1 ===\\n[text from second image]\\n\\n[Topic Analysis: ...]"
 }
+
+VALIDATION CHECK before finalizing:
+- Verify clear page boundaries are maintained
+- Confirm topic analysis is included
+- Ensure no content mixing between different pages
 
 Important: Only return the JSON object with the extracted text. Do not include any additional explanations or notes.`
 
