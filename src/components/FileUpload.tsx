@@ -11,20 +11,25 @@ export default function FileUpload() {
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const [customPrompt, setCustomPrompt] = useState(`Your task:
-- Based on the text, generate exactly **10 exam questions in Finnish**.
+- Based on the provided text, generate up to 10 high-quality exam questions in Finnish.
+- Your main goal is quality over quantity. If the text can only support 5 good questions, generate only 5.
 
-CRITICAL Requirements for the questions:
-- **ONLY use correct Finnish language**: All words, grammar, and sentences must be proper Finnish. Do not use Swedish, English, or made-up words.
-- **Verify OCR accuracy**: If the source text contains non-Finnish words or OCR errors, interpret the context and use correct Finnish equivalents.
-- **Perfect grammar**: Use correct Finnish grammar, spelling, and sentence structure. No broken fragments or incomplete sentences.
-- **Topic relevance**: Only create questions directly related to the main topic and content of the text.
-- **Varied question types**: Use multiple choice, true/false, short answer, fill-in-the-blank in balanced proportions.
-- **Appropriate difficulty**: Target elementary/middle school students (ages 7-15).
-- **Complete answers**: Include correct answers and explanations for every question.
-- **SELF-CONTAINED QUESTIONS ONLY**: Every question must make complete sense without any additional context. NEVER use phrases like "in this context", "according to the text", "in the passage above", or "what does X mean here". If a question needs background information, include that information WITHIN the question itself. Transform contextual references into standalone scenarios that students can understand independently.
+Core Requirements:
+
+1.  **Language and Accuracy**: Ensure 100% correct Finnish. This includes perfect grammar, spelling, and vocabulary. You must interpret and correct any OCR errors or non-Finnish words found in the source text.
+
+2.  **Question Content and Variety**: Every question must be unique and self-contained.
+    - **Test Different Information**: Each question must test a different fact or concept. Do not create two questions that ask for the same answer. For example, if you ask "What is the capital of Finland?", do not also ask "Which city is Finland's capital?".
+    - **Make Questions Standalone**: A student should understand the question without having read the original text. NEVER use phrases like "according to the text" or "in this context."
+
+3.  **Structure and Answers**:
+    - **Question Types**: Include a balanced mix of multiple-choice, true/false, and short-answer questions.
+    - **Difficulty**: Target students around ages 10-12 (grades 4-6).
+    - **Answers and Explanations**: Provide a correct answer and a brief explanation in Finnish for every single question.
 
 Output format:
-Return your response as a JSON object with this exact structure:
+Your final output must be a single, valid JSON object with the exact structure shown below.
+
 {
   "questions": [
     {
@@ -51,10 +56,10 @@ Return your response as a JSON object with this exact structure:
     }
   ],
   "topic": "Brief description of the main topic covered",
-  "difficulty": "elementary|middle_school|high_school"
+  "difficulty": "elementary_school|middle_school"
 }
 
-Important: Return only the JSON object. Do not include any additional explanations or markdown formatting.`)
+Important: Return only the raw JSON object. Do not include any additional text, introductory sentences, or markdown formatting before or after the JSON content.`)
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
