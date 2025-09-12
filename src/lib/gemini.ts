@@ -222,7 +222,12 @@ Return only the JSON object. No additional explanations.`
 }
 
 export async function extractRawTextFromImages(imageParts: any[]): Promise<RawOCRResult> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-2.5-flash-lite',
+    generationConfig: {
+      temperature: 0 // Reduce hallucinations and improve source fidelity
+    }
+  })
   
   const ocrPrompt = `STEP 1: Extract text from each image separately
 - Process each image individually (numbered 0, 1, 2, etc.)
@@ -320,7 +325,12 @@ Important: Only return the JSON object with the extracted text. Do not include a
 }
 
 export async function processImagesWithGemini(files: FileMetadata[], customPrompt?: string): Promise<GeminiOCRResult[]> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-2.5-flash-lite',
+    generationConfig: {
+      temperature: 0 // Reduce hallucinations and improve source fidelity
+    }
+  })
   
   try {
     // Prepare image parts for Gemini
@@ -367,12 +377,23 @@ CRITICAL TOPIC SEPARATION RULES:
 - Each question must use content from the same subject area only
 - When in doubt, focus on the topic with the most content
 
+CRITICAL CONTENT FIDELITY RULES:
+- ONLY use facts explicitly stated in the source text
+- NEVER combine unrelated concepts even within the same topic
+- NEVER add external knowledge not present in the material
+- NEVER invent or assume concepts not directly mentioned
+- Each question must be answerable using ONLY the provided text
+- Do NOT synthesize or create connections between separate text sections
+
 STEP 3: Generate questions
-${customPrompt.replace('- **Topic relevance**: Only create questions directly related to the main topic and content of the text.', '- **Topic relevance**: Only create questions directly related to the SINGLE TOPIC identified in Step 2.')}
+${customPrompt.replace('- **Topic relevance**: Only create questions directly related to the main topic and content of the text.', '- **Topic relevance**: Only create questions directly related to the SINGLE TOPIC identified in Step 2.')
+.replace('- **SELF-CONTAINED QUESTIONS ONLY**: Every question must make complete sense without any additional context.', '- **SOURCE-BASED QUESTIONS ONLY**: Every question must be answerable using ONLY the provided text. Do not require external knowledge or create connections not explicitly stated in the source material.')}
 
 VALIDATION CHECK before finalizing:
 - Verify all questions are about the same subject area
 - Ensure no mixing of unrelated academic topics
+- Confirm each question can be answered from the source text alone
+- Check that no external knowledge or invented concepts are used
 - Confirm topic coherence across all questions
 
 Important: Return only the JSON response as specified in the task instructions. Do not include any additional explanations or notes.
@@ -499,7 +520,12 @@ export interface StructuredQuestionResult extends GeminiOCRResult {
 }
 
 export async function generateStructuredQuestions(topics: TopicGrouping['topics'], customPrompt?: string): Promise<StructuredQuestionResult> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-2.5-flash-lite',
+    generationConfig: {
+      temperature: 0 // Reduce hallucinations and improve source fidelity
+    }
+  })
   
   // Create structured content with clear topic separation
   const structuredContent = Object.entries(topics).map(([topicKey, topic]) => {
