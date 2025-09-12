@@ -54,6 +54,15 @@ export async function createExam(
     imageUrls: string[]
     rawOcrText: string
     diagnosticEnabled: boolean
+  },
+  geminiUsage?: {
+    promptTokenCount: number
+    candidatesTokenCount: number
+    totalTokenCount: number
+    estimatedCost: number
+    inputCost: number
+    outputCost: number
+    model: string
   }
 ): Promise<{ examId: string; examUrl: string; gradingUrl: string } | null> {
   try {
@@ -116,6 +125,15 @@ export async function createExam(
       console.log('Including diagnostic data:', {
         imageUrls: diagnosticData.imageUrls.length,
         rawOcrTextLength: diagnosticData.rawOcrText.length
+      })
+    }
+
+    // Add Gemini usage data for cost tracking if available
+    if (geminiUsage) {
+      insertData.creation_gemini_usage = geminiUsage
+      console.log('Including Gemini usage data:', {
+        totalTokens: geminiUsage.totalTokenCount,
+        estimatedCost: geminiUsage.estimatedCost.toFixed(6)
       })
     }
 

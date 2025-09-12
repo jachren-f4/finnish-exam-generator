@@ -17,6 +17,7 @@ export interface DbExam {
   diagnostic_image_urls?: string[] // Array of Supabase Storage URLs
   ocr_raw_text?: string // Raw OCR output before question processing
   diagnostic_enabled?: boolean
+  creation_gemini_usage?: any // Gemini API usage data for exam creation
 }
 
 export interface DbAnswer {
