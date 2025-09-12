@@ -35,7 +35,10 @@ export default function FileUpload() {
       > *"Miksi on tärkeää harjata hampaat säännöllisesti?"* (Why is it important to brush teeth regularly?)
     - **Guiding Principle**: Focus your questions on the **"why"** and **"what"** of the topic (e.g., why is hygiene important, what are the parts of a plant), not on the definition of specific words.
 
-4.  **Structure and Answers**:
+4. **Ignore References to Visual Elements**:
+    - Your source text may contain fragments from textbooks, like image captions or references to diagrams. You must ignore these.
+
+5.  **Structure and Answers**:
     - **Question Types**: Include a balanced mix of multiple-choice, true/false, and short-answer questions.
     - **Difficulty**: Target students around ages 10-12 (grades 4-6).
     - **Answers and Explanations**: Provide a correct answer and a brief explanation in Finnish for every single question.
