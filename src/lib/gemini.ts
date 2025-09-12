@@ -356,8 +356,27 @@ export async function processImagesWithGemini(files: FileMetadata[], customPromp
       }
     }
 
-    // Use custom prompt if provided, otherwise use simple OCR prompt
-    const promptToUse = customPrompt || ocrPrompt
+    // Use custom prompt if provided, otherwise use simple extraction
+    const promptToUse = customPrompt || `
+Extract text from the images and generate exam questions.
+
+Return your response as a JSON object with this exact structure:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Question text in Finnish",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_answer": "Option A",
+      "explanation": "Brief explanation in Finnish"
+    }
+  ],
+  "topic": "Brief topic description",
+  "difficulty": "elementary"
+}
+
+Important: Return only the JSON object. Generate exactly 10 questions in Finnish based on the image content.`
 
     // Send request to Gemini
     const result = await model.generateContent([
