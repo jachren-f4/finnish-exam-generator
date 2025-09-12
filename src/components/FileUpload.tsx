@@ -10,7 +10,6 @@ export default function FileUpload() {
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
-  const [structuredMode, setStructuredMode] = useState(false) // Default to legacy mode
   const [customPrompt, setCustomPrompt] = useState(`Your task:
 - Based on the text, generate exactly **10 exam questions in Finnish**.
 
@@ -142,8 +141,6 @@ Important: Return only the JSON object. Do not include any additional explanatio
         formData.append('prompt', customPrompt.trim())
       }
       
-      // Add structured mode toggle
-      formData.append('structured_mode', structuredMode.toString())
 
       const response = await fetch('/api/mobile/exam-questions', {
         method: 'POST',
@@ -179,48 +176,22 @@ Important: Return only the JSON object. Do not include any additional explanatio
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Processing Mode Toggle */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100">Processing Mode</h3>
-            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-              {structuredMode 
-                ? "Topic-aware: Separates different subjects to prevent mixed questions" 
-                : "Legacy: Processes all images together (may mix topics)"
-              }
-            </p>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={structuredMode}
-              onChange={(e) => setStructuredMode(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            <span className="ml-3 text-sm font-medium text-blue-900 dark:text-blue-100">
-              {structuredMode ? "Structured" : "Legacy"}
-            </span>
-          </label>
-        </div>
-      </div>
 
       {/* Custom Prompt Field */}
       <div>
         <label htmlFor="custom-prompt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Custom Prompt Context (Optional)
+          Exam Generation Prompt
         </label>
         <textarea
           id="custom-prompt"
           rows={4}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-100 placeholder-gray-400"
-          placeholder="e.g., Generate 10 exam questions in Finnish based on the textbook content. Include multiple choice and open-ended questions with correct answers..."
+          placeholder="Specify how you want the exam questions to be generated..."
           value={customPrompt}
           onChange={(e) => setCustomPrompt(e.target.value)}
         />
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Add specific context or instructions for Gemini to improve OCR accuracy and relevance.
+          Define how exam questions should be generated from the uploaded images. You can modify this prompt to test different question generation strategies.
         </p>
       </div>
 

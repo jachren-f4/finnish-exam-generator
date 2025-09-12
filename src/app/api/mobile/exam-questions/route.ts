@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { processImagesWithGemini, extractRawTextFromImages, extractTextWithTopicDetection, generateStructuredQuestions } from '@/lib/gemini'
+import { processImagesWithGemini, extractRawTextFromImages } from '@/lib/gemini'
 import { FileMetadata } from '@/types'
 import { v4 as uuidv4 } from 'uuid'
 import fs from 'fs/promises'
@@ -7,51 +7,6 @@ import path from 'path'
 import { SupabaseStorageManager } from '@/lib/storage'
 import { supabase } from '@/lib/supabase'
 
-const DEFAULT_EXAM_PROMPT = `Your task:
-- Based on the text, generate exactly **10 exam questions in Finnish**.
-
-CRITICAL Requirements for the questions:
-- **ONLY use correct Finnish language**: All words, grammar, and sentences must be proper Finnish. Do not use Swedish, English, or made-up words.
-- **Verify OCR accuracy**: If the source text contains non-Finnish words or OCR errors, interpret the context and use correct Finnish equivalents.
-- **Perfect grammar**: Use correct Finnish grammar, spelling, and sentence structure. No broken fragments or incomplete sentences.
-- **Topic relevance**: Only create questions directly related to the main topic and content of the text.
-- **Varied question types**: Use multiple choice, true/false, short answer, fill-in-the-blank in balanced proportions.
-- **Appropriate difficulty**: Target elementary/middle school students (ages 7-15).
-- **Complete answers**: Include correct answers and explanations for every question.
-- **SELF-CONTAINED QUESTIONS ONLY**: Every question must make complete sense without any additional context. NEVER use phrases like "in this context", "according to the text", "in the passage above", or "what does X mean here". If a question needs background information, include that information WITHIN the question itself. Transform contextual references into standalone scenarios that students can understand independently.
-
-Output format:
-Return your response as a JSON object with this exact structure:
-{
-  "questions": [
-    {
-      "id": 1,
-      "type": "multiple_choice",
-      "question": "Question text in Finnish",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct_answer": "Option A",
-      "explanation": "Brief explanation in Finnish"
-    },
-    {
-      "id": 2,
-      "type": "true_false",
-      "question": "Statement in Finnish",
-      "correct_answer": true,
-      "explanation": "Brief explanation in Finnish"
-    },
-    {
-      "id": 3,
-      "type": "short_answer",
-      "question": "Question in Finnish",
-      "correct_answer": "Expected answer",
-      "explanation": "Brief explanation in Finnish"
-    }
-  ],
-  "topic": "Brief description of the main topic covered",
-  "difficulty": "elementary|middle_school|high_school"
-}
-
-Important: Return only the JSON object. Do not include any additional explanations or markdown formatting.`
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,11 +16,10 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const customPrompt = formData.get('prompt') as string
     const images = formData.getAll('images') as File[]
-    const useStructuredMode = formData.get('structured_mode') === 'true' // New toggle parameter
     
     console.log('Received custom prompt:', customPrompt ? 'YES' : 'NO')
     console.log('Number of images received:', images.length)
-    console.log('Processing mode:', useStructuredMode ? 'STRUCTURED (Topic-aware)' : 'LEGACY (Standard)')
+    console.log('Processing mode: LEGACY (Standard)')
     
     if (!images || images.length === 0) {
       return NextResponse.json(
@@ -81,9 +35,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use custom prompt or fallback to default
-    const promptToUse = customPrompt && customPrompt.trim() !== '' ? customPrompt : DEFAULT_EXAM_PROMPT
-    console.log('Using prompt type:', customPrompt && customPrompt.trim() !== '' ? 'CUSTOM' : 'DEFAULT')
+    // Use custom prompt (required now)
+    const promptToUse = customPrompt && customPrompt.trim() !== '' ? customPrompt : 'Generate 10 exam questions in Finnish based on the image content.'
+    console.log('Using prompt type:', customPrompt && customPrompt.trim() !== '' ? 'CUSTOM' : 'FALLBACK')
     
     // Log full prompt for quality analysis and optimization
     console.log('=== FULL PROMPT SENT TO GEMINI ===')
@@ -152,7 +106,6 @@ export async function POST(request: NextRequest) {
     // Diagnostic Mode Processing
     let diagnosticImageUrls: string[] = []
     let rawOcrText: string = ''
-    let structuredOcrData: string = '' // For storing complete structured topic data
     const diagnosticModeEnabled = SupabaseStorageManager.isDiagnosticModeEnabled()
     
     if (diagnosticModeEnabled) {
@@ -201,68 +154,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Process with Gemini using appropriate method
+    // Process with Gemini using legacy mode
     console.log('Starting Gemini processing...')
+    console.log('=== USING LEGACY MODE ===')
     const startTime = Date.now()
     
-    let result: any
-    let structuredTopicData: any = null
-    
-    if (useStructuredMode) {
-      console.log('=== USING STRUCTURED TOPIC-AWARE MODE ===')
-      
-      // Prepare image parts for topic detection
-      const imageParts = []
-      for (const fileMetadata of fileMetadataList) {
-        const filePath = path.join('/tmp', `${fileMetadata.id}${path.extname(fileMetadata.filename)}`)
-        const buffer = await fs.readFile(filePath)
-        const base64Data = buffer.toString('base64')
-        
-        imageParts.push({
-          inlineData: {
-            data: base64Data,
-            mimeType: fileMetadata.mimeType
-          }
-        })
-      }
-      
-      // Step 1: Extract text and detect topics
-      console.log('Step 1: Topic detection and OCR...')
-      const topicResult = await extractTextWithTopicDetection(imageParts)
-      structuredTopicData = topicResult
-      
-      console.log('Detected topics:', Object.keys(topicResult.topics))
-      for (const [key, topic] of Object.entries(topicResult.topics)) {
-        console.log(`  - ${key}: ${topic.subject} (images ${topic.images.join(', ')})`)
-      }
-      
-      // Step 2: Generate structured questions
-      console.log('Step 2: Structured question generation...')
-      result = await generateStructuredQuestions(topicResult.topics, promptToUse)
-      
-      // Prepare structured OCR data for storage in ocr_raw_text field
-      structuredOcrData = JSON.stringify({
-        processing_mode: 'structured',
-        topic_detection: {
-          topics: topicResult.topics,
-          usage: topicResult.usage
-        },
-        question_generation: {
-          prompt_used: result.fullPromptUsed,
-          usage: result.geminiUsage
-        },
-        timestamp: new Date().toISOString()
-      }, null, 2)
-      
-      console.log('Structured OCR data length:', structuredOcrData.length)
-      
-    } else {
-      console.log('=== USING LEGACY MODE ===')
-      
-      // Use original processing method
-      const geminiResults = await processImagesWithGemini(fileMetadataList, promptToUse)
-      result = geminiResults[0] // Take first result since we process all images together
-    }
+    // Use legacy processing method
+    const geminiResults = await processImagesWithGemini(fileMetadataList, promptToUse)
+    const result = geminiResults[0] // Take first result since we process all images together
     
     const endTime = Date.now()
     const processingTime = endTime - startTime
@@ -294,16 +193,12 @@ export async function POST(request: NextRequest) {
       // Prepare diagnostic data if available
       const diagnosticDataToPass = diagnosticModeEnabled ? {
         imageUrls: diagnosticImageUrls,
-        rawOcrText: useStructuredMode ? structuredOcrData : rawOcrText, // Use structured data when in structured mode
+        rawOcrText: rawOcrText,
         diagnosticEnabled: true
-      } : (useStructuredMode ? {
-        imageUrls: [],
-        rawOcrText: structuredOcrData, // Store structured data even if diagnostic mode is off
-        diagnosticEnabled: false
-      } : undefined)
+      } : undefined
 
-      // Use the actual enhanced prompt that was sent to Gemini (if available)
-      const actualPromptUsed = result.fullPromptUsed || promptToUse
+      // Use the prompt that was sent to Gemini
+      const actualPromptUsed = promptToUse
       examResult = await createExam(result.rawText, actualPromptUsed, diagnosticDataToPass)
       console.log('Exam creation result:', examResult ? 'SUCCESS' : 'NULL')
       if (!examResult) {
@@ -323,20 +218,8 @@ export async function POST(request: NextRequest) {
           processingTime,
           imageCount: images.length,
           promptUsed: customPrompt && customPrompt.trim() !== '' ? 'custom' : 'default',
-          processingMode: useStructuredMode ? 'structured' : 'legacy',
+          processingMode: 'legacy',
           geminiUsage: result.geminiUsage,
-          ...(useStructuredMode && structuredTopicData && {
-            structuredTopics: {
-              topicCount: Object.keys(structuredTopicData.topics).length,
-              topics: Object.entries(structuredTopicData.topics).map(([key, topic]: [string, any]) => ({
-                id: key,
-                subject: topic.subject,
-                imageCount: topic.images.length,
-                keywords: topic.keywords
-              })),
-              topicDetectionUsage: structuredTopicData.usage
-            }
-          }),
           ...(diagnosticModeEnabled && {
             diagnostic: {
               enabled: true,
