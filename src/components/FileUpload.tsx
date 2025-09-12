@@ -41,7 +41,7 @@ export default function FileUpload() {
 5.  **Structure and Answers**:
     - **Question Types**: Include a balanced mix of multiple-choice, true/false, and short-answer questions.
     - **Difficulty**: Target students around ages 10-12 (grades 4-6).
-    - **Answers and Explanations**: Provide a correct answer and a brief explanation in Finnish for every single question.
+    - **Answers and Explanations**: Provide a correct answer and a one sentence explanation in Finnish for every single question.
 
 ### Output format:
 
@@ -55,21 +55,21 @@ Your final output must be a single, valid JSON object with the exact structure s
       "question": "Question text in Finnish",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correct_answer": "Option A",
-      "explanation": "One-sentence explanation in Finnish"
+      "explanation": "One sentence explanation in Finnish"
     },
     {
       "id": 2,
       "type": "true_false",
       "question": "Statement in Finnish",
       "correct_answer": true,
-      "explanation": "One-sentence explanation in Finnish"
+      "explanation": "One sentence explanation in Finnish"
     },
     {
       "id": 3,
       "type": "short_answer",
       "question": "Question in Finnish",
       "correct_answer": "Expected answer",
-      "explanation": "One-sentence explanation in Finnish"
+      "explanation": "One sentence explanation in Finnish"
     }
   ],
   "topic": "Brief description of the main topic covered",
