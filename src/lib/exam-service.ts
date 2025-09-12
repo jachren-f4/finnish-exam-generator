@@ -65,13 +65,19 @@ export async function createExam(
     model: string
   }
 ): Promise<{ examId: string; examUrl: string; gradingUrl: string } | null> {
+  const examCreationStartTime = Date.now()
+  console.log(`⏱️  [EXAM-CREATE] Starting exam creation from ${geminiResponse.length} char response`)
+  
   try {
     console.log('=== CREATE EXAM DEBUG ===')
     console.log('Input response length:', geminiResponse?.length || 0)
     console.log('Input preview:', geminiResponse?.substring(0, 100) || 'No input')
     
     // Transform Gemini response to database format
+    const responseProcessingStartTime = Date.now()
+    console.log(`⏱️  [EXAM-CREATE] Processing Gemini response`)
     let examData = processGeminiResponse(geminiResponse)
+    console.log(`⏱️  [EXAM-CREATE] Response processing: ${Date.now() - responseProcessingStartTime}ms`)
     console.log('processGeminiResponse result:', examData ? 'SUCCESS' : 'FAILED')
     
     // Create fallback if Gemini response is invalid
@@ -94,6 +100,9 @@ export async function createExam(
       questionsCount: examData.exam?.questions?.length || 0,
       hasPrompt: !!promptUsed
     })
+    
+    const dbInsertStartTime = Date.now()
+    console.log(`⏱️  [EXAM-CREATE] Inserting exam into database`)
 
     // Add prompt to exam data for analysis
     const examDataWithPrompt = {
@@ -142,6 +151,8 @@ export async function createExam(
       .insert(insertData)
       .select('exam_id')
       .single()
+    
+    console.log(`⏱️  [EXAM-CREATE] Database insert: ${Date.now() - dbInsertStartTime}ms`)
 
     if (error) {
       console.error('SUPABASE INSERT ERROR:', error)
@@ -156,6 +167,10 @@ export async function createExam(
     const examId = exam.exam_id
     const baseUrl = 'https://exam-generator.vercel.app'
     
+    const totalExamCreationTime = Date.now() - examCreationStartTime
+    console.log(`⏱️  [EXAM-CREATE] Exam creation completed: ${totalExamCreationTime}ms`)
+    console.log(`⏱️  [EXAM-CREATE] Exam ID: ${examId}`)
+
     return {
       examId,
       examUrl: `${baseUrl}/exam/${examId}`,
@@ -163,6 +178,8 @@ export async function createExam(
     }
 
   } catch (error) {
+    const totalExamCreationTime = Date.now() - examCreationStartTime
+    console.error(`⏱️  [EXAM-CREATE] Exam creation failed after ${totalExamCreationTime}ms:`, error)
     return null
   }
 }

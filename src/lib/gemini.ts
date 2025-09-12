@@ -84,6 +84,9 @@ function attemptJsonRepair(text: string): string | null {
 
 
 export async function extractRawTextFromImages(imageParts: any[]): Promise<RawOCRResult> {
+  const functionStartTime = Date.now()
+  console.log(`⏱️  [GEMINI-OCR] Starting OCR extraction for ${imageParts.length} images`)
+  
   const model = genAI.getGenerativeModel({ 
     model: 'gemini-2.5-flash-lite',
     generationConfig: {
@@ -122,10 +125,15 @@ VALIDATION CHECK before finalizing:
 Important: Only return the JSON object with the extracted text. Do not include any additional explanations or notes.`
 
   try {
+    const apiCallStartTime = Date.now()
+    console.log(`⏱️  [GEMINI-OCR] Sending API request to Gemini (prompt: ${ocrPrompt.length} chars)`)
+    
     const result = await model.generateContent([
       ocrPrompt,
       ...imageParts
     ])
+    
+    console.log(`⏱️  [GEMINI-OCR] Gemini API call completed: ${Date.now() - apiCallStartTime}ms`)
 
     const response = await result.response
     const text = response.text()
@@ -169,6 +177,10 @@ Important: Only return the JSON object with the extracted text. Do not include a
       }
     }
 
+    const totalProcessingTime = Date.now() - functionStartTime
+    console.log(`⏱️  [GEMINI-OCR] OCR extraction completed: ${totalProcessingTime}ms`)
+    console.log(`⏱️  [GEMINI-OCR] OCR result: ${rawText.length} chars, ${totalTokenCount} tokens, $${totalCost.toFixed(6)}`)
+    
     return {
       rawText,
       usage: {
@@ -187,6 +199,10 @@ Important: Only return the JSON object with the extracted text. Do not include a
 }
 
 export async function processImagesWithGemini(files: FileMetadata[], customPrompt?: string): Promise<GeminiOCRResult[]> {
+  const functionStartTime = Date.now()
+  console.log(`⏱️  [GEMINI-PROCESS] Starting question generation for ${files.length} files`)
+  console.log(`⏱️  [GEMINI-PROCESS] Custom prompt: ${customPrompt ? 'YES' : 'NO'} (${customPrompt?.length || 0} chars)`)
+  
   const model = genAI.getGenerativeModel({ 
     model: 'gemini-2.5-flash-lite',
     generationConfig: {
@@ -196,6 +212,8 @@ export async function processImagesWithGemini(files: FileMetadata[], customPromp
   
   try {
     // Prepare image parts for Gemini
+    const imageLoadStartTime = Date.now()
+    console.log(`⏱️  [GEMINI-PROCESS] Loading ${files.length} image files from disk`)
     const imageParts = []
     
     for (const file of files) {
@@ -217,6 +235,7 @@ export async function processImagesWithGemini(files: FileMetadata[], customPromp
         throw new Error(`Failed to read file: ${file.filename}`)
       }
     }
+    console.log(`⏱️  [GEMINI-PROCESS] Image loading completed: ${Date.now() - imageLoadStartTime}ms`)
 
     // Use custom prompt if provided, otherwise use simple extraction
     const promptToUse = customPrompt || `
@@ -241,10 +260,16 @@ Return your response as a JSON object with this exact structure:
 Important: Return only the JSON object. Generate exactly 10 questions in Finnish based on the image content.`
 
     // Send request to Gemini
+    const apiCallStartTime = Date.now()
+    console.log(`⏱️  [GEMINI-PROCESS] Sending question generation request to Gemini`)
+    console.log(`⏱️  [GEMINI-PROCESS] Final prompt length: ${promptToUse.length} chars`)
+    
     const result = await model.generateContent([
       promptToUse,
       ...imageParts
     ])
+    
+    console.log(`⏱️  [GEMINI-PROCESS] Gemini API call completed: ${Date.now() - apiCallStartTime}ms`)
 
     const response = await result.response
     const text = response.text()
@@ -308,6 +333,10 @@ Important: Return only the JSON object. Generate exactly 10 questions in Finnish
     }
 
 
+    const totalProcessingTime = Date.now() - functionStartTime
+    console.log(`⏱️  [GEMINI-PROCESS] Question generation completed: ${totalProcessingTime}ms`)
+    console.log(`⏱️  [GEMINI-PROCESS] Result: ${responseText.length} chars, ${totalTokenCount} tokens, $${totalCost.toFixed(6)}`)
+    
     // Create simple results without compression
     return files.map(() => ({
       rawText: responseText,

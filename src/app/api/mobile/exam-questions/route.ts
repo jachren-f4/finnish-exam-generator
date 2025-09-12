@@ -9,11 +9,16 @@ import { supabase } from '@/lib/supabase'
 
 
 export async function POST(request: NextRequest) {
+  const overallStartTime = Date.now()
+  console.log('=== MOBILE API ENDPOINT CALLED ===')
+  console.log(`⏱️  [TIMER] Overall processing started at ${new Date().toISOString()}`)
+  
   try {
-    console.log('=== MOBILE API ENDPOINT CALLED ===')
     
     // Parse form data
+    const parseStartTime = Date.now()
     const formData = await request.formData()
+    console.log(`⏱️  [TIMER] Form data parsing: ${Date.now() - parseStartTime}ms`)
     const customPrompt = formData.get('prompt') as string
     const images = formData.getAll('images') as File[]
     
@@ -46,7 +51,9 @@ export async function POST(request: NextRequest) {
     console.log('Prompt length:', promptToUse.length, 'characters')
 
     // Process images and create file metadata
+    const fileProcessingStartTime = Date.now()
     const fileMetadataList: FileMetadata[] = []
+    console.log(`⏱️  [TIMER] Starting file processing for ${images.length} images`)
     
     // Helper function to detect proper MIME type from file extension
     const getProperMimeType = (fileName: string, providedMimeType: string): string => {
@@ -102,6 +109,7 @@ export async function POST(request: NextRequest) {
         uploadedAt: new Date()
       })
     }
+    console.log(`⏱️  [TIMER] File processing completed: ${Date.now() - fileProcessingStartTime}ms`)
 
     // Diagnostic Mode Processing
     let diagnosticImageUrls: string[] = []
@@ -110,6 +118,7 @@ export async function POST(request: NextRequest) {
     
     if (diagnosticModeEnabled) {
       console.log('=== DIAGNOSTIC MODE ENABLED ===')
+      const diagnosticStartTime = Date.now()
       
       try {
         // Upload images to Supabase Storage for visual inspection
@@ -147,6 +156,7 @@ export async function POST(request: NextRequest) {
         rawOcrText = ocrResult.rawText
         console.log('Raw OCR text length:', rawOcrText.length)
         console.log('Raw OCR preview:', rawOcrText.substring(0, 300))
+        console.log(`⏱️  [TIMER] Diagnostic processing: ${Date.now() - diagnosticStartTime}ms`)
         
       } catch (diagnosticError) {
         console.error('Diagnostic mode error:', diagnosticError)
@@ -157,17 +167,21 @@ export async function POST(request: NextRequest) {
     // Process with Gemini using legacy mode
     console.log('Starting Gemini processing...')
     console.log('=== USING LEGACY MODE ===')
-    const startTime = Date.now()
+    const geminiStartTime = Date.now()
+    console.log(`⏱️  [TIMER] Gemini processing started with prompt length: ${promptToUse.length} chars`)
     
     // Use legacy processing method
     const geminiResults = await processImagesWithGemini(fileMetadataList, promptToUse)
     const result = geminiResults[0] // Take first result since we process all images together
     
-    const endTime = Date.now()
-    const processingTime = endTime - startTime
-    console.log(`Gemini processing completed in ${processingTime}ms`)
+    const geminiEndTime = Date.now()
+    const geminiProcessingTime = geminiEndTime - geminiStartTime
+    console.log(`⏱️  [TIMER] Gemini processing completed: ${geminiProcessingTime}ms`)
+    console.log(`⏱️  [TIMER] Gemini tokens - Input: ${result.geminiUsage?.promptTokenCount}, Output: ${result.geminiUsage?.candidatesTokenCount}, Cost: $${result.geminiUsage?.estimatedCost?.toFixed(6)}`)
 
     // Clean up uploaded files
+    const cleanupStartTime = Date.now()
+    console.log(`⏱️  [TIMER] Starting file cleanup for ${fileMetadataList.length} files`)
     for (const fileMetadata of fileMetadataList) {
       const filePath = path.join('/tmp', `${fileMetadata.id}${path.extname(fileMetadata.filename)}`)
       try {
@@ -177,11 +191,13 @@ export async function POST(request: NextRequest) {
         console.warn(`Failed to clean up file: ${fileMetadata.filename}`, error)
       }
     }
+    console.log(`⏱️  [TIMER] File cleanup completed: ${Date.now() - cleanupStartTime}ms`)
 
     console.log('Using Gemini response for exam creation')
 
     // Create web exam from the response
     console.log('=== ATTEMPTING TO CREATE EXAM ===')
+    const examCreationStartTime = Date.now()
     console.log('Raw text length:', result.rawText?.length || 0)
     console.log('Raw text preview:', result.rawText?.substring(0, 200) || 'No raw text')
     
@@ -200,6 +216,7 @@ export async function POST(request: NextRequest) {
       // Use the prompt that was sent to Gemini
       const actualPromptUsed = promptToUse
       examResult = await createExam(result.rawText, actualPromptUsed, diagnosticDataToPass, result.geminiUsage)
+      console.log(`⏱️  [TIMER] Exam creation: ${Date.now() - examCreationStartTime}ms`)
       console.log('Exam creation result:', examResult ? 'SUCCESS' : 'NULL')
       if (!examResult) {
         console.log('WARNING: Exam creation returned null - check exam processing and Supabase connection')
@@ -210,12 +227,20 @@ export async function POST(request: NextRequest) {
       console.error('Error stack:', examError instanceof Error ? examError.stack : 'No stack trace')
     }
 
+    const overallProcessingTime = Date.now() - overallStartTime
+    console.log(`⏱️  [TIMER] === OVERALL PROCESSING COMPLETED: ${overallProcessingTime}ms ===`)
+    console.log(`⏱️  [TIMER] Performance breakdown:`)
+    console.log(`⏱️  [TIMER] - Gemini processing: ${geminiProcessingTime}ms (${Math.round(geminiProcessingTime/overallProcessingTime*100)}%)`)
+    console.log(`⏱️  [TIMER] - File operations: ${Date.now() - fileProcessingStartTime - cleanupStartTime}ms`)
+    console.log(`⏱️  [TIMER] - Database operations: ${Date.now() - examCreationStartTime}ms`)
+    
     // Return clean mobile response with exam URLs at root level
     return NextResponse.json({
       success: true,
       data: {
         metadata: {
-          processingTime,
+          processingTime: overallProcessingTime,
+          geminiProcessingTime,
           imageCount: images.length,
           promptUsed: customPrompt && customPrompt.trim() !== '' ? 'custom' : 'default',
           processingMode: 'legacy',
