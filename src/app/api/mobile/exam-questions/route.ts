@@ -302,7 +302,9 @@ export async function POST(request: NextRequest) {
         diagnosticEnabled: false
       } : undefined)
 
-      examResult = await createExam(result.rawText, promptToUse, diagnosticDataToPass)
+      // Use the actual enhanced prompt that was sent to Gemini (if available)
+      const actualPromptUsed = result.fullPromptUsed || promptToUse
+      examResult = await createExam(result.rawText, actualPromptUsed, diagnosticDataToPass)
       console.log('Exam creation result:', examResult ? 'SUCCESS' : 'NULL')
       if (!examResult) {
         console.log('WARNING: Exam creation returned null - check exam processing and Supabase connection')

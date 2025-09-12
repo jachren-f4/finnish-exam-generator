@@ -445,6 +445,7 @@ Important: Only return the JSON object with the extracted text. Do not include a
     // Create simple results without compression
     return files.map(() => ({
       rawText: responseText,
+      fullPromptUsed: promptToUse, // Add the actual enhanced prompt sent to Gemini
       compressed: {
         vocabulary: { tokens: [], phrases: [] },
         body: { segments: [] },
@@ -597,6 +598,7 @@ ${basePrompt}`
 
     return {
       rawText: responseText,
+      fullPromptUsed: fullPrompt, // Add the actual enhanced prompt sent to Gemini
       compressed: {
         vocabulary: { tokens: [], phrases: [] },
         body: { segments: [] },
@@ -616,8 +618,7 @@ ${basePrompt}`
         inputCost,
         outputCost,
         model: 'gemini-2.5-flash-lite'
-      },
-      fullPromptUsed: fullPrompt
+      }
     }
   } catch (error) {
     throw new Error(`Structured question generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
