@@ -6,6 +6,7 @@ export interface FileMetadata {
   width?: number
   height?: number
   uploadedAt: Date
+  base64Data?: string
 }
 
 export interface CompressionSchema {
