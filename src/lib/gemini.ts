@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { FileMetadata, CompressionSchema } from '@/types'
 import { GEMINI_CONFIG, PROMPTS, getGeminiApiKey } from './config'
 import { safeJsonParse, parseOcrResponse } from './utils/json-handler'
-import { calculateGeminiCost, createUsageMetadata, CostTracker } from './utils/cost-calculator'
+import { createUsageMetadata, CostTracker } from './utils/cost-calculator'
 import { GeminiLogger, OperationTimer } from './utils/performance-logger'
 
 const genAI = new GoogleGenerativeAI(getGeminiApiKey())
@@ -50,7 +50,7 @@ export async function extractRawTextFromImages(imageParts: any[]): Promise<RawOC
   const ocrPrompt = PROMPTS.OCR_EXTRACTION
 
   try {
-    const apiTimer = timer.startPhase('Gemini API Call')
+    timer.startPhase('Gemini API Call')
     GeminiLogger.logOcrPhase(`Sending API request to Gemini (prompt: ${ocrPrompt.length} chars)`)
     
     const result = await model.generateContent([
@@ -72,7 +72,7 @@ export async function extractRawTextFromImages(imageParts: any[]): Promise<RawOC
     const rawText = parseResult.success && parseResult.data?.rawText ? parseResult.data.rawText : text
     timer.endPhase('Response Parsing')
 
-    const breakdown = timer.complete({
+    timer.complete({
       imageCount: imageParts.length,
       resultLength: rawText.length,
       parseMethod: parseResult.method || 'direct'
@@ -156,7 +156,7 @@ export async function processImagesWithGemini(files: FileMetadata[], customPromp
     timer.endPhase('Response Parsing')
 
 
-    const breakdown = timer.complete({
+    timer.complete({
       fileCount: files.length,
       promptLength: promptToUse.length,
       resultLength: responseText.length,

@@ -26,7 +26,7 @@ export interface ProcessedFile {
  */
 export function getProperMimeType(fileName: string, providedMimeType: string): string {
   // If provided MIME type is valid image type, use it
-  if (FILE_CONFIG.ALLOWED_MIME_TYPES.includes(providedMimeType.toLowerCase())) {
+  if (FILE_CONFIG.ALLOWED_MIME_TYPES.includes(providedMimeType.toLowerCase() as any)) {
     return providedMimeType
   }
   
@@ -61,7 +61,7 @@ export function validateImageFiles(files: File[]): FileValidationResult {
 
     // Check MIME type
     const detectedMimeType = getProperMimeType(file.name, file.type)
-    if (!FILE_CONFIG.ALLOWED_MIME_TYPES.includes(detectedMimeType)) {
+    if (!FILE_CONFIG.ALLOWED_MIME_TYPES.includes(detectedMimeType as any)) {
       errors.push(`Image ${index + 1} (${file.name}) has unsupported type: ${file.type}`)
     }
 

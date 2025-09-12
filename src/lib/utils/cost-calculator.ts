@@ -73,7 +73,6 @@ export function createUsageMetadata(
   // Use actual metadata if available, otherwise estimate
   const promptTokenCount = actualUsageMetadata?.promptTokenCount || estimateTokenCount(promptText)
   const candidatesTokenCount = actualUsageMetadata?.candidatesTokenCount || estimateTokenCount(responseText)
-  const totalTokenCount = actualUsageMetadata?.totalTokenCount || promptTokenCount + candidatesTokenCount
 
   return calculateGeminiCost(promptTokenCount, candidatesTokenCount, {
     ...options,

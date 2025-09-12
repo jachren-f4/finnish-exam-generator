@@ -3,8 +3,6 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { ExamCreator, ExamCreationOptions } from './services/exam-creator'
 import { ExamRepository } from './services/exam-repository'
 import { GEMINI_CONFIG, getGeminiApiKey, getGradingPrompt } from './config'
-import { calculateGeminiCost, CostTracker } from './utils/cost-calculator'
-import { createTimer, endTimer } from './utils/performance-logger'
 
 const genAI = new GoogleGenerativeAI(getGeminiApiKey())
 
