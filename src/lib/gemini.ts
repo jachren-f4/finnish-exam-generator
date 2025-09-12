@@ -139,9 +139,9 @@ Important: Only return the JSON object with the extracted text. Do not include a
     const candidatesTokenCount = usageMetadata?.candidatesTokenCount || estimatedOutputTokens
     const totalTokenCount = usageMetadata?.totalTokenCount || promptTokenCount + candidatesTokenCount
     
-    // Calculate costs
-    const inputCostPer1M = 0.075
-    const outputCostPer1M = 0.30
+    // Calculate costs (Gemini 2.5 Flash Lite pricing as of 2025)
+    const inputCostPer1M = 0.10   // $0.10 per 1M input tokens
+    const outputCostPer1M = 0.40  // $0.40 per 1M output tokens
     const inputCost = (promptTokenCount / 1000000) * inputCostPer1M
     const outputCost = (candidatesTokenCount / 1000000) * outputCostPer1M
     const totalCost = inputCost + outputCost
@@ -262,9 +262,9 @@ Important: Return only the JSON object. Generate exactly 10 questions in Finnish
     const candidatesTokenCount = usageMetadata?.candidatesTokenCount || estimatedOutputTokens
     const totalTokenCount = usageMetadata?.totalTokenCount || promptTokenCount + candidatesTokenCount
     
-    // Calculate estimated costs (Gemini 2.5 Flash Lite pricing as of 2024)
-    const inputCostPer1M = 0.075  // $0.075 per 1M input tokens
-    const outputCostPer1M = 0.30  // $0.30 per 1M output tokens
+    // Calculate estimated costs (Gemini 2.5 Flash Lite pricing as of 2025)
+    const inputCostPer1M = 0.10   // $0.10 per 1M input tokens
+    const outputCostPer1M = 0.40  // $0.40 per 1M output tokens
     const inputCost = (promptTokenCount / 1000000) * inputCostPer1M
     const outputCost = (candidatesTokenCount / 1000000) * outputCostPer1M
     const totalCost = inputCost + outputCost

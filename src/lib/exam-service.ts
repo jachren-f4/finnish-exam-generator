@@ -355,9 +355,9 @@ Arvioi vastaus ja anna pisteet välillä 0-${maxPoints}.`
     // Log API usage for cost tracking
     const usageMetadata = result.response.usageMetadata
     
-    // Calculate cost (Gemini 2.5 Flash Lite pricing)
-    const inputCostPer1M = 0.075  // $0.075 per 1M input tokens
-    const outputCostPer1M = 0.30  // $0.30 per 1M output tokens
+    // Calculate cost (Gemini 2.5 Flash Lite pricing as of 2025)
+    const inputCostPer1M = 0.10   // $0.10 per 1M input tokens
+    const outputCostPer1M = 0.40  // $0.40 per 1M output tokens
     
     const promptTokenCount = usageMetadata?.promptTokenCount || 0
     const candidatesTokenCount = usageMetadata?.candidatesTokenCount || 0
