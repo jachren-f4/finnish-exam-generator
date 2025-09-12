@@ -6,19 +6,21 @@ import fs from 'fs/promises'
 import path from 'path'
 import { SupabaseStorageManager } from '@/lib/storage'
 import { supabase } from '@/lib/supabase'
+import { FILE_CONFIG, PROMPTS } from '@/lib/config'
+import { FileProcessor } from '@/lib/utils/file-handler'
+import { OperationTimer, logProcessingPhase } from '@/lib/utils/performance-logger'
 
 
 export async function POST(request: NextRequest) {
-  const overallStartTime = Date.now()
+  const timer = new OperationTimer('Mobile API Processing')
   console.log('=== MOBILE API ENDPOINT CALLED ===')
-  console.log(`⏱️  [TIMER] Overall processing started at ${new Date().toISOString()}`)
   
   try {
     
     // Parse form data
-    const parseStartTime = Date.now()
+    timer.startPhase('Form Data Parsing')
     const formData = await request.formData()
-    console.log(`⏱️  [TIMER] Form data parsing: ${Date.now() - parseStartTime}ms`)
+    timer.endPhase('Form Data Parsing')
     const customPrompt = formData.get('prompt') as string
     const images = formData.getAll('images') as File[]
     
@@ -26,22 +28,22 @@ export async function POST(request: NextRequest) {
     console.log('Number of images received:', images.length)
     console.log('Processing mode: LEGACY (Standard)')
     
-    if (!images || images.length === 0) {
+    // Validate images using our file handler
+    const validation = FileProcessor.validate(images)
+    if (!validation.valid) {
       return NextResponse.json(
-        { error: 'At least one image is required' },
+        { error: validation.errors[0] },
         { status: 400 }
       )
     }
-
-    if (images.length > 5) {
-      return NextResponse.json(
-        { error: 'Maximum 5 images allowed per request' },
-        { status: 400 }
-      )
+    
+    // Log warnings if any
+    if (validation.warnings.length > 0) {
+      console.warn('File validation warnings:', validation.warnings)
     }
 
-    // Use custom prompt (required now)
-    const promptToUse = customPrompt && customPrompt.trim() !== '' ? customPrompt : 'Generate 10 exam questions in Finnish based on the image content.'
+    // Use custom prompt or fallback to default
+    const promptToUse = customPrompt && customPrompt.trim() !== '' ? customPrompt : PROMPTS.DEFAULT_EXAM_GENERATION
     console.log('Using prompt type:', customPrompt && customPrompt.trim() !== '' ? 'CUSTOM' : 'FALLBACK')
     
     // Log full prompt for quality analysis and optimization
@@ -50,66 +52,14 @@ export async function POST(request: NextRequest) {
     console.log('=== END PROMPT ===')
     console.log('Prompt length:', promptToUse.length, 'characters')
 
-    // Process images and create file metadata
-    const fileProcessingStartTime = Date.now()
-    const fileMetadataList: FileMetadata[] = []
-    console.log(`⏱️  [TIMER] Starting file processing for ${images.length} images`)
+    // Process images using our file handler
+    timer.startPhase('File Processing')
+    const processedFiles = await FileProcessor.save(images, uuidv4)
+    const fileMetadataList = processedFiles.map(file => file.metadata)
     
-    // Helper function to detect proper MIME type from file extension
-    const getProperMimeType = (fileName: string, providedMimeType: string): string => {
-      // If provided MIME type is valid image type, use it
-      const validImageMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic']
-      if (validImageMimeTypes.includes(providedMimeType.toLowerCase())) {
-        return providedMimeType
-      }
-      
-      // Fall back to file extension detection
-      const ext = path.extname(fileName).toLowerCase()
-      const mimeTypeMap: { [key: string]: string } = {
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.png': 'image/png',
-        '.webp': 'image/webp',
-        '.heic': 'image/heic',
-        '.heif': 'image/heic'
-      }
-      
-      return mimeTypeMap[ext] || 'image/jpeg' // Default to JPEG for safety
-    }
-    
-    for (let i = 0; i < images.length; i++) {
-      const image = images[i]
-      const fileId = uuidv4()
-      const fileExtension = path.extname(image.name) || '.jpg'
-      const fileName = `${fileId}${fileExtension}`
-      const filePath = path.join('/tmp', fileName)
-      
-      // Fix MIME type issue - detect proper MIME type
-      const properMimeType = getProperMimeType(image.name, image.type)
-      
-      console.log(`Processing image ${i + 1}:`)
-      console.log(`  - Original MIME type: ${image.type}`)
-      console.log(`  - Corrected MIME type: ${properMimeType}`)
-      console.log(`  - File extension: ${fileExtension}`)
-      
-      // Ensure tmp directory exists (usually exists in serverless environments)
-      await fs.mkdir('/tmp', { recursive: true })
-      
-      // Save file
-      const buffer = await image.arrayBuffer()
-      await fs.writeFile(filePath, Buffer.from(buffer))
-      
-      console.log(`Saved image ${i + 1}: ${fileName} (${buffer.byteLength} bytes)`)
-      
-      fileMetadataList.push({
-        id: fileId,
-        filename: image.name,
-        mimeType: properMimeType,
-        size: buffer.byteLength,
-        uploadedAt: new Date()
-      })
-    }
-    console.log(`⏱️  [TIMER] File processing completed: ${Date.now() - fileProcessingStartTime}ms`)
+    // Log file processing statistics
+    FileProcessor.logStats(images, processedFiles)
+    timer.endPhase('File Processing')
 
     // Diagnostic Mode Processing
     let diagnosticImageUrls: string[] = []
@@ -180,18 +130,13 @@ export async function POST(request: NextRequest) {
     console.log(`⏱️  [TIMER] Gemini tokens - Input: ${result.geminiUsage?.promptTokenCount}, Output: ${result.geminiUsage?.candidatesTokenCount}, Cost: $${result.geminiUsage?.estimatedCost?.toFixed(6)}`)
 
     // Clean up uploaded files
-    const cleanupStartTime = Date.now()
-    console.log(`⏱️  [TIMER] Starting file cleanup for ${fileMetadataList.length} files`)
-    for (const fileMetadata of fileMetadataList) {
-      const filePath = path.join('/tmp', `${fileMetadata.id}${path.extname(fileMetadata.filename)}`)
-      try {
-        await fs.unlink(filePath)
-        console.log(`Cleaned up file: ${fileMetadata.filename}`)
-      } catch (error) {
-        console.warn(`Failed to clean up file: ${fileMetadata.filename}`, error)
-      }
+    timer.startPhase('File Cleanup')
+    const cleanupResult = await FileProcessor.cleanupByMetadata(fileMetadataList)
+    console.log(`Cleaned up ${cleanupResult.cleaned} files${cleanupResult.errors.length > 0 ? ` (${cleanupResult.errors.length} errors)` : ''}`)
+    if (cleanupResult.errors.length > 0) {
+      console.warn('Cleanup errors:', cleanupResult.errors)
     }
-    console.log(`⏱️  [TIMER] File cleanup completed: ${Date.now() - cleanupStartTime}ms`)
+    timer.endPhase('File Cleanup')
 
     console.log('Using Gemini response for exam creation')
 
@@ -227,24 +172,25 @@ export async function POST(request: NextRequest) {
       console.error('Error stack:', examError instanceof Error ? examError.stack : 'No stack trace')
     }
 
-    const overallProcessingTime = Date.now() - overallStartTime
-    console.log(`⏱️  [TIMER] === OVERALL PROCESSING COMPLETED: ${overallProcessingTime}ms ===`)
-    console.log(`⏱️  [TIMER] Performance breakdown:`)
-    console.log(`⏱️  [TIMER] - Gemini processing: ${geminiProcessingTime}ms (${Math.round(geminiProcessingTime/overallProcessingTime*100)}%)`)
-    console.log(`⏱️  [TIMER] - File operations: ${Date.now() - fileProcessingStartTime - cleanupStartTime}ms`)
-    console.log(`⏱️  [TIMER] - Database operations: ${Date.now() - examCreationStartTime}ms`)
+    const breakdown = timer.complete({
+      imageCount: images.length,
+      promptType: customPrompt && customPrompt.trim() !== '' ? 'custom' : 'default',
+      geminiProcessingTime,
+      examCreated: !!examResult
+    })
     
     // Return clean mobile response with exam URLs at root level
     return NextResponse.json({
       success: true,
       data: {
         metadata: {
-          processingTime: overallProcessingTime,
+          processingTime: breakdown.totalDuration,
           geminiProcessingTime,
           imageCount: images.length,
           promptUsed: customPrompt && customPrompt.trim() !== '' ? 'custom' : 'default',
           processingMode: 'legacy',
           geminiUsage: result.geminiUsage,
+          performanceBreakdown: breakdown.phases,
           ...(diagnosticModeEnabled && {
             diagnostic: {
               enabled: true,

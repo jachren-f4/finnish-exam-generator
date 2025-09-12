@@ -1,52 +1,16 @@
 import { supabase, DbExam, ExamData, StudentAnswer, GradingResult } from './supabase'
 import { processGeminiResponse, createFallbackExam } from './exam-transformer'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { ExamCreator, ExamCreationOptions } from './services/exam-creator'
+import { ExamRepository } from './services/exam-repository'
+import { GEMINI_CONFIG, getGeminiApiKey, getGradingPrompt } from './config'
+import { calculateGeminiCost, aggregateUsageMetadata, CostTracker } from './utils/cost-calculator'
+import { createTimer, endTimer } from './utils/performance-logger'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const genAI = new GoogleGenerativeAI(getGeminiApiKey())
 
-const GEMINI_GRADING_PROMPT = `Arvioi seuraava opiskelijan vastaus suomenkielisessä kokeessa älykkäästi ja oikeudenmukaisesti.
 
-KRIITTINEN PROSESSI:
-1. ANALYSOI KYSYMYS ENSIN:
-   - Mitä kysymys tarkalleen ottaen pyytää? (määrä, tyyppi, formaatti)
-   - Onko kysymyksessä määrällistä vaatimusta? (esim. "kaksi", "kolme", "yksi")
-   - Mikä on kysymyksen ydinasia ja tavoite?
-
-2. VERTAA MALLIVASTAUS KYSYMYKSEEN:
-   - Vastaako mallivastaus kysymyksen vaatimuksia?
-   - Jos mallivastaus sisältää enemmän vaihtoehtoja kuin pyydetty, tulkitse se järkevästi
-   - Huomioi että "tai" tarkoittaa vaihtoehtoja, ei kaikkia yhdessä
-
-3. ARVIOI OPISKELIJAN VASTAUS:
-   - Täyttääkö vastaus kysymyksen vaatimukset?
-   - Jos opiskelija antaa oikean määrän oikeita vastauksia, anna täydet pisteet
-   - ÄLYKÄS TULKINTA: Jos kysytään "kaksi soitinta" ja opiskelija antaa tarkalleen kaksi oikeaa soitinta, se on täydellinen vastaus riippumatta malliovastauksen muotoilusta
-
-ARVIOINTI KRITEERIT (Suomalainen asteikko 4-10):
-- 10: Täydellinen vastaus, täyttää kysymyksen vaatimukset täysin
-- 9: Erinomainen vastaus, pieniä muotoiluvirheitä
-- 8: Hyvä vastaus, sisältää oleelliset asiat
-- 7: Tyydyttävä vastaus, joitain aukkoja
-- 6: Välttävä vastaus, perustiedot hallussa
-- 5: Heikko vastaus, merkittäviä puutteita
-- 4: Hylätty, ei täytä kysymyksen perusvaatimuksia
-
-TÄRKEÄT OHJEET:
-- PRIORISOI KYSYMYKSEN VAATIMUKSET mallivastauksen yli
-- Hyväksy synonyymit ja vaihtoehtoiset ilmaisutavat
-- Jos opiskelijan vastaus täyttää kysymyksen vaatimukset paremmin kuin mallivastaus antaa ymmärtää, anna oikeudenmukainen arviointi
-- Anna rakentavaa palautetta suomeksi
-- Selitä päättelysi selkeästi
-
-Palauta VAIN JSON-objekti:
-{
-  "points_awarded": [0-max_points välillä],
-  "percentage": [0-100],
-  "feedback": "Yksityiskohtainen palaute suomeksi",
-  "grade_reasoning": "Selitä miksi annoit juuri nämä pisteet, erityisesti jos kysymyksen vaatimukset vs mallivastaus eroavat"
-}`
-
-// Create a new exam from Gemini response
+// Create a new exam from Gemini response - using new ExamCreator service
 export async function createExam(
   geminiResponse: string, 
   promptUsed?: string,
@@ -65,166 +29,18 @@ export async function createExam(
     model: string
   }
 ): Promise<{ examId: string; examUrl: string; gradingUrl: string } | null> {
-  const examCreationStartTime = Date.now()
-  console.log(`⏱️  [EXAM-CREATE] Starting exam creation from ${geminiResponse.length} char response`)
-  
-  try {
-    console.log('=== CREATE EXAM DEBUG ===')
-    console.log('Input response length:', geminiResponse?.length || 0)
-    console.log('Input preview:', geminiResponse?.substring(0, 100) || 'No input')
-    
-    // Transform Gemini response to database format
-    const responseProcessingStartTime = Date.now()
-    console.log(`⏱️  [EXAM-CREATE] Processing Gemini response`)
-    let examData = processGeminiResponse(geminiResponse)
-    console.log(`⏱️  [EXAM-CREATE] Response processing: ${Date.now() - responseProcessingStartTime}ms`)
-    console.log('processGeminiResponse result:', examData ? 'SUCCESS' : 'FAILED')
-    
-    // Create fallback if Gemini response is invalid
-    if (!examData) {
-      console.log('Creating fallback exam')
-      examData = createFallbackExam(geminiResponse)
-      console.log('Fallback exam result:', examData ? 'SUCCESS' : 'FAILED')
-    }
-    
-    if (!examData) {
-      console.error('ERROR: Both processGeminiResponse and createFallbackExam failed')
-      return null
-    }
-    
-    console.log('About to insert into Supabase...')
-    console.log('Exam data structure check:', {
-      hasExam: !!examData.exam,
-      hasSubject: !!examData.exam?.subject,
-      hasGrade: !!examData.exam?.grade,
-      questionsCount: examData.exam?.questions?.length || 0,
-      hasPrompt: !!promptUsed
-    })
-    
-    const dbInsertStartTime = Date.now()
-    console.log(`⏱️  [EXAM-CREATE] Inserting exam into database`)
-
-    // Add prompt to exam data for analysis
-    const examDataWithPrompt = {
-      ...examData,
-      metadata: {
-        ...examData.metadata,
-        prompt_used: promptUsed,
-        prompt_length: promptUsed?.length || 0,
-        created_at: new Date().toISOString()
-      }
-    }
-
-    // Insert exam into database
-    const insertData: any = {
-      subject: examData.exam.subject,
-      grade: examData.exam.grade,
-      exam_json: examDataWithPrompt,
-      status: 'created',
-      prompt_text: promptUsed || null,
-      prompt_type: promptUsed && promptUsed.trim() !== '' ? 'custom' : 'default',
-      prompt_length: promptUsed?.length || 0
-    }
-
-    // Add diagnostic data if available
-    if (diagnosticData?.diagnosticEnabled) {
-      insertData.diagnostic_image_urls = diagnosticData.imageUrls
-      insertData.ocr_raw_text = diagnosticData.rawOcrText
-      insertData.diagnostic_enabled = true
-      console.log('Including diagnostic data:', {
-        imageUrls: diagnosticData.imageUrls.length,
-        rawOcrTextLength: diagnosticData.rawOcrText.length
-      })
-    }
-
-    // Add Gemini usage data for cost tracking if available
-    if (geminiUsage) {
-      insertData.creation_gemini_usage = geminiUsage
-      console.log('Including Gemini usage data:', {
-        totalTokens: geminiUsage.totalTokenCount,
-        estimatedCost: geminiUsage.estimatedCost.toFixed(6)
-      })
-    }
-
-    const { data: exam, error } = await supabase
-      .from('exams')
-      .insert(insertData)
-      .select('exam_id')
-      .single()
-    
-    console.log(`⏱️  [EXAM-CREATE] Database insert: ${Date.now() - dbInsertStartTime}ms`)
-
-    if (error) {
-      console.error('SUPABASE INSERT ERROR:', error)
-      console.error('Error code:', error.code)
-      console.error('Error message:', error.message)
-      console.error('Error details:', error.details)
-      return null
-    }
-    
-    console.log('Supabase insert successful! Exam ID:', exam?.exam_id)
-
-    const examId = exam.exam_id
-    const baseUrl = 'https://exam-generator.vercel.app'
-    
-    const totalExamCreationTime = Date.now() - examCreationStartTime
-    console.log(`⏱️  [EXAM-CREATE] Exam creation completed: ${totalExamCreationTime}ms`)
-    console.log(`⏱️  [EXAM-CREATE] Exam ID: ${examId}`)
-
-    return {
-      examId,
-      examUrl: `${baseUrl}/exam/${examId}`,
-      gradingUrl: `${baseUrl}/grading/${examId}`
-    }
-
-  } catch (error) {
-    const totalExamCreationTime = Date.now() - examCreationStartTime
-    console.error(`⏱️  [EXAM-CREATE] Exam creation failed after ${totalExamCreationTime}ms:`, error)
-    return null
+  const options: ExamCreationOptions = {
+    promptUsed,
+    diagnosticData,
+    geminiUsage
   }
+  
+  return ExamCreator.createFromGeminiResponse(geminiResponse, options)
 }
 
-// Get exam data for taking (without answers)
+// Get exam data for taking (without answers) - using new ExamRepository
 export async function getExamForTaking(examId: string): Promise<ExamData | null> {
-  try {
-    const { data: exam, error } = await supabase
-      .from('exams')
-      .select('*')
-      .eq('exam_id', examId)
-      .eq('status', 'created')
-      .single()
-
-    if (error || !exam) {
-      return null
-    }
-
-    // Transform database exam to display format (remove answers)
-    const examJson = exam.exam_json
-    const questions = examJson.exam.questions.map((q: any) => ({
-      id: q.id,
-      question_text: q.question_text,
-      question_type: q.question_type,
-      options: q.options,
-      max_points: q.max_points
-      // Note: answer_text and explanation excluded for exam taking
-    }))
-
-    const totalPoints = questions.reduce((sum: number, q: any) => sum + q.max_points, 0)
-
-    return {
-      exam_id: exam.exam_id,
-      subject: exam.subject,
-      grade: exam.grade,
-      status: exam.status,
-      created_at: exam.created_at,
-      questions,
-      total_questions: questions.length,
-      max_total_points: totalPoints
-    }
-
-  } catch (error) {
-    return null
-  }
+  return ExamRepository.findForTaking(examId)
 }
 
 // Get exam state for reuse/review - checks if exam has been completed at least once
@@ -235,14 +51,9 @@ export async function getExamState(examId: string): Promise<{
   canReuse: boolean
 } | null> {
   try {
-    // First check if exam exists (any status)
-    const { data: exam, error: examError } = await supabase
-      .from('exams')
-      .select('*')
-      .eq('exam_id', examId)
-      .single()
-
-    if (examError || !exam) {
+    // Get exam data
+    const exam = await ExamRepository.findById(examId)
+    if (!exam) {
       return null
     }
 
@@ -257,28 +68,10 @@ export async function getExamState(examId: string): Promise<{
     const hasBeenCompleted = !gradingError && grading && grading.length > 0
     const latestGrading = hasBeenCompleted ? grading[0] : null
 
-    // Transform database exam to display format (remove answers for fresh attempts)
-    const examJson = exam.exam_json
-    const questions = examJson.exam.questions.map((q: any) => ({
-      id: q.id,
-      question_text: q.question_text,
-      question_type: q.question_type,
-      options: q.options,
-      max_points: q.max_points
-      // Note: answer_text and explanation excluded for exam taking
-    }))
-
-    const totalPoints = questions.reduce((sum: number, q: any) => sum + q.max_points, 0)
-
-    const examData: ExamData = {
-      exam_id: exam.exam_id,
-      subject: exam.subject,
-      grade: exam.grade,
-      status: exam.status,
-      created_at: exam.created_at,
-      questions,
-      total_questions: questions.length,
-      max_total_points: totalPoints
+    // Use repository method to get exam for taking (properly formatted)
+    const examData = await ExamRepository.findForTaking(examId)
+    if (!examData) {
+      return null
     }
 
     return {
@@ -335,7 +128,7 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
         grade_scale: '4-10',
         grading_json: gradingResult,
         final_grade: gradingResult.final_grade,
-        grading_prompt: GEMINI_GRADING_PROMPT
+        grading_prompt: getGradingPrompt()
       })
 
     if (gradingError) {
@@ -627,7 +420,7 @@ async function gradeExam(exam: DbExam, studentAnswers: StudentAnswer[]): Promise
         primary_method: geminiGradedCount > ruleBasedGradedCount ? 'gemini' : 'rule-based',
         gemini_available: !!process.env.GEMINI_API_KEY,
         total_gemini_usage: totalGeminiUsage,
-        grading_prompt: GEMINI_GRADING_PROMPT
+        grading_prompt: getGradingPrompt()
       }
     }
 
