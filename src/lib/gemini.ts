@@ -333,10 +333,26 @@ STEP 1: Extract text from each image separately
 - Maintain page boundaries - do NOT merge or mix content between different images
 - Keep each page's content distinct and separate
 
-STEP 2: Generate questions
-${customPrompt}
+STEP 2: MANDATORY TOPIC ANALYSIS
+Before creating any questions, you MUST:
+1. Examine each image/page separately and identify its main academic subject
+2. Determine if all pages belong to the same subject area (e.g., all physics, all biology, all history)
+3. If pages contain DIFFERENT academic subjects, choose the MOST PROMINENT subject and ignore others
+4. State your decision: "Topic detected: [SUBJECT NAME]" or "Mixed topics detected - focusing on: [CHOSEN SUBJECT]"
 
-CRITICAL: When generating questions, respect page boundaries. If images contain different topics or subjects, generate questions that are clearly focused on specific content rather than mixing concepts from different pages.
+CRITICAL TOPIC SEPARATION RULES:
+- NEVER mix different academic subjects (physics + biology, history + chemistry, etc.)
+- If you detect unrelated subjects, pick ONE and ignore the rest
+- Each question must use content from the same subject area only
+- When in doubt, focus on the topic with the most content
+
+STEP 3: Generate questions
+${customPrompt.replace('- **Topic relevance**: Only create questions directly related to the main topic and content of the text.', '- **Topic relevance**: Only create questions directly related to the SINGLE TOPIC identified in Step 2.')}
+
+VALIDATION CHECK before finalizing:
+- Verify all questions are about the same subject area
+- Ensure no mixing of unrelated academic topics
+- Confirm topic coherence across all questions
 
 Important: Return only the JSON response as specified in the task instructions. Do not include any additional explanations or notes.
 ` : `
