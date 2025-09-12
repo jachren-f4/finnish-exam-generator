@@ -10,24 +10,38 @@ export default function FileUpload() {
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
-  const [customPrompt, setCustomPrompt] = useState(`Your task:
-- Based on the provided text, generate up to 10 high-quality exam questions in Finnish.
-- Your main goal is quality over quantity. If the text can only support 5 good questions, generate only 5.
+  const [customPrompt, setCustomPrompt] = useState(`# Prompt: Finnish Exam Question Generation
 
-Core Requirements:
+### Your task:
+- Based on the provided text, generate up to **10 high-quality exam questions in Finnish**.
+- Your main goal is **quality over quantity**. If the text can only support 5 good questions, generate only 5.
 
-1.  **Language and Accuracy**: Ensure 100% correct Finnish. This includes perfect grammar, spelling, and vocabulary. You must interpret and correct any OCR errors or non-Finnish words found in the source text.
+### Core Requirements:
 
-2.  **Question Content and Variety**: Every question must be unique and self-contained.
-    - **Test Different Information**: Each question must test a different fact or concept. Do not create two questions that ask for the same answer. For example, if you ask "What is the capital of Finland?", do not also ask "Which city is Finland's capital?".
-    - **Make Questions Standalone**: A student should understand the question without having read the original text. NEVER use phrases like "according to the text" or "in this context."
+1.  **Language and Accuracy**:
+    - Ensure **100% correct Finnish**. This includes perfect grammar, spelling, and vocabulary.
+    - You must interpret and correct any OCR errors or non-Finnish words found in the source text.
 
-3.  **Structure and Answers**:
+2.  **Question Content and Variety**:
+    - Every question must be **unique and self-contained**.
+    - **Test Different Information**: Each question must test a different fact or concept. Do not create two questions that ask for the same answer.
+    - **Make Questions Standalone**: A student should understand the question without having read the original text. **NEVER** use phrases like "according to the text" or "in this context."
+
+3.  **Ensure Questions are Practical and Sensible**:
+    - All questions must be practical and make sense to a child. They must test the main concepts and learning goals of the text, not the literal definitions of the words themselves.
+    - **Example of what to AVOID**: If the text says to "move the toothbrush regularly," you must **AVOID** creating a nonsense question like:
+      > *"Mitä hammasharjan säännöllinen liikutus tarkoittaa?"* (What does the regular movement of a toothbrush mean?).
+    - **Example of what to DO**: Instead, create a question that tests the actual health concept, such as:
+      > *"Miksi on tärkeää harjata hampaat säännöllisesti?"* (Why is it important to brush teeth regularly?)
+    - **Guiding Principle**: Focus your questions on the **"why"** and **"what"** of the topic (e.g., why is hygiene important, what are the parts of a plant), not on the definition of specific words.
+
+4.  **Structure and Answers**:
     - **Question Types**: Include a balanced mix of multiple-choice, true/false, and short-answer questions.
     - **Difficulty**: Target students around ages 10-12 (grades 4-6).
     - **Answers and Explanations**: Provide a correct answer and a brief explanation in Finnish for every single question.
 
-Output format:
+### Output format:
+
 Your final output must be a single, valid JSON object with the exact structure shown below.
 
 {
@@ -38,21 +52,21 @@ Your final output must be a single, valid JSON object with the exact structure s
       "question": "Question text in Finnish",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correct_answer": "Option A",
-      "explanation": "Brief explanation in Finnish"
+      "explanation": "One-sentence explanation in Finnish"
     },
     {
       "id": 2,
       "type": "true_false",
       "question": "Statement in Finnish",
       "correct_answer": true,
-      "explanation": "Brief explanation in Finnish"
+      "explanation": "One-sentence explanation in Finnish"
     },
     {
       "id": 3,
       "type": "short_answer",
       "question": "Question in Finnish",
       "correct_answer": "Expected answer",
-      "explanation": "Brief explanation in Finnish"
+      "explanation": "One-sentence explanation in Finnish"
     }
   ],
   "topic": "Brief description of the main topic covered",
