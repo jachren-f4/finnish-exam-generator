@@ -1,10 +1,9 @@
 import { supabase, DbExam, ExamData, StudentAnswer, GradingResult } from './supabase'
-import { processGeminiResponse, createFallbackExam } from './exam-transformer'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { ExamCreator, ExamCreationOptions } from './services/exam-creator'
 import { ExamRepository } from './services/exam-repository'
 import { GEMINI_CONFIG, getGeminiApiKey, getGradingPrompt } from './config'
-import { calculateGeminiCost, aggregateUsageMetadata, CostTracker } from './utils/cost-calculator'
+import { calculateGeminiCost, CostTracker } from './utils/cost-calculator'
 import { createTimer, endTimer } from './utils/performance-logger'
 
 const genAI = new GoogleGenerativeAI(getGeminiApiKey())
@@ -161,9 +160,9 @@ async function gradeQuestionWithGemini(
   usage_metadata?: any;
 } | null> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+    const model = genAI.getGenerativeModel({ model: GEMINI_CONFIG.MODEL_NAME })
     
-    const contextPrompt = `${GEMINI_GRADING_PROMPT}
+    const contextPrompt = `${getGradingPrompt()}
 
 KYSYMYKSEN TIEDOT:
 Kysymys: "${question.question_text}"

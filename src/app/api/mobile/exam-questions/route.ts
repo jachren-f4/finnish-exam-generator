@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { processImagesWithGemini, extractRawTextFromImages } from '@/lib/gemini'
-import { FileMetadata } from '@/types'
 import { v4 as uuidv4 } from 'uuid'
 import fs from 'fs/promises'
 import path from 'path'
 import { SupabaseStorageManager } from '@/lib/storage'
-import { supabase } from '@/lib/supabase'
-import { FILE_CONFIG, PROMPTS } from '@/lib/config'
+import { PROMPTS } from '@/lib/config'
 import { FileProcessor } from '@/lib/utils/file-handler'
-import { OperationTimer, logProcessingPhase } from '@/lib/utils/performance-logger'
+import { OperationTimer } from '@/lib/utils/performance-logger'
 
 
 export async function POST(request: NextRequest) {
