@@ -77,7 +77,6 @@ export class RetryOrchestrator {
     for (let attempt = 1; ; attempt++) {
       try {
         logger.debug('Executing operation', {
-          operation: context.operation,
           attempt,
           ...context
         })
@@ -85,7 +84,6 @@ export class RetryOrchestrator {
         const result = await operation()
         
         logger.info('Operation succeeded', {
-          operation: context.operation,
           attempt,
           totalDuration: Date.now() - startTime,
           ...context
@@ -114,7 +112,6 @@ export class RetryOrchestrator {
         
         if (!policy || !classified.retryable || attempt >= policy.config.maxAttempts) {
           logger.warn('Operation failed - no more retries', {
-            operation: context.operation,
             attempt,
             category: classified.category,
             retryable: classified.retryable,
@@ -135,7 +132,6 @@ export class RetryOrchestrator {
         })
 
         logger.warn('Operation failed - retrying', {
-          operation: context.operation,
           attempt,
           nextAttempt: attempt + 1,
           delayMs,

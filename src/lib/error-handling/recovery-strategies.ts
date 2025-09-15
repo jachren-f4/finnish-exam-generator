@@ -101,7 +101,6 @@ export class ErrorRecoveryOrchestrator {
     const metadata: Record<string, any> = {}
 
     logger.debug('Starting operation with recovery', {
-      operation: config.operation,
       strategies: effectiveConfig.strategies,
       ...context
     })
@@ -113,7 +112,14 @@ export class ErrorRecoveryOrchestrator {
       }
 
       try {
-        const result = await this.executeWithStrategy<T>(
+        const strategyResult: {
+          success: boolean;
+          result?: T;
+          error?: Error;
+          attemptsUsed?: number;
+          totalDuration?: number;
+          metadata?: Record<string, any>
+        } = await this.executeWithStrategy<T>(
           operation,
           strategy,
           config,
@@ -121,11 +127,10 @@ export class ErrorRecoveryOrchestrator {
           lastError
         )
 
-        if (result.success) {
+        if (strategyResult.success) {
           const totalDuration = Date.now() - startTime
           
           logger.info('Operation succeeded with recovery', {
-            operation: config.operation,
             strategy,
             attempts: attemptsUsed + 1,
             duration: totalDuration,
@@ -134,27 +139,26 @@ export class ErrorRecoveryOrchestrator {
 
           return {
             success: true,
-            result: result.result,
+            result: strategyResult.result,
             strategyUsed: strategy,
-            attemptsUsed: attemptsUsed + 1,
+            attemptsUsed: (strategyResult.attemptsUsed || 0) + attemptsUsed + 1,
             totalDuration,
-            metadata: { ...metadata, ...result.metadata }
+            metadata: { ...metadata, ...(strategyResult.metadata || {}) }
           }
         }
 
-        lastError = result.error || lastError
+        lastError = strategyResult.error || lastError
         attemptsUsed++
-        
+
         // Store strategy metadata
-        metadata[`${strategy}_attempts`] = result.attemptsUsed || 1
-        metadata[`${strategy}_duration`] = result.totalDuration || 0
+        metadata[`${strategy}_attempts`] = strategyResult.attemptsUsed || 1
+        metadata[`${strategy}_duration`] = strategyResult.totalDuration || 0
 
       } catch (error) {
         lastError = error as Error
         attemptsUsed++
         
         logger.warn('Recovery strategy failed', {
-          operation: config.operation,
           strategy,
           attempts: attemptsUsed,
           error: (error as Error).message,
@@ -274,41 +278,42 @@ export class ErrorRecoveryOrchestrator {
   private async executeWithCircuitBreaker<T>(
     operation: () => Promise<T>,
     config: OperationConfig
-  ): Promise<{ success: boolean; result?: T; error?: Error }> {
+  ): Promise<{ success: boolean; result?: T; error?: Error; attemptsUsed?: number; totalDuration?: number; metadata?: Record<string, any> }> {
     try {
       // Determine appropriate circuit breaker
       const breakerConfig = this.getCircuitBreakerConfig(config)
       const breaker = circuitBreakerRegistry.getCircuitBreaker(breakerConfig)
-      
+
       const result = await breaker.execute(operation)
-      return { success: true, result }
+      return { success: true, result, attemptsUsed: 1, totalDuration: 0, metadata: { circuitBreaker: true } }
     } catch (error) {
-      return { success: false, error: error as Error }
+      return { success: false, error: error as Error, attemptsUsed: 1, totalDuration: 0, metadata: { circuitBreaker: true } }
     }
   }
 
   private async executeFallback<T>(
     config: OperationConfig
-  ): Promise<{ success: boolean; result?: T }> {
+  ): Promise<{ success: boolean; result?: T; attemptsUsed?: number; totalDuration?: number; metadata?: Record<string, any> }> {
     if (config.fallbackValue !== undefined) {
-      return { success: true, result: config.fallbackValue }
+      return { success: true, result: config.fallbackValue, attemptsUsed: 0, totalDuration: 0, metadata: { fallbackUsed: true } }
     }
-    return { success: false }
+    return { success: false, attemptsUsed: 0, totalDuration: 0 }
   }
 
   private async executeCacheFallback<T>(
     config: OperationConfig,
     context: ErrorContext
-  ): Promise<{ success: boolean; result?: T; metadata?: Record<string, any> }> {
+  ): Promise<{ success: boolean; result?: T; attemptsUsed?: number; totalDuration?: number; metadata?: Record<string, any> }> {
     // Try to get cached result - would integrate with cache manager
     logger.info('Attempting cache fallback', {
-      operation: config.operation,
       ...context
     })
 
     // Simulate cache lookup - in real implementation, use cache manager
-    return { 
-      success: false, 
+    return {
+      success: false,
+      attemptsUsed: 1,
+      totalDuration: 0,
       metadata: { cacheAttempted: true, cacheHit: false }
     }
   }
@@ -317,9 +322,9 @@ export class ErrorRecoveryOrchestrator {
     config: OperationConfig,
     context: ErrorContext,
     error?: Error | null
-  ): Promise<{ success: boolean; metadata: Record<string, any> }> {
+  ): Promise<{ success: boolean; attemptsUsed?: number; totalDuration?: number; metadata?: Record<string, any> }> {
     if (!error) {
-      return { success: false, metadata: { dlqSkipped: 'No error to queue' } }
+      return { success: false, attemptsUsed: 0, totalDuration: 0, metadata: { dlqSkipped: 'No error to queue' } }
     }
 
     try {
@@ -337,9 +342,11 @@ export class ErrorRecoveryOrchestrator {
         config.priority
       )
 
-      return { 
-        success: true, 
-        metadata: { 
+      return {
+        success: true,
+        attemptsUsed: 1,
+        totalDuration: 0,
+        metadata: {
           dlqId,
           dlqQueue: queueName,
           dlqOperation: 'queued'
@@ -347,12 +354,13 @@ export class ErrorRecoveryOrchestrator {
       }
     } catch (dlqError) {
       logger.error('Failed to add to DLQ', {
-        operation: config.operation,
         ...context
       }, dlqError as Error)
 
-      return { 
-        success: false, 
+      return {
+        success: false,
+        attemptsUsed: 1,
+        totalDuration: 0,
         metadata: { dlqError: (dlqError as Error).message }
       }
     }
@@ -361,13 +369,15 @@ export class ErrorRecoveryOrchestrator {
   private async executeGracefulDegradation<T>(
     operation: () => Promise<T>,
     config: OperationConfig
-  ): Promise<{ success: boolean; result?: T; metadata: Record<string, any> }> {
+  ): Promise<{ success: boolean; result?: T; attemptsUsed?: number; totalDuration?: number; metadata?: Record<string, any> }> {
     try {
       // Try operation with reduced functionality
       const result = await operation()
-      return { 
-        success: true, 
+      return {
+        success: true,
         result,
+        attemptsUsed: 1,
+        totalDuration: 0,
         metadata: { degradedMode: false }
       }
     } catch (error) {
@@ -380,6 +390,8 @@ export class ErrorRecoveryOrchestrator {
       return {
         success: true,
         result: config.fallbackValue,
+        attemptsUsed: 1,
+        totalDuration: 0,
         metadata: { degradedMode: true, reason: (error as Error).message }
       }
     }
@@ -387,11 +399,14 @@ export class ErrorRecoveryOrchestrator {
 
   private async executeFailFast<T>(
     error?: Error | null
-  ): Promise<{ success: boolean; error?: Error }> {
+  ): Promise<{ success: boolean; error?: Error; attemptsUsed?: number; totalDuration?: number; metadata?: Record<string, any> }> {
     // Don't attempt recovery - fail immediately
-    return { 
-      success: false, 
-      error: error || new Error('Fail fast strategy - no recovery attempted')
+    return {
+      success: false,
+      error: error || new Error('Fail fast strategy - no recovery attempted'),
+      attemptsUsed: 0,
+      totalDuration: 0,
+      metadata: { failFast: true }
     }
   }
 
@@ -408,7 +423,6 @@ export class ErrorRecoveryOrchestrator {
 
     // Log final failure
     logger.error('All recovery strategies exhausted', {
-      operation: config.operation,
       attempts,
       duration,
       strategies: recoveryConfig.strategies,

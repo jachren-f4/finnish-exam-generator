@@ -82,7 +82,7 @@ export function withAuth<T extends any[]>(
 
     // Extract token from Authorization header
     const authHeader = request.headers.get('authorization')
-    const token = TokenManager.extractBearerToken(authHeader)
+    const token = TokenManager.extractBearerToken(authHeader || undefined)
 
     if (!token) {
       // Record authentication failure
@@ -96,8 +96,7 @@ export function withAuth<T extends any[]>(
 
       if (required) {
         return ApiResponseBuilder.unauthorized(
-          'Authentication required',
-          'Missing or invalid authorization token'
+          'Authentication required - Missing or invalid authorization token'
         )
       }
       
@@ -119,16 +118,13 @@ export function withAuth<T extends any[]>(
 
       if (validation.error === 'expired' && validation.shouldRefresh) {
         return ApiResponseBuilder.unauthorized(
-          'Token expired',
-          'Please refresh your authentication token',
-          { shouldRefresh: true }
+          'Token expired - Please refresh your authentication token'
         )
       }
 
       if (required) {
         return ApiResponseBuilder.unauthorized(
-          'Authentication failed',
-          'Invalid or expired token'
+          'Authentication failed - Invalid or expired token'
         )
       }
 
@@ -151,8 +147,7 @@ export function withAuth<T extends any[]>(
         })
 
         return ApiResponseBuilder.forbidden(
-          'Insufficient permissions',
-          `Required role: ${roles.join(' or ')}`
+          `Insufficient permissions - Required role: ${roles.join(' or ')}`
         )
       }
     }
@@ -225,8 +220,7 @@ export async function handleTokenRefresh(request: NextRequest): Promise<NextResp
 
     if (!tokenPair) {
       return ApiResponseBuilder.unauthorized(
-        'Invalid refresh token',
-        'Refresh token is expired or revoked'
+        'Invalid refresh token - Refresh token is expired or revoked'
       )
     }
 
