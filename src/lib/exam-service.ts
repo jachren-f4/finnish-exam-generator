@@ -3,6 +3,7 @@ import { ExamCreator, ExamCreationOptions } from './services/exam-creator'
 import { ExamRepository } from './services/exam-repository'
 import { ExamGradingService } from './services/exam-grading-service'
 import { getGradingPrompt } from './config'
+import { DatabaseManager } from './utils/database-manager'
 
 
 // Create a new exam from Gemini response - using new ExamCreator service
@@ -53,15 +54,20 @@ export async function getExamState(examId: string): Promise<{
     }
 
     // Check if exam has been completed (has grading data)
-    const { data: grading, error: gradingError } = await supabase
-      .from('grading')
-      .select('*')
-      .eq('exam_id', examId)
-      .order('created_at', { ascending: false })
-      .limit(1)
+    const gradingResult = await DatabaseManager.executeQuery(
+      async () => {
+        return await supabase
+          .from('grading')
+          .select('*')
+          .eq('exam_id', examId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+      },
+      'Get Latest Grading'
+    )
 
-    const hasBeenCompleted = !gradingError && grading && grading.length > 0
-    const latestGrading = hasBeenCompleted ? grading[0] : null
+    const hasBeenCompleted = !gradingResult.error && !!gradingResult.data && gradingResult.data.length > 0
+    const latestGrading = hasBeenCompleted && gradingResult.data ? gradingResult.data[0] : null
 
     // Use repository method to get exam for taking (properly formatted)
     const examData = await ExamRepository.findForTaking(examId)
@@ -86,26 +92,34 @@ export async function getExamState(examId: string): Promise<{
 export async function submitAnswers(examId: string, answers: StudentAnswer[]): Promise<GradingResult | null> {
   try {
     // First, get the original exam with correct answers
-    const { data: exam, error: examError } = await supabase
-      .from('exams')
-      .select('*')
-      .eq('exam_id', examId)
-      .eq('status', 'created')
-      .single()
+    const examResult = await DatabaseManager.executeQuery(
+      async () => {
+        return await supabase
+          .from('exams')
+          .select('*')
+          .eq('exam_id', examId)
+          .eq('status', 'created')
+          .single()
+      },
+      'Get Exam for Submission'
+    )
 
-    if (examError || !exam) {
+    if (examResult.error || !examResult.data) {
       return null
     }
 
+    const exam = examResult.data
+
     // Insert student answers
-    const { error: answerError } = await supabase
-      .from('answers')
-      .insert({
+    const answerResult = await DatabaseManager.insert(
+      'answers',
+      {
         exam_id: examId,
         answers_json: { answers }
-      })
+      }
+    )
 
-    if (answerError) {
+    if (answerResult.error) {
       return null
     }
 
@@ -115,26 +129,26 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
       return null
     }
 
-    // Save grading results
-    const { error: gradingError } = await supabase
-      .from('grading')
-      .insert({
+    // Use transaction to save grading and update status atomically
+    const transactionResult = await DatabaseManager.transaction([
+      // Save grading results
+      () => DatabaseManager.insert('grading', {
         exam_id: examId,
         grade_scale: '4-10',
         grading_json: gradingResult,
         final_grade: gradingResult.final_grade,
         grading_prompt: getGradingPrompt()
-      })
+      }),
+      // Update exam status to graded
+      () => DatabaseManager.update('exams', 
+        { status: 'graded' }, 
+        { exam_id: examId }
+      )
+    ], 'Submit Answers Transaction')
 
-    if (gradingError) {
+    if (transactionResult.error) {
       return null
     }
-
-    // Update exam status to graded
-    await supabase
-      .from('exams')
-      .update({ status: 'graded' })
-      .eq('exam_id', examId)
 
     return gradingResult
 
@@ -146,20 +160,25 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
 // Get grading results
 export async function getGradingResults(examId: string): Promise<GradingResult | null> {
   try {
-    const { data: grading, error } = await supabase
-      .from('grading')
-      .select(`
-        *,
-        exams!inner(*)
-      `)
-      .eq('exam_id', examId)
-      .single()
+    const gradingResult = await DatabaseManager.executeQuery(
+      async () => {
+        return await supabase
+          .from('grading')
+          .select(`
+            *,
+            exams!inner(*)
+          `)
+          .eq('exam_id', examId)
+          .single()
+      },
+      'Get Grading Results'
+    )
 
-    if (error || !grading) {
+    if (gradingResult.error || !gradingResult.data) {
       return null
     }
 
-    return grading.grading_json as GradingResult
+    return (gradingResult.data as any).grading_json as GradingResult
 
   } catch (error) {
     return null

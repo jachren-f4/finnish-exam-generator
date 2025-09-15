@@ -29,6 +29,7 @@ export interface ErrorContext {
   method?: string
   userAgent?: string
   timestamp?: string
+  operation?: string
   additionalData?: Record<string, any>
 }
 
@@ -94,6 +95,36 @@ export const ERROR_PATTERNS = {
     category: ErrorCategory.DATABASE,
     severity: ErrorSeverity.CRITICAL,
     userMessage: 'Database connection failed. Please try again',
+    retryable: true
+  },
+  DATABASE_TIMEOUT: {
+    category: ErrorCategory.DATABASE,
+    severity: ErrorSeverity.HIGH,
+    userMessage: 'Database operation timed out. Please try again',
+    retryable: true
+  },
+  DATABASE_CONSTRAINT_VIOLATION: {
+    category: ErrorCategory.DATABASE,
+    severity: ErrorSeverity.MEDIUM,
+    userMessage: 'Data validation failed. Please check your input',
+    retryable: false
+  },
+  DATABASE_TRANSACTION_FAILED: {
+    category: ErrorCategory.DATABASE,
+    severity: ErrorSeverity.HIGH,
+    userMessage: 'Operation failed. Please try again',
+    retryable: true
+  },
+  SUPABASE_RLS_ERROR: {
+    category: ErrorCategory.DATABASE,
+    severity: ErrorSeverity.HIGH,
+    userMessage: 'Access denied. Please check your permissions',
+    retryable: false
+  },
+  SUPABASE_QUOTA_EXCEEDED: {
+    category: ErrorCategory.RATE_LIMIT,
+    severity: ErrorSeverity.HIGH,
+    userMessage: 'Service temporarily unavailable. Please try again later',
     retryable: true
   },
   EXAM_CREATION_FAILED: {
@@ -195,6 +226,7 @@ export class ErrorManager {
   private static detectErrorPattern(message: string): ErrorPatternKey | null {
     const lowerMessage = message.toLowerCase()
     
+    // File processing errors
     if (lowerMessage.includes('file too large') || lowerMessage.includes('size exceeds')) {
       return 'FILE_TOO_LARGE'
     }
@@ -204,12 +236,36 @@ export class ErrorManager {
     if (lowerMessage.includes('too many files') || lowerMessage.includes('maximum')) {
       return 'TOO_MANY_FILES'
     }
+    
+    // Gemini API errors
     if (lowerMessage.includes('gemini') && lowerMessage.includes('quota')) {
       return 'GEMINI_QUOTA_EXCEEDED'
     }
     if (lowerMessage.includes('timeout') || lowerMessage.includes('timed out')) {
       return 'GEMINI_TIMEOUT'
     }
+    
+    // Database errors
+    if (lowerMessage.includes('connection') && (lowerMessage.includes('refused') || lowerMessage.includes('failed'))) {
+      return 'DATABASE_CONNECTION_ERROR'
+    }
+    if (lowerMessage.includes('timeout') && lowerMessage.includes('database')) {
+      return 'DATABASE_TIMEOUT'
+    }
+    if (lowerMessage.includes('constraint') || lowerMessage.includes('unique') || lowerMessage.includes('foreign key')) {
+      return 'DATABASE_CONSTRAINT_VIOLATION'
+    }
+    if (lowerMessage.includes('transaction') && lowerMessage.includes('failed')) {
+      return 'DATABASE_TRANSACTION_FAILED'
+    }
+    if (lowerMessage.includes('row level security') || lowerMessage.includes('rls') || lowerMessage.includes('policy')) {
+      return 'SUPABASE_RLS_ERROR'
+    }
+    if (lowerMessage.includes('quota') && (lowerMessage.includes('supabase') || lowerMessage.includes('exceeded'))) {
+      return 'SUPABASE_QUOTA_EXCEEDED'
+    }
+    
+    // Legacy patterns
     if (lowerMessage.includes('database') || lowerMessage.includes('connection')) {
       return 'DATABASE_CONNECTION_ERROR'
     }
