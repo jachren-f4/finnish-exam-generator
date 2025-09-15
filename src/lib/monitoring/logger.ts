@@ -338,9 +338,8 @@ export class StructuredLogger {
         userId: entry.context.userId,
         sessionId: entry.context.sessionId,
         details: {
-          message: entry.message,
-          level: entry.level,
-          ...entry.context
+          errorMessage: entry.message,
+          additionalData: { level: entry.level, ...entry.context }
         }
       })
     }

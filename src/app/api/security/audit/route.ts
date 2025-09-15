@@ -160,18 +160,15 @@ function getTopResources(events: any[]): Array<{ resource: string; count: number
 }
 
 // Export with authentication (admin only), security headers, and rate limiting
-export const GET = withSecurityHeaders(
-  {
-    ...SecurityProfiles.strict,
-    cors: {
-      origins: ['https://admin.gemini-ocr.com'], // Restrict to admin interface
-      methods: ['GET', 'OPTIONS'],
-      headers: ['Content-Type', 'Authorization'],
-      credentials: true
-    }
-  },
-  withAuth(withEnhancedRateLimit(rateLimitConfigs.expensive, auditHandler))
-)
+export const GET = withSecurityHeaders({
+  ...SecurityProfiles.strict,
+  cors: {
+    origins: ['https://admin.gemini-ocr.com'], // Restrict to admin interface
+    methods: ['GET', 'OPTIONS'],
+    headers: ['Content-Type', 'Authorization'],
+    credentials: true
+  }
+})(withAuth(withEnhancedRateLimit(rateLimitConfigs.expensive, auditHandler)))
 
 // Handle CORS for audit endpoint
 export async function OPTIONS(_request: NextRequest) {

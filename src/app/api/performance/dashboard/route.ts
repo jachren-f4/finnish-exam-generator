@@ -81,18 +81,15 @@ async function dashboardHandler(request: NextRequest) {
 }
 
 // Export GET with rate limiting and security headers
-export const GET = withSecurityHeaders(
-  {
-    ...SecurityProfiles.balanced,
-    cors: {
-      origins: ['*'],
-      methods: ['GET', 'OPTIONS'],
-      headers: ['Content-Type', 'Authorization'],
-      credentials: false
-    }
-  },
-  withEnhancedRateLimit(rateLimitConfigs.expensive, dashboardHandler)
-)
+export const GET = withSecurityHeaders({
+  ...SecurityProfiles.balanced,
+  cors: {
+    origins: ['*'],
+    methods: ['GET', 'OPTIONS'],
+    headers: ['Content-Type', 'Authorization'],
+    credentials: false
+  }
+})(withEnhancedRateLimit(rateLimitConfigs.expensive, dashboardHandler))
 
 // Export metrics data in various formats
 export async function POST(request: NextRequest) {

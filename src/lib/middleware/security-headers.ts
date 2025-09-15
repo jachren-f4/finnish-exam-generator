@@ -388,7 +388,7 @@ function applySecurityHeaders(response: NextResponse, config: SecurityConfig): v
 /**
  * Pre-configured security profiles
  */
-/* export const SecurityProfiles = {
+export const SecurityProfiles = {
   // Strict security for API endpoints
   strict: {
     csp: {
@@ -466,12 +466,12 @@ function applySecurityHeaders(response: NextResponse, config: SecurityConfig): v
       credentials: true
     }
   }
-} as const satisfies Record<string, SecurityConfig> */
+} as const satisfies Record<string, SecurityConfig>
 
 /**
  * Quick setup for common API CORS
  */
-/* export const apiCors = (origins: string[] = ['*']) => withSecurityHeaders({
+export const apiCors = (origins: string[] = ['*']) => withSecurityHeaders({
   cors: {
     origins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -484,4 +484,4 @@ function applySecurityHeaders(response: NextResponse, config: SecurityConfig): v
 /**
  * Quick setup for strict API security
  */
-// export const secureAPI = withSecurityHeaders(SecurityProfiles.strict) */
+export const secureAPI = () => withSecurityHeaders(SecurityProfiles.strict)

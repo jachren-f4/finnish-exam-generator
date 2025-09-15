@@ -163,9 +163,11 @@ export class AuditLogger {
       riskLevel: details.sensitiveData ? 'high' : 'low',
       userId: details.userId,
       details: {
-        recordId: details.recordId,
         ip: details.ip,
-        sensitiveData: details.sensitiveData
+        additionalData: {
+          recordId: details.recordId,
+          sensitiveData: details.sensitiveData
+        }
       }
     })
   }
@@ -223,7 +225,7 @@ export class AuditLogger {
     }
 
     if (query.action) {
-      filteredEvents = filteredEvents.filter(e => e.action.includes(query.action))
+      filteredEvents = filteredEvents.filter(e => e.action.includes(query.action!))
     }
 
     if (query.resource) {

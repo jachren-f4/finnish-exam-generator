@@ -216,7 +216,7 @@ export class CSRFProtection {
     const tokenFromHeader = request.headers.get('x-csrf-token')
     const tokenFromCookie = request.cookies.get('csrf-token')?.value
     
-    return tokenFromHeader && tokenFromCookie && tokenFromHeader === tokenFromCookie
+    return !!(tokenFromHeader && tokenFromCookie && tokenFromHeader === tokenFromCookie)
   }
 }
 
@@ -235,8 +235,7 @@ export function withValidation<T extends any[]>(
       // CSRF Protection
       if (config.csrfProtection && !CSRFProtection.validateToken(request)) {
         return ApiResponseBuilder.forbidden(
-          'CSRF validation failed',
-          'Missing or invalid CSRF token'
+          'CSRF validation failed - Missing or invalid CSRF token'
         )
       }
 
@@ -286,7 +285,7 @@ export function withValidation<T extends any[]>(
         try {
           const validation = config.body.safeParse(body)
           if (!validation.success) {
-            validationErrors.push(...validation.error.errors.map(e => 
+            validationErrors.push(...validation.error.issues.map(e =>
               `Body ${e.path.join('.')}: ${e.message}`
             ))
           } else {
@@ -302,7 +301,7 @@ export function withValidation<T extends any[]>(
         try {
           const validation = config.query.safeParse(queryParams)
           if (!validation.success) {
-            validationErrors.push(...validation.error.errors.map(e => 
+            validationErrors.push(...validation.error.issues.map(e =>
               `Query ${e.path.join('.')}: ${e.message}`
             ))
           } else {
@@ -325,7 +324,7 @@ export function withValidation<T extends any[]>(
           const headerObj = Object.fromEntries(request.headers.entries())
           const validation = config.headers.safeParse(headerObj)
           if (!validation.success) {
-            validationErrors.push(...validation.error.errors.map(e => 
+            validationErrors.push(...validation.error.issues.map(e =>
               `Header ${e.path.join('.')}: ${e.message}`
             ))
           } else {
@@ -355,15 +354,18 @@ export function withValidation<T extends any[]>(
 
       // Return validation errors if any
       if (validationErrors.length > 0) {
-        ErrorManager.logError(new Error('Validation failed'), {
-          endpoint: request.nextUrl.pathname,
-          method: request.method,
-          additionalData: { errors: validationErrors }
-        })
+        const managedError = ErrorManager.createFromError(
+          new Error('Validation failed'),
+          {
+            endpoint: request.nextUrl.pathname,
+            method: request.method,
+            additionalData: { errors: validationErrors }
+          }
+        )
+        ErrorManager.logError(managedError)
 
         return ApiResponseBuilder.validationError(
-          'Validation failed',
-          validationErrors.join('; ')
+          'Validation failed - ' + validationErrors.join('; ')
         )
       }
 
@@ -378,15 +380,18 @@ export function withValidation<T extends any[]>(
       return handler(validatedRequest, ...args)
 
     } catch (error) {
-      ErrorManager.logError(error, {
-        endpoint: request.nextUrl.pathname,
-        method: request.method,
-        additionalData: { validationConfig: config }
-      })
+      const managedError = ErrorManager.createFromError(
+        error,
+        {
+          endpoint: request.nextUrl.pathname,
+          method: request.method,
+          additionalData: { validationConfig: config }
+        }
+      )
+      ErrorManager.logError(managedError)
 
       return ApiResponseBuilder.internalError(
-        'Validation middleware error',
-        'Unable to validate request'
+        'Validation middleware error - Unable to validate request'
       )
     }
   }
