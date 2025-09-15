@@ -226,47 +226,6 @@ export class CORSConfig {
   }
 }
 
-/**
- * Apply security headers to response
- */
-function applySecurityHeaders(response: NextResponse, config: SecurityConfig): void {
-  // Content Security Policy
-  if (config.csp?.enabled && config.csp.directives) {
-    const cspDirectives = Object.entries(config.csp.directives)
-      .map(([directive, sources]) => {
-        if (Array.isArray(sources)) {
-          return `${directive} ${sources.join(' ')}`
-        }
-        return `${directive} ${sources}`
-      })
-      .join('; ')
-
-    const cspHeader = config.csp.reportOnly ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy'
-    response.headers.set(cspHeader, cspDirectives)
-  }
-
-  // HTTP Strict Transport Security
-  if (config.hsts?.enabled) {
-    let hstsValue = `max-age=${config.hsts.maxAge || 31536000}`
-    if (config.hsts.includeSubDomains) hstsValue += '; includeSubDomains'
-    if (config.hsts.preload) hstsValue += '; preload'
-    response.headers.set('Strict-Transport-Security', hstsValue)
-  }
-
-  // X-Frame-Options
-  if (config.frameOptions) {
-    response.headers.set('X-Frame-Options', config.frameOptions)
-  }
-
-  // X-Content-Type-Options
-  if (config.contentTypeOptions) {
-    response.headers.set('X-Content-Type-Options', 'nosniff')
-  }
-
-  // Referrer Policy
-  const referrerPolicy = config.referrerPolicy || 'strict-origin-when-cross-origin'
-  response.headers.set('Referrer-Policy', referrerPolicy)
-}
 
 /**
  * Security headers middleware
@@ -418,27 +377,18 @@ function applySecurityHeaders(response: NextResponse, config: SecurityConfig): v
   }
 
   // Additional security headers
-  response.headers.set('X-Powered-By', 'GeminiOCR/1.0') // Custom header instead of revealing tech stack
+  response.headers.set('X-Powered-By', 'GeminiOCR/1.0')
   response.headers.set('X-DNS-Prefetch-Control', 'off')
   response.headers.set('X-Download-Options', 'noopen')
   response.headers.set('X-Permitted-Cross-Domain-Policies', 'none')
   response.headers.set('X-XSS-Protection', '1; mode=block')
-
-      // Call the actual handler
-      const handlerResponse = await handler(request, ...args)
-
-      // Apply security headers to the response
-      applySecurityHeaders(handlerResponse, config)
-
-      return handlerResponse
-    }
-  }
+}
 }
 
 /**
  * Pre-configured security profiles
  */
-export const SecurityProfiles = {
+/* export const SecurityProfiles = {
   // Strict security for API endpoints
   strict: {
     csp: {
@@ -516,12 +466,12 @@ export const SecurityProfiles = {
       credentials: true
     }
   }
-} as const satisfies Record<string, SecurityConfig>
+} as const satisfies Record<string, SecurityConfig> */
 
 /**
  * Quick setup for common API CORS
  */
-export const apiCors = (origins: string[] = ['*']) => withSecurityHeaders({
+/* export const apiCors = (origins: string[] = ['*']) => withSecurityHeaders({
   cors: {
     origins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -534,4 +484,4 @@ export const apiCors = (origins: string[] = ['*']) => withSecurityHeaders({
 /**
  * Quick setup for strict API security
  */
-export const secureAPI = withSecurityHeaders(SecurityProfiles.strict)
+// export const secureAPI = withSecurityHeaders(SecurityProfiles.strict) */
