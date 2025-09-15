@@ -101,12 +101,12 @@ export default function ExamPage() {
   }
 
   const isAllAnswered = () => {
-    if (!exam) return false
+    if (!exam || !exam.questions || !Array.isArray(exam.questions)) return false
     return exam.questions.every(q => answers[q.id]?.trim())
   }
 
   const getProgress = () => {
-    if (!exam) return 0
+    if (!exam || !exam.questions || !Array.isArray(exam.questions) || exam.questions.length === 0) return 0
     const answeredCount = exam.questions.filter(q => answers[q.id]?.trim()).length
     return Math.round((answeredCount / exam.questions.length) * 100)
   }
