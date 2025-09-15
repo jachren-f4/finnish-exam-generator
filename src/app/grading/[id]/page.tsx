@@ -29,7 +29,8 @@ export default function GradingPage() {
         throw new Error(errorData.error || 'Tulosten lataus epäonnistui')
       }
 
-      const gradingData = await response.json()
+      const responseData = await response.json()
+      const gradingData = responseData.data || responseData // Handle both old and new API formats
       setGrading(gradingData)
       setError('')
     } catch (err) {
@@ -142,7 +143,7 @@ export default function GradingPage() {
           
           {showAllQuestions && (
             <div className="mt-6 space-y-6">
-              {grading.questions.map((question, index) => (
+              {(grading.questions || []).map((question, index) => (
                 <div key={question.id} className="border rounded-lg p-4">
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="font-semibold text-gray-900 flex-1">
@@ -220,7 +221,7 @@ export default function GradingPage() {
             </div>
             <div>
               <p><span className="font-medium">Arvosteltu:</span> {new Date(grading.graded_at).toLocaleString('fi-FI')}</p>
-              <p><span className="font-medium">Kokeen tunnus:</span> {grading.exam_id.slice(0, 8)}...</p>
+              <p><span className="font-medium">Kokeen tunnus:</span> {grading.exam_id ? grading.exam_id.slice(0, 8) + '...' : 'Ei saatavilla'}</p>
             </div>
           </div>
           
