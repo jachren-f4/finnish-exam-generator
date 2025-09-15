@@ -142,7 +142,49 @@ export default function ExamPage() {
     )
   }
 
+  // Ensure we have valid questions array and current question exists
+  if (!exam.questions || !Array.isArray(exam.questions) || exam.questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-4">
+          <div className="text-center">
+            <div className="text-red-500 text-5xl mb-4">⚠️</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Virhe</h1>
+            <p className="text-gray-600 mb-4">Kokeen kysymyksiä ei löytynyt tai ne ovat virheellisessä muodossa</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Yritä uudelleen
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const currentQ = exam.questions[currentQuestion]
+
+  // Additional safety check for current question
+  if (!currentQ) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-4">
+          <div className="text-center">
+            <div className="text-red-500 text-5xl mb-4">⚠️</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Virhe</h1>
+            <p className="text-gray-600 mb-4">Nykyistä kysymystä ei löytynyt</p>
+            <button
+              onClick={() => setCurrentQuestion(0)}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Palaa ensimmäiseen kysymykseen
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -205,7 +247,7 @@ export default function ExamPage() {
           <>
             {/* Question Navigation */}
             <div className="flex flex-wrap gap-2 mb-6">
-              {exam.questions.map((q, index) => (
+              {(exam.questions || []).map((q, index) => (
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestion(index)}
@@ -290,7 +332,7 @@ export default function ExamPage() {
                 ← Edellinen
               </button>
 
-              {currentQuestion === exam.questions.length - 1 ? (
+              {currentQuestion === (exam.questions?.length || 0) - 1 ? (
                 <button
                   onClick={() => setShowConfirmDialog(true)}
                   disabled={!isAllAnswered()}
@@ -300,7 +342,7 @@ export default function ExamPage() {
                 </button>
               ) : (
                 <button
-                  onClick={() => setCurrentQuestion(Math.min(exam.questions.length - 1, currentQuestion + 1))}
+                  onClick={() => setCurrentQuestion(Math.min((exam.questions?.length || 0) - 1, currentQuestion + 1))}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   Seuraava →
@@ -317,7 +359,7 @@ export default function ExamPage() {
                   <div className="text-sm text-gray-600">Vastattu</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-gray-400">{exam.questions.length - Object.keys(answers).filter(id => answers[id]?.trim()).length}</div>
+                  <div className="text-2xl font-bold text-gray-400">{(exam.questions?.length || 0) - Object.keys(answers).filter(id => answers[id]?.trim()).length}</div>
                   <div className="text-sm text-gray-600">Jäljellä</div>
                 </div>
                 <div>
