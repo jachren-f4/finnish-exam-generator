@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { FileMetadata } from '@/types'
+import { ApiResponseBuilder } from '@/lib/utils/api-response'
+import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
 
 const UPLOAD_DIR = '/tmp'
 const SUPPORTED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic']
@@ -19,6 +21,11 @@ async function ensureUploadDir() {
 }
 
 export async function POST(request: NextRequest) {
+  const errorContext = {
+    endpoint: '/api/files/upload',
+    method: 'POST'
+  }
+
   try {
     await ensureUploadDir()
 
@@ -26,16 +33,26 @@ export async function POST(request: NextRequest) {
     const files = formData.getAll('file') as File[]
     
     if (!files || files.length === 0) {
-      return NextResponse.json(
-        { error: 'No files uploaded' },
-        { status: 400 }
+      const managedError = ErrorManager.createFromPattern(
+        'INVALID_REQUEST',
+        'No files provided',
+        errorContext
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.validationError(
+        'No files uploaded'
       )
     }
 
     if (files.length > MAX_FILES) {
-      return NextResponse.json(
-        { error: `Maximum ${MAX_FILES} files allowed` },
-        { status: 400 }
+      const managedError = ErrorManager.createFromPattern(
+        'TOO_MANY_FILES',
+        `Attempted to upload ${files.length} files`,
+        errorContext
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.validationError(
+        ErrorManager.getUserMessage(managedError)
       )
     }
 
@@ -86,15 +103,26 @@ export async function POST(request: NextRequest) {
 
         uploadedFiles.push(fileMetadata)
       } catch (error) {
-        console.error(`Error processing ${file.name}:`, error)
+        const managedError = ErrorManager.createFromError(
+          error instanceof Error ? error : new Error(`Processing failed for ${file.name}`),
+          { ...errorContext, additionalData: { fileName: file.name } },
+          ErrorCategory.FILE_PROCESSING
+        )
+        ErrorManager.logError(managedError)
         errors.push(`${file.name}: Processing failed`)
       }
     }
 
     if (uploadedFiles.length === 0 && errors.length > 0) {
-      return NextResponse.json(
-        { error: 'No files were successfully uploaded', details: errors },
-        { status: 400 }
+      const managedError = ErrorManager.createFromError(
+        new Error('No files were successfully uploaded'),
+        { ...errorContext, additionalData: { errors } },
+        ErrorCategory.FILE_PROCESSING
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.validationError(
+        'No files were successfully uploaded',
+        errors.join(', ')
       )
     }
 
@@ -104,12 +132,12 @@ export async function POST(request: NextRequest) {
       ...(errors.length > 0 && { warnings: errors })
     }
 
-    return NextResponse.json(response)
+    return ApiResponseBuilder.success(response)
   } catch (error) {
-    console.error('Upload error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+    const managedError = ErrorManager.handleError(error, errorContext)
+    return ApiResponseBuilder.internalError(
+      ErrorManager.getUserMessage(managedError),
+      managedError.details
     )
   }
 }

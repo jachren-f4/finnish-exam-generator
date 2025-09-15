@@ -1,18 +1,30 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getJob } from '@/lib/jobs'
+import { ApiResponseBuilder } from '@/lib/utils/api-response'
+import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const errorContext = {
+    endpoint: '/api/ocr/jobs/[id]',
+    method: 'GET'
+  }
+
   try {
     const { id: jobId } = await params
     console.log(`Looking for job with ID: ${jobId}`)
 
     if (!jobId) {
-      return NextResponse.json(
-        { error: 'Job ID is required' },
-        { status: 400 }
+      const managedError = ErrorManager.createFromPattern(
+        'INVALID_REQUEST',
+        'Job ID is required',
+        errorContext
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.validationError(
+        'Job ID is required'
       )
     }
 
@@ -20,13 +32,18 @@ export async function GET(
     console.log(`Job found:`, job ? `Status: ${job.status}` : 'null')
 
     if (!job) {
-      return NextResponse.json(
-        { error: 'Job not found' },
-        { status: 404 }
+      const managedError = ErrorManager.createFromPattern(
+        'INVALID_REQUEST',
+        'OCR job not found',
+        { ...errorContext, additionalData: { jobId } }
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.notFound(
+        'Job not found'
       )
     }
 
-    return NextResponse.json({
+    return ApiResponseBuilder.success({
       id: job.id,
       status: job.status,
       fileCount: job.files.length,
@@ -36,10 +53,10 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Error fetching job:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+    const managedError = ErrorManager.handleError(error, errorContext)
+    return ApiResponseBuilder.internalError(
+      ErrorManager.getUserMessage(managedError),
+      managedError.details
     )
   }
 }

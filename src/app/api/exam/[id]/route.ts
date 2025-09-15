@@ -1,10 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getExamForTaking, getExamState } from '@/lib/exam-service'
+import { ApiResponseBuilder } from '@/lib/utils/api-response'
+import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const errorContext = {
+    endpoint: '/api/exam/[id]',
+    method: 'GET'
+  }
+
   try {
     const resolvedParams = await params
     const examId = resolvedParams.id
@@ -12,9 +19,15 @@ export async function GET(
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!uuidRegex.test(examId)) {
-      return NextResponse.json(
-        { error: 'Virheellinen kokeen tunniste', details: 'Kokeen tunniste ei ole oikeassa muodossa' },
-        { status: 400 }
+      const managedError = ErrorManager.createFromPattern(
+        'INVALID_REQUEST',
+        'Invalid exam ID format',
+        errorContext
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.validationError(
+        'Virheellinen kokeen tunniste',
+        'Kokeen tunniste ei ole oikeassa muodossa'
       )
     }
 
@@ -22,9 +35,14 @@ export async function GET(
     const examState = await getExamState(examId)
     
     if (!examState) {
-      return NextResponse.json(
-        { error: 'Koetta ei löytynyt', details: 'Koe ei ole saatavilla tai sitä ei ole olemassa' },
-        { status: 404 }
+      const managedError = ErrorManager.createFromPattern(
+        'INVALID_REQUEST',
+        'Exam not found',
+        { ...errorContext, additionalData: { examId } }
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.notFound(
+        'Koetta ei löytynyt'
       )
     }
 
@@ -42,14 +60,19 @@ export async function GET(
         status: examState.exam?.status,
         reason: 'Exam not reusable and not in created status'
       })
-      return NextResponse.json(
-        { error: 'Koe ei ole saatavilla', details: 'Koe ei ole vielä valmis tai sitä ei voida suorittaa uudelleen' },
-        { status: 403 }
+      const managedError = ErrorManager.createFromError(
+        new Error('Exam not available for access'),
+        { ...errorContext, additionalData: { examId, status: examState.exam?.status } },
+        ErrorCategory.AUTHORIZATION
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.forbidden(
+        'Koe ei ole saatavilla'
       )
     }
 
     // Return exam data along with state information
-    return NextResponse.json({
+    return ApiResponseBuilder.success({
       ...examState.exam,
       canReuse: examState.canReuse,
       hasBeenCompleted: examState.hasBeenCompleted,
@@ -57,22 +80,19 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Error fetching exam:', error)
-    return NextResponse.json(
-      { error: 'Palvelinvirhe', details: 'Kokeen haku epäonnistui' },
-      { status: 500 }
+    const managedError = ErrorManager.handleError(error, errorContext)
+    return ApiResponseBuilder.internalError(
+      'Palvelinvirhe',
+      'Kokeen haku epäonnistui'
     )
   }
 }
 
 // Handle CORS for exam pages
 export async function OPTIONS(_request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  })
+  return ApiResponseBuilder.cors(
+    ['GET', 'OPTIONS'],
+    ['Content-Type'],
+    '*'
+  )
 }

@@ -1,10 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { submitAnswers } from '@/lib/exam-service'
+import { ApiResponseBuilder } from '@/lib/utils/api-response'
+import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const errorContext = {
+    endpoint: '/api/exam/[id]/submit',
+    method: 'POST'
+  }
+
   try {
     const resolvedParams = await params
     const examId = resolvedParams.id
@@ -12,9 +19,15 @@ export async function POST(
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!uuidRegex.test(examId)) {
-      return NextResponse.json(
-        { error: 'Virheellinen kokeen tunniste', details: 'Kokeen tunniste ei ole oikeassa muodossa' },
-        { status: 400 }
+      const managedError = ErrorManager.createFromPattern(
+        'INVALID_REQUEST',
+        'Invalid exam ID format',
+        errorContext
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.validationError(
+        'Virheellinen kokeen tunniste',
+        'Kokeen tunniste ei ole oikeassa muodossa'
       )
     }
 
@@ -22,18 +35,30 @@ export async function POST(
     const { answers } = body
 
     if (!answers || !Array.isArray(answers)) {
-      return NextResponse.json(
-        { error: 'Virheelliset vastaukset', details: 'Vastaukset täytyy antaa taulukkomuodossa' },
-        { status: 400 }
+      const managedError = ErrorManager.createFromPattern(
+        'INVALID_REQUEST',
+        'Invalid answers format',
+        { ...errorContext, additionalData: { examId } }
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.validationError(
+        'Virheelliset vastaukset',
+        'Vastaukset täytyy antaa taulukkomuodossa'
       )
     }
 
     // Validate answers format
     for (const answer of answers) {
       if (!answer.question_id || typeof answer.answer_text !== 'string') {
-        return NextResponse.json(
-          { error: 'Virheellinen vastaus', details: 'Jokainen vastaus tarvitsee question_id ja answer_text kentät' },
-          { status: 400 }
+        const managedError = ErrorManager.createFromPattern(
+          'INVALID_REQUEST',
+          'Invalid answer structure',
+          { ...errorContext, additionalData: { examId } }
+        )
+        ErrorManager.logError(managedError)
+        return ApiResponseBuilder.validationError(
+          'Virheellinen vastaus',
+          'Jokainen vastaus tarvitsee question_id ja answer_text kentät'
         )
       }
     }
@@ -41,15 +66,22 @@ export async function POST(
     const gradingResult = await submitAnswers(examId, answers)
     
     if (!gradingResult) {
-      return NextResponse.json(
-        { error: 'Vastausten lähettäminen epäonnistui', details: 'Koe ei ole saatavilla tai sitä on jo arvosteltu' },
+      const managedError = ErrorManager.createFromError(
+        new Error('Exam submission failed'),
+        { ...errorContext, additionalData: { examId } },
+        ErrorCategory.VALIDATION
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.error(
+        'Vastausten lähettäminen epäonnistui',
+        'Koe ei ole saatavilla tai sitä on jo arvosteltu',
         { status: 409 }
       )
     }
 
     const baseUrl = 'https://exam-generator.vercel.app'
 
-    return NextResponse.json({
+    return ApiResponseBuilder.success({
       success: true,
       message: 'Vastaukset lähetetty ja arvosteltu onnistuneesti',
       exam_id: examId,
@@ -61,22 +93,19 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error('Error submitting answers:', error)
-    return NextResponse.json(
-      { error: 'Palvelinvirhe', details: 'Vastausten lähettäminen epäonnistui' },
-      { status: 500 }
+    const managedError = ErrorManager.handleError(error, errorContext)
+    return ApiResponseBuilder.internalError(
+      'Palvelinvirhe',
+      'Vastausten lähettäminen epäonnistui'
     )
   }
 }
 
 // Handle CORS for exam submission
 export async function OPTIONS(_request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  })
+  return ApiResponseBuilder.cors(
+    ['POST', 'OPTIONS'],
+    ['Content-Type'],
+    '*'
+  )
 }

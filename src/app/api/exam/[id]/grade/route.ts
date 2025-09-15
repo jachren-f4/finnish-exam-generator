@@ -1,10 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getGradingResults } from '@/lib/exam-service'
+import { ApiResponseBuilder } from '@/lib/utils/api-response'
+import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const errorContext = {
+    endpoint: '/api/exam/[id]/grade',
+    method: 'GET'
+  }
+
   try {
     const resolvedParams = await params
     const examId = resolvedParams.id
@@ -12,43 +19,51 @@ export async function GET(
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!uuidRegex.test(examId)) {
-      return NextResponse.json(
-        { error: 'Virheellinen kokeen tunniste', details: 'Kokeen tunniste ei ole oikeassa muodossa' },
-        { status: 400 }
+      const managedError = ErrorManager.createFromPattern(
+        'INVALID_REQUEST',
+        'Invalid exam ID format',
+        errorContext
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.validationError(
+        'Virheellinen kokeen tunniste',
+        'Kokeen tunniste ei ole oikeassa muodossa'
       )
     }
 
     const gradingResult = await getGradingResults(examId)
     
     if (!gradingResult) {
-      return NextResponse.json(
-        { error: 'Arvostelutuloste ei löytynyt', details: 'Koetta ei ole vielä arvosteltu tai sitä ei ole olemassa' },
-        { status: 404 }
+      const managedError = ErrorManager.createFromPattern(
+        'INVALID_REQUEST',
+        'Grading results not found',
+        { ...errorContext, additionalData: { examId } }
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.notFound(
+        'Arvostelutuloste ei löytynyt'
       )
     }
 
-    return NextResponse.json({
+    return ApiResponseBuilder.success({
       success: true,
       ...gradingResult
     })
 
   } catch (error) {
-    console.error('Error fetching grading results:', error)
-    return NextResponse.json(
-      { error: 'Palvelinvirhe', details: 'Arvostelutulosten haku epäonnistui' },
-      { status: 500 }
+    const managedError = ErrorManager.handleError(error, errorContext)
+    return ApiResponseBuilder.internalError(
+      'Palvelinvirhe',
+      'Arvostelutulosten haku epäonnistui'
     )
   }
 }
 
 // Handle CORS for grading results
 export async function OPTIONS(_request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  })
+  return ApiResponseBuilder.cors(
+    ['GET', 'OPTIONS'],
+    ['Content-Type'],
+    '*'
+  )
 }

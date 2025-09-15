@@ -1,24 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createJob, updateJobStatus } from '@/lib/jobs'
 import { processImagesWithGemini } from '@/lib/gemini'
 import { FileMetadata, OCRResult } from '@/types'
+import { ApiResponseBuilder } from '@/lib/utils/api-response'
+import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
 
 export async function POST(request: NextRequest) {
+  const errorContext = {
+    endpoint: '/api/ocr/jobs',
+    method: 'POST'
+  }
+
   try {
     const body = await request.json()
     const { files, customPrompt }: { files: FileMetadata[], customPrompt?: string } = body
 
     if (!files || !Array.isArray(files) || files.length === 0) {
-      return NextResponse.json(
-        { error: 'No files provided' },
-        { status: 400 }
+      const managedError = ErrorManager.createFromPattern(
+        'INVALID_REQUEST',
+        'No files provided for OCR processing',
+        errorContext
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.validationError(
+        'No files provided'
       )
     }
 
     if (files.length > 20) {
-      return NextResponse.json(
-        { error: 'Maximum 20 files allowed per job' },
-        { status: 400 }
+      const managedError = ErrorManager.createFromPattern(
+        'TOO_MANY_FILES',
+        `Attempted OCR processing with ${files.length} files`,
+        errorContext
+      )
+      ErrorManager.logError(managedError)
+      return ApiResponseBuilder.validationError(
+        ErrorManager.getUserMessage(managedError)
       )
     }
 
@@ -28,17 +45,17 @@ export async function POST(request: NextRequest) {
     // Start processing asynchronously
     processJobAsync(job.id, files, customPrompt)
 
-    return NextResponse.json({
+    return ApiResponseBuilder.success({
       jobId: job.id,
       status: 'pending',
       message: 'Job created successfully. Processing started.'
     })
 
   } catch (error) {
-    console.error('Error creating OCR job:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+    const managedError = ErrorManager.handleError(error, errorContext)
+    return ApiResponseBuilder.internalError(
+      ErrorManager.getUserMessage(managedError),
+      managedError.details
     )
   }
 }
