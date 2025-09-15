@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
           endpoint: '/api/test/audit',
           ip: request.headers.get('x-forwarded-for') || '127.0.0.1',
           userAgent: request.headers.get('user-agent') || undefined,
-          testData: body
+          additionalData: { testData: body }
         }
       })
 
