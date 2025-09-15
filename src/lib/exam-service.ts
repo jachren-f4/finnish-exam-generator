@@ -60,7 +60,7 @@ export async function getExamState(examId: string): Promise<{
           .from('grading')
           .select('*')
           .eq('exam_id', examId)
-          .order('created_at', { ascending: false })
+          .order('graded_at', { ascending: false })
           .limit(1)
       },
       'Get Latest Grading'
