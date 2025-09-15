@@ -225,8 +225,22 @@ export class MobileApiService {
         processingTime: geminiProcessingTime
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in Gemini processing:', error)
+
+      // Check if this is a Gemini API overload error
+      const isGeminiOverloaded = error?.status === 503 ||
+                                error?.message?.includes('overloaded') ||
+                                error?.message?.includes('Service Unavailable')
+
+      if (isGeminiOverloaded) {
+        return {
+          success: false,
+          error: 'Gemini API is currently overloaded',
+          details: 'Google\'s AI service is temporarily at capacity. Please try again in a few moments.'
+        }
+      }
+
       return {
         success: false,
         error: 'Gemini processing failed',
