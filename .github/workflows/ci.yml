@@ -1,0 +1,324 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main, develop]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ============================================================================
+  # Code Quality & Security Checks
+  # ============================================================================
+  quality:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript check
+        run: npm run type-check
+        continue-on-error: false
+
+      - name: Run linting
+        run: npm run lint
+        continue-on-error: false
+
+      - name: Run security audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Run dependency check
+        uses: securecodewarrior/github-action-dependency-check@v3
+        with:
+          project-name: 'gemini-ocr'
+          format: 'HTML,JSON'
+        continue-on-error: true
+
+  # ============================================================================
+  # Unit & Integration Tests
+  # ============================================================================
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: quality
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test
+        env:
+          NODE_ENV: test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Run integration tests
+        run: npm run test:integration
+        env:
+          NODE_ENV: test
+          REDIS_URL: redis://localhost:6379
+        continue-on-error: true
+
+      - name: Upload test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+        continue-on-error: true
+
+  # ============================================================================
+  # Build & Containerization
+  # ============================================================================
+  build:
+    name: Build & Push Container
+    runs-on: ubuntu-latest
+    needs: [quality, test]
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-,suffix={{sha}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # ============================================================================
+  # Security Scanning
+  # ============================================================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ needs.build.outputs.image-tag }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # ============================================================================
+  # Deployment to Staging
+  # ============================================================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment:
+      name: staging
+      url: https://staging-api.gemini-ocr.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl for staging
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.STAGING_KUBECONFIG }}" | base64 -d > ~/.kube/config
+          kubectl config use-context staging
+
+      - name: Deploy to staging
+        run: |
+          # Update image tag in deployment
+          sed -i "s|image: gemini-ocr:latest|image: ${{ needs.build.outputs.image-tag }}|g" k8s/deployment.yaml
+          
+          # Apply Kubernetes manifests
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/pvc.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/hpa.yaml
+          
+          # Wait for deployment to complete
+          kubectl rollout status deployment/gemini-ocr-app -n gemini-ocr --timeout=300s
+
+      - name: Run smoke tests
+        run: |
+          # Wait for service to be ready
+          sleep 30
+          
+          # Get service URL
+          STAGING_URL="https://staging-api.gemini-ocr.com"
+          
+          # Health check
+          curl -f "$STAGING_URL/api/health" || exit 1
+          
+          # Basic API test
+          curl -f -X POST "$STAGING_URL/api/test/error-recovery" \
+            -H "Content-Type: application/json" \
+            -d '{"testType": "error_classification"}' || exit 1
+
+  # ============================================================================
+  # Deployment to Production
+  # ============================================================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: production
+      url: https://api.gemini-ocr.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl for production
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.PROD_KUBECONFIG }}" | base64 -d > ~/.kube/config
+          kubectl config use-context production
+
+      - name: Deploy to production
+        run: |
+          # Update image tag in deployment
+          sed -i "s|image: gemini-ocr:latest|image: ${{ needs.build.outputs.image-tag }}|g" k8s/deployment.yaml
+          
+          # Apply Kubernetes manifests
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/pvc.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/hpa.yaml
+          
+          # Wait for deployment to complete
+          kubectl rollout status deployment/gemini-ocr-app -n gemini-ocr --timeout=600s
+
+      - name: Run production smoke tests
+        run: |
+          # Wait for service to be ready
+          sleep 60
+          
+          # Get service URL
+          PROD_URL="https://api.gemini-ocr.com"
+          
+          # Health check
+          curl -f "$PROD_URL/api/health" || exit 1
+          
+          # Verify monitoring endpoints
+          curl -f "$PROD_URL/api/metrics" || exit 1
+
+      - name: Notify deployment success
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: "🚀 Gemini OCR API v${{ github.ref_name }} deployed successfully to production!"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: success()
+
+      - name: Notify deployment failure
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: "❌ Gemini OCR API v${{ github.ref_name }} deployment to production failed!"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: failure()

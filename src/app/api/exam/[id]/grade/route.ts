@@ -2,8 +2,10 @@ import { NextRequest } from 'next/server'
 import { getGradingResults } from '@/lib/exam-service'
 import { ApiResponseBuilder } from '@/lib/utils/api-response'
 import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
+import { performanceWrapper } from '@/lib/middleware/performance-middleware'
+import { gradingCache } from '@/lib/utils/cache-manager'
 
-export async function GET(
+async function gradingHandler(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -31,6 +33,15 @@ export async function GET(
       )
     }
 
+    // Check cache first
+    const cachedGrading = gradingCache.getGrading(examId)
+    if (cachedGrading) {
+      return ApiResponseBuilder.success({
+        success: true,
+        ...cachedGrading
+      })
+    }
+
     const gradingResult = await getGradingResults(examId)
     
     if (!gradingResult) {
@@ -45,6 +56,9 @@ export async function GET(
       )
     }
 
+    // Cache successful result
+    gradingCache.setGrading(examId, gradingResult)
+
     return ApiResponseBuilder.success({
       success: true,
       ...gradingResult
@@ -57,6 +71,17 @@ export async function GET(
       'Arvostelutulosten haku epäonnistui'
     )
   }
+}
+
+// Export with performance tracking
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  return performanceWrapper(
+    (req: NextRequest) => gradingHandler(req, context),
+    'Get Grading Results'
+  )(request)
 }
 
 // Handle CORS for grading results

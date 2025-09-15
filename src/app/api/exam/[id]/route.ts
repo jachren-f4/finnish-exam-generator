@@ -2,9 +2,12 @@ import { NextRequest } from 'next/server'
 import { getExamForTaking, getExamState } from '@/lib/exam-service'
 import { ApiResponseBuilder } from '@/lib/utils/api-response'
 import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
+import { withPerformanceTracking, handleWithPerformance } from '@/lib/middleware/performance-middleware'
+import { examCache } from '@/lib/utils/cache-manager'
 
-export async function GET(
+async function examHandler(
   request: NextRequest,
+  context: any,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const errorContext = {
@@ -31,8 +34,26 @@ export async function GET(
       )
     }
 
+    // Check cache first
+    context.timer.startPhase('Cache Check')
+    const cachedExamState = examCache.get(`state:${examId}`)
+    context.timer.endPhase('Cache Check')
+    
+    if (cachedExamState) {
+      return ApiResponseBuilder.success({
+        ...cachedExamState.exam,
+        canReuse: cachedExamState.canReuse,
+        hasBeenCompleted: cachedExamState.hasBeenCompleted,
+        latestGrading: cachedExamState.latestGrading
+      })
+    }
+
     // First try to get exam state (includes completion status)
-    const examState = await getExamState(examId)
+    const examState = await handleWithPerformance(
+      () => getExamState(examId),
+      'Get Exam State',
+      context
+    )
     
     if (!examState) {
       const managedError = ErrorManager.createFromPattern(
@@ -71,6 +92,9 @@ export async function GET(
       )
     }
 
+    // Cache the exam state for future requests
+    examCache.set(`state:${examId}`, examState, 300000) // 5 minutes
+
     // Return exam data along with state information
     return ApiResponseBuilder.success({
       ...examState.exam,
@@ -87,6 +111,9 @@ export async function GET(
     )
   }
 }
+
+// Export the GET handler with performance tracking
+export const GET = withPerformanceTracking(examHandler)
 
 // Handle CORS for exam pages
 export async function OPTIONS(_request: NextRequest) {

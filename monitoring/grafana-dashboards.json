@@ -1,0 +1,329 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Gemini OCR - Application Overview",
+    "tags": ["gemini-ocr", "production", "overview"],
+    "style": "dark",
+    "timezone": "UTC",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    },
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Status",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=\"gemini-ocr-app\"}",
+            "legendFormat": "App Status",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"gemini-ocr-app\"}[5m])",
+            "legendFormat": "{{method}} {{status}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Requests per second",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Response Times",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"gemini-ocr-app\"}[5m]))",
+            "legendFormat": "50th percentile",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"gemini-ocr-app\"}[5m]))",
+            "legendFormat": "95th percentile",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"gemini-ocr-app\"}[5m]))",
+            "legendFormat": "99th percentile",
+            "refId": "C"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Response time (seconds)",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Error Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"gemini-ocr-app\",status=~\"4..\"}[5m])",
+            "legendFormat": "4xx errors",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(http_requests_total{job=\"gemini-ocr-app\",status=~\"5..\"}[5m])",
+            "legendFormat": "5xx errors",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Errors per second",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "OCR Queue Length",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "ocr_queue_length",
+            "legendFormat": "Queue Length",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(ocr_requests_total[5m])",
+            "legendFormat": "Processing Rate",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Count",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "OCR Success Rate",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(ocr_requests_successful_total[5m]) / rate(ocr_requests_total[5m]) * 100",
+            "legendFormat": "Success Rate",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 90},
+                {"color": "green", "value": 95}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Gemini API Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(gemini_api_requests_total[5m])",
+            "legendFormat": "API Requests",
+            "refId": "A"
+          },
+          {
+            "expr": "gemini_api_quota_remaining",
+            "legendFormat": "Quota Remaining",
+            "refId": "B"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Memory Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes{job=\"gemini-ocr-app\"} / 1024 / 1024",
+            "legendFormat": "Memory Usage (MB)",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Memory (MB)",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "CPU Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(process_cpu_seconds_total{job=\"gemini-ocr-app\"}[5m]) * 100",
+            "legendFormat": "CPU Usage (%)",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "CPU Usage (%)",
+            "min": 0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Redis Metrics",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "redis_connected_clients",
+            "legendFormat": "Connected Clients",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(redis_commands_processed_total[5m])",
+            "legendFormat": "Commands/sec",
+            "refId": "B"
+          },
+          {
+            "expr": "redis_memory_used_bytes / 1024 / 1024",
+            "legendFormat": "Memory Usage (MB)",
+            "refId": "C"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Circuit Breaker Status",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "circuit_breaker_state",
+            "legendFormat": "{{breaker_name}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"options": {"0": {"text": "CLOSED", "color": "green"}}},
+              {"options": {"1": {"text": "HALF_OPEN", "color": "yellow"}}},
+              {"options": {"2": {"text": "OPEN", "color": "red"}}}
+            ]
+          }
+        }
+      },
+      {
+        "id": 12,
+        "title": "Active Database Connections",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 32},
+        "targets": [
+          {
+            "expr": "db_pool_active_connections",
+            "legendFormat": "Active Connections",
+            "refId": "A"
+          },
+          {
+            "expr": "db_pool_idle_connections",
+            "legendFormat": "Idle Connections",
+            "refId": "B"
+          },
+          {
+            "expr": "db_pool_max_connections",
+            "legendFormat": "Max Connections",
+            "refId": "C"
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "Database Query Performance",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 32},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(db_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile",
+            "refId": "B"
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "title": "Pod Status",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 32},
+        "targets": [
+          {
+            "expr": "sum(kube_pod_status_ready{namespace=\"gemini-ocr\", condition=\"true\"})",
+            "legendFormat": "Ready Pods",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(kube_pod_status_ready{namespace=\"gemini-ocr\", condition=\"false\"})",
+            "legendFormat": "Not Ready Pods",
+            "refId": "B"
+          }
+        ]
+      }
+    ]
+  }
+}

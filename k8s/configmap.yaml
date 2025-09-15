@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gemini-ocr-config
+  namespace: gemini-ocr
+  labels:
+    app: gemini-ocr
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  HOSTNAME: "0.0.0.0"
+  NEXT_TELEMETRY_DISABLED: "1"
+  
+  # Application Configuration
+  LOG_LEVEL: "info"
+  MAX_FILE_SIZE: "10485760"
+  RATE_LIMIT_WINDOW: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "100"
+  
+  # Cache Configuration  
+  CACHE_TTL: "3600"
+  CACHE_MAX_SIZE: "1000"
+  
+  # Health Check Configuration
+  HEALTH_CHECK_INTERVAL: "30000"
+  HEALTH_CHECK_TIMEOUT: "5000"
+  
+  # Circuit Breaker Configuration
+  CIRCUIT_BREAKER_THRESHOLD: "0.5"
+  CIRCUIT_BREAKER_TIMEOUT: "60000"
+  
+  # Retry Configuration
+  RETRY_MAX_ATTEMPTS: "3"
+  RETRY_BASE_DELAY: "1000"
+  RETRY_MAX_DELAY: "30000"

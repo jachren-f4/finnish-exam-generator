@@ -1,0 +1,244 @@
+groups:
+  - name: gemini-ocr.rules
+    rules:
+      # High-level application alerts
+      - alert: ApplicationDown
+        expr: up{job="gemini-ocr-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: gemini-ocr
+        annotations:
+          summary: "Gemini OCR application is down"
+          description: "The Gemini OCR application has been down for more than 1 minute on instance {{ $labels.instance }}"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          service: gemini-ocr
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.instance }}"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: gemini-ocr
+        annotations:
+          summary: "High latency detected"
+          description: "95th percentile latency is {{ $value }}s for {{ $labels.instance }}"
+
+      # Resource usage alerts
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: gemini-ocr
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (process_resident_memory_bytes / process_virtual_memory_max_bytes) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: gemini-ocr
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      - alert: PodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: gemini-ocr
+        annotations:
+          summary: "Pod is crash looping"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crash looping"
+
+      # Redis alerts
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Redis instance {{ $labels.instance }} has been down for more than 1 minute"
+
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      - alert: RedisHighConnections
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "High number of Redis connections"
+          description: "Redis has {{ $value }} connected clients on {{ $labels.instance }}"
+
+      # OCR-specific alerts
+      - alert: OCRProcessingBacklog
+        expr: ocr_queue_length > 100
+        for: 2m
+        labels:
+          severity: warning
+          service: gemini-ocr
+        annotations:
+          summary: "OCR processing backlog"
+          description: "OCR queue has {{ $value }} pending items on {{ $labels.instance }}"
+
+      - alert: HighOCRFailureRate
+        expr: rate(ocr_requests_failed_total[5m]) / rate(ocr_requests_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          service: gemini-ocr
+        annotations:
+          summary: "High OCR failure rate"
+          description: "OCR failure rate is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      - alert: GeminiAPIQuotaExhausted
+        expr: gemini_api_quota_remaining < 100
+        for: 1m
+        labels:
+          severity: critical
+          service: gemini-ocr
+        annotations:
+          summary: "Gemini API quota nearly exhausted"
+          description: "Gemini API quota remaining: {{ $value }} requests"
+
+      # Circuit breaker alerts
+      - alert: CircuitBreakerOpen
+        expr: circuit_breaker_state == 2
+        for: 1m
+        labels:
+          severity: warning
+          service: gemini-ocr
+        annotations:
+          summary: "Circuit breaker is open"
+          description: "Circuit breaker {{ $labels.breaker_name }} is open on {{ $labels.instance }}"
+
+      # Database alerts
+      - alert: DatabaseConnectionPoolExhausted
+        expr: db_pool_active_connections / db_pool_max_connections > 0.9
+        for: 2m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "Database connection pool usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      - alert: DatabaseSlowQueries
+        expr: rate(db_query_duration_seconds{quantile="0.95"}[5m]) > 1
+        for: 3m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Database slow queries detected"
+          description: "95th percentile query duration is {{ $value }}s"
+
+      # Kubernetes cluster alerts
+      - alert: KubernetesPodNotReady
+        expr: kube_pod_status_ready{condition="false"} == 1
+        for: 2m
+        labels:
+          severity: warning
+          service: kubernetes
+        annotations:
+          summary: "Kubernetes pod not ready"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been not ready for more than 2 minutes"
+
+      - alert: KubernetesNodeNotReady
+        expr: kube_node_status_ready{condition="false"} == 1
+        for: 2m
+        labels:
+          severity: critical
+          service: kubernetes
+        annotations:
+          summary: "Kubernetes node not ready"
+          description: "Node {{ $labels.node }} has been not ready for more than 2 minutes"
+
+      - alert: KubernetesPersistentVolumeUsageHigh
+        expr: (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+          service: kubernetes
+        annotations:
+          summary: "Kubernetes PV usage high"
+          description: "PV usage is {{ $value | humanizePercentage }} for volume {{ $labels.persistentvolumeclaim }}"
+
+      # NGINX Ingress alerts
+      - alert: NginxHighRequestRate
+        expr: rate(nginx_ingress_controller_requests[5m]) > 1000
+        for: 2m
+        labels:
+          severity: warning
+          service: nginx-ingress
+        annotations:
+          summary: "High request rate on NGINX Ingress"
+          description: "Request rate is {{ $value }} req/sec on {{ $labels.instance }}"
+
+      - alert: NginxHighErrorRate
+        expr: rate(nginx_ingress_controller_requests{status=~"5.."}[5m]) / rate(nginx_ingress_controller_requests[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          service: nginx-ingress
+        annotations:
+          summary: "High error rate on NGINX Ingress"
+          description: "Error rate is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+  - name: system.rules
+    rules:
+      # Disk usage alerts
+      - alert: DiskSpaceRunningOut
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 10
+        for: 1m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "Disk space running out"
+          description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 5
+        for: 1m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Disk space critical"
+          description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      # Network alerts
+      - alert: HighNetworkReceiveErrors
+        expr: rate(node_network_receive_errs_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High network receive errors"
+          description: "Network interface {{ $labels.device }} has {{ $value }} receive errors/sec on {{ $labels.instance }}"
