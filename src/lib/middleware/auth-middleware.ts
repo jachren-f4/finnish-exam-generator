@@ -232,10 +232,8 @@ export async function handleTokenRefresh(request: NextRequest): Promise<NextResp
     })
 
   } catch (error) {
-    ErrorManager.logError(error, {
-      endpoint: '/api/auth/refresh',
-      method: 'POST'
-    })
+    const managedError = ErrorManager.createFromError(error as Error)
+    ErrorManager.logError(managedError)
 
     return ApiResponseBuilder.internalError(
       'Token refresh failed',
@@ -265,8 +263,7 @@ export async function handleLogin(request: NextRequest): Promise<NextResponse> {
     
     if (!isValidCredentials) {
       return ApiResponseBuilder.unauthorized(
-        'Invalid credentials',
-        'Email or password is incorrect'
+        'Invalid credentials - Email or password is incorrect'
       )
     }
 
@@ -274,8 +271,7 @@ export async function handleLogin(request: NextRequest): Promise<NextResponse> {
     const userData = await getUserByEmail(email)
     if (!userData) {
       return ApiResponseBuilder.unauthorized(
-        'User not found',
-        'No user found with provided email'
+        'User not found - No user found with provided email'
       )
     }
 
@@ -302,10 +298,8 @@ export async function handleLogin(request: NextRequest): Promise<NextResponse> {
     })
 
   } catch (error) {
-    ErrorManager.logError(error, {
-      endpoint: '/api/auth/login',
-      method: 'POST'
-    })
+    const managedError = ErrorManager.createFromError(error as Error)
+    ErrorManager.logError(managedError)
 
     return ApiResponseBuilder.internalError(
       'Login failed',
@@ -321,7 +315,7 @@ export async function handleLogout(request: NextRequest): Promise<NextResponse> 
   try {
     // Extract token to get session ID
     const authHeader = request.headers.get('authorization')
-    const token = TokenManager.extractBearerToken(authHeader)
+    const token = TokenManager.extractBearerToken(authHeader || undefined)
     
     if (token) {
       const validation = await tokenManager.validateAccessToken(token)
@@ -336,10 +330,8 @@ export async function handleLogout(request: NextRequest): Promise<NextResponse> 
     })
 
   } catch (error) {
-    ErrorManager.logError(error, {
-      endpoint: '/api/auth/logout',
-      method: 'POST'
-    })
+    const managedError = ErrorManager.createFromError(error as Error)
+    ErrorManager.logError(managedError)
 
     return ApiResponseBuilder.internalError(
       'Logout failed',
@@ -389,16 +381,14 @@ export function withApiKey<T extends any[]>(
     
     if (!apiKey) {
       return ApiResponseBuilder.unauthorized(
-        'API key required',
-        'Missing X-API-Key header'
+        'API key required - Missing X-API-Key header'
       )
     }
 
     // Validate API key format
     if (!apiKey.startsWith('gocr_')) {
       return ApiResponseBuilder.unauthorized(
-        'Invalid API key format',
-        'API key must start with gocr_ prefix'
+        'Invalid API key format - API key must start with gocr_ prefix'
       )
     }
 

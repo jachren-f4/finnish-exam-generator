@@ -354,7 +354,7 @@ export function withEnhancedRateLimit<T extends any[]>(
     // Extract user ID from token if present
     let userId: string | undefined
     const authHeader = request.headers.get('authorization')
-    const token = TokenManager.extractBearerToken(authHeader)
+    const token = TokenManager.extractBearerToken(authHeader || undefined)
     
     if (token) {
       const validation = await tokenManager.validateAccessToken(token)

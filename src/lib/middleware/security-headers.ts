@@ -143,7 +143,9 @@ export class CORSConfig {
    * Set allowed origins
    */
   origins(origins: string | string[]): this {
-    this.config.origins = origins
+    if (this.config) {
+      this.config.origins = origins
+    }
     return this
   }
 
