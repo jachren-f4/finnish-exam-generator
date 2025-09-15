@@ -40,9 +40,10 @@ export default function ExamPage() {
         throw new Error(errorData.error || 'Kokeen lataus epäonnistui')
       }
 
-      const examData = await response.json()
+      const responseData = await response.json()
+      const examData = responseData.data || responseData // Handle both old and new API formats
       setExam(examData)
-      
+
       // Determine initial mode based on exam state
       if (examData.hasBeenCompleted && examData.latestGrading) {
         setMode('review')
