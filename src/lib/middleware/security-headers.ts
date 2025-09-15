@@ -153,7 +153,9 @@ export class CORSConfig {
    * Set allowed methods
    */
   methods(methods: string[]): this {
-    this.config.methods = methods
+    if (this.config) {
+      this.config.methods = methods
+    }
     return this
   }
 
@@ -161,7 +163,9 @@ export class CORSConfig {
    * Set allowed headers
    */
   headers(headers: string[]): this {
-    this.config.headers = headers
+    if (this.config) {
+      this.config.headers = headers
+    }
     return this
   }
 
@@ -169,7 +173,9 @@ export class CORSConfig {
    * Enable credentials
    */
   withCredentials(): this {
-    this.config.credentials = true
+    if (this.config) {
+      this.config.credentials = true
+    }
     return this
   }
 
@@ -177,7 +183,9 @@ export class CORSConfig {
    * Set preflight cache duration
    */
   maxAge(seconds: number): this {
-    this.config.maxAge = seconds
+    if (this.config) {
+      this.config.maxAge = seconds
+    }
     return this
   }
 
@@ -185,8 +193,10 @@ export class CORSConfig {
    * Apply CORS headers to response
    */
   applyHeaders(response: NextResponse, request: NextRequest): void {
+    if (!this.config) return
+
     const origin = request.headers.get('origin')
-    
+
     // Handle origin
     if (this.config.origins === '*') {
       response.headers.set('Access-Control-Allow-Origin', '*')
@@ -217,14 +227,56 @@ export class CORSConfig {
 }
 
 /**
+ * Apply security headers to response
+ */
+function applySecurityHeaders(response: NextResponse, config: SecurityConfig): void {
+  // Content Security Policy
+  if (config.csp?.enabled && config.csp.directives) {
+    const cspDirectives = Object.entries(config.csp.directives)
+      .map(([directive, sources]) => {
+        if (Array.isArray(sources)) {
+          return `${directive} ${sources.join(' ')}`
+        }
+        return `${directive} ${sources}`
+      })
+      .join('; ')
+
+    const cspHeader = config.csp.reportOnly ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy'
+    response.headers.set(cspHeader, cspDirectives)
+  }
+
+  // HTTP Strict Transport Security
+  if (config.hsts?.enabled) {
+    let hstsValue = `max-age=${config.hsts.maxAge || 31536000}`
+    if (config.hsts.includeSubDomains) hstsValue += '; includeSubDomains'
+    if (config.hsts.preload) hstsValue += '; preload'
+    response.headers.set('Strict-Transport-Security', hstsValue)
+  }
+
+  // X-Frame-Options
+  if (config.frameOptions) {
+    response.headers.set('X-Frame-Options', config.frameOptions)
+  }
+
+  // X-Content-Type-Options
+  if (config.contentTypeOptions) {
+    response.headers.set('X-Content-Type-Options', 'nosniff')
+  }
+
+  // Referrer Policy
+  const referrerPolicy = config.referrerPolicy || 'strict-origin-when-cross-origin'
+  response.headers.set('Referrer-Policy', referrerPolicy)
+}
+
+/**
  * Security headers middleware
  */
 export function withSecurityHeaders<T extends any[]>(
-  config: SecurityConfig,
-  handler: (request: NextRequest, ...args: T) => Promise<NextResponse>
+  config: SecurityConfig
 ) {
-  return async (request: NextRequest, ...args: T): Promise<NextResponse> => {
-    // Handle preflight requests
+  return (handler: (request: NextRequest, ...args: T) => Promise<NextResponse>) => {
+    return async (request: NextRequest, ...args: T): Promise<NextResponse> => {
+      // Handle preflight requests
     if (request.method === 'OPTIONS' && config.cors) {
       const response = new NextResponse(null, { status: 200 })
       const corsConfig = new CORSConfig()
@@ -371,6 +423,16 @@ function applySecurityHeaders(response: NextResponse, config: SecurityConfig): v
   response.headers.set('X-Download-Options', 'noopen')
   response.headers.set('X-Permitted-Cross-Domain-Policies', 'none')
   response.headers.set('X-XSS-Protection', '1; mode=block')
+
+      // Call the actual handler
+      const handlerResponse = await handler(request, ...args)
+
+      // Apply security headers to the response
+      applySecurityHeaders(handlerResponse, config)
+
+      return handlerResponse
+    }
+  }
 }
 
 /**
