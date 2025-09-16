@@ -88,15 +88,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Log request details
-    RequestProcessor.logRequest(processedData, {
-      'Client IP': clientInfo.ip,
-      'User Agent': clientInfo.userAgent.substring(0, 100)
-    })
+    console.log('=== MOBILE API REQUEST DETAILS ===')
+    console.log('Processing ID:', processingId)
+    console.log('Image count:', images.length)
+    console.log('Subject:', subject || 'not specified')
+    console.log('Grade:', grade || 'not specified')
+    console.log('Student ID:', student_id || 'not specified')
+    console.log('Client IP:', clientInfo.ip)
+    console.log('User Agent:', clientInfo.userAgent.substring(0, 100))
+    console.log('=== END REQUEST DETAILS ===')
 
       // Process exam generation through service layer with ExamGenie parameters
       const result = await MobileApiService.generateExam({
-        images: processedData.images,
-        customPrompt: processedData.customPrompt,
+        images,
+        customPrompt,
         processingId,
         // ExamGenie MVP parameters
         subject,
