@@ -13,6 +13,7 @@
     "@google/generative-ai": "^0.21.0",
     "@supabase/supabase-js": "^2.57.4",
     "@types/jsonwebtoken": "^9.0.10",
+    "dotenv": "^17.2.2",
     "formidable": "^3.5.1",
     "isomorphic-dompurify": "^2.26.0",
     "jsonwebtoken": "^9.0.2",

@@ -139,6 +139,76 @@ VALIDATION CHECK before finalizing:
 - Ensure no content mixing between different pages
 
 Important: Only return the JSON object with the extracted text. Do not include any additional explanations or notes.`,
+
+  // ExamGenie MVP Subject-Aware Prompts
+  getSubjectAwarePrompt: (subject?: string, grade?: number) => {
+    const basePrompt = `Lue kuvista teksti ja luo aiheeseen sopivia koekysymyksiä suomeksi.`
+
+    let subjectContext = ''
+    if (subject) {
+      subjectContext = `\n\nAIHE: ${subject}`
+
+      // Add subject-specific guidance
+      switch (subject) {
+        case 'Äidinkieli':
+          subjectContext += `\nKeskity kielioppi-, kirjallisuus- ja tekstinymmärtämiskysymyksiin.`
+          break
+        case 'Maantieto':
+          subjectContext += `\nKeskity maantiedon käsitteisiin, karttoihin ja maantieteellisiin ilmiöihin.`
+          break
+        case 'Historia':
+          subjectContext += `\nKeskity historiallisiin tapahtumiin, henkilöihin ja aikakausiin.`
+          break
+        case 'Biologia':
+          subjectContext += `\nKeskity elämän tieteeseen, elimistöön ja luonnon ilmiöihin.`
+          break
+        case 'Fysiikka':
+          subjectContext += `\nKeskity fysiikan ilmiöihin, laskutehtäviin ja tieteellisiin käsitteisiin.`
+          break
+        case 'Kemia':
+          subjectContext += `\nKeskity kemiallisiin reaktioihin, aineisiin ja kemian käsitteisiin.`
+          break
+        case 'Ympäristöoppi':
+          subjectContext += `\nKeskity ympäristön ja luonnon tuntemukseen sekä kestävään kehitykseen.`
+          break
+        default:
+          subjectContext += `\nLuo kysymyksiä jotka sopivat ${subject}-aihealueeseen.`
+      }
+    }
+
+    let gradeContext = ''
+    if (grade) {
+      gradeContext = `\nLUOKKA-ASTE: ${grade}. luokka`
+
+      if (grade >= 1 && grade <= 3) {
+        gradeContext += `\nTaso: Ala-aste (1.-3. luokka) - Yksinkertaiset, selkeät kysymykset. Käytä tuttuja sanoja.`
+      } else if (grade >= 4 && grade <= 6) {
+        gradeContext += `\nTaso: Ala-aste (4.-6. luokka) - Haastavia mutta ikätason mukaisia kysymyksiä.`
+      } else if (grade >= 7 && grade <= 9) {
+        gradeContext += `\nTaso: Yläkoulu (7.-9. luokka) - Syvempiä analyysejä ja kriittistä ajattelua vaativia kysymyksiä.`
+      }
+    }
+
+    return `${basePrompt}${subjectContext}${gradeContext}
+
+Palauta vastauksesi JSON-objektina tällä tarkalleen tämän rakenteen mukaisesti:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Kysymysteksti suomeksi",
+      "options": ["Vaihtoehto A", "Vaihtoehto B", "Vaihtoehto C", "Vaihtoehto D"],
+      "correct_answer": "Vaihtoehto A",
+      "explanation": "Lyhyt selitys suomeksi"
+    }
+  ],
+  "topic": "Lyhyt aiheen kuvaus",
+  "difficulty": "${grade ? `luokka-${grade}` : 'ala-aste'}"
+}
+
+Tärkeää: Palauta VAIN JSON-objekti. Luo tarkalleen 10 kysymystä suomeksi kuvan sisällön perusteella.`
+  }
 } as const
 
 // Type definitions for configuration

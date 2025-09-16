@@ -10,6 +10,11 @@ export interface MobileApiRequest {
   images: File[]
   customPrompt?: string
   processingId: string
+  // ExamGenie MVP parameters
+  subject?: string
+  grade?: number
+  student_id?: string
+  user_id?: string
 }
 
 export interface DiagnosticData {
@@ -53,12 +58,16 @@ export class MobileApiService {
    * Process the complete exam generation workflow
    */
   static async generateExam(request: MobileApiRequest): Promise<MobileApiResult> {
-    const timer = new OperationTimer('Mobile API Processing')
-    const { images, customPrompt, processingId } = request
+    const timer = new OperationTimer('ExamGenie Mobile API Processing')
+    const { images, customPrompt, processingId, subject, grade, student_id, user_id } = request
 
     try {
-      console.log('=== MOBILE API ENDPOINT CALLED ===')
+      console.log('=== EXAMGENIE MOBILE API ENDPOINT CALLED ===')
       console.log('Processing ID:', processingId)
+      console.log('Subject:', subject || 'not specified')
+      console.log('Grade:', grade || 'not specified')
+      console.log('Student ID:', student_id || 'not specified')
+      console.log('User ID:', user_id || 'not authenticated')
 
       // Process files using FileProcessor
       timer.startPhase('File Processing')
@@ -75,11 +84,13 @@ export class MobileApiService {
         timer
       )
 
-      // Process with Gemini
+      // Process with Gemini using subject-aware prompts
       const geminiResult = await this.processWithGemini(
         fileMetadataList,
         customPrompt,
-        timer
+        timer,
+        subject,
+        grade
       )
 
       if (!geminiResult.success) {
@@ -187,17 +198,32 @@ export class MobileApiService {
   }
 
   /**
-   * Process images with Gemini AI
+   * Process images with Gemini AI using subject-aware prompts
    */
   private static async processWithGemini(
     fileMetadataList: any[],
     customPrompt: string | undefined,
-    timer: OperationTimer
+    timer: OperationTimer,
+    subject?: string,
+    grade?: number
   ): Promise<{ success: true; data: any; processingTime: number } | { success: false; error: string; details: string }> {
     try {
-      // Use custom prompt or fallback to default
-      const promptToUse = customPrompt && customPrompt.trim() !== '' ? customPrompt : PROMPTS.DEFAULT_EXAM_GENERATION
-      console.log('Using prompt type:', customPrompt && customPrompt.trim() !== '' ? 'CUSTOM' : 'FALLBACK')
+      // Determine which prompt to use
+      let promptToUse: string
+      let promptType: string
+
+      if (customPrompt && customPrompt.trim() !== '') {
+        promptToUse = customPrompt
+        promptType = 'CUSTOM'
+      } else if (subject || grade) {
+        promptToUse = PROMPTS.getSubjectAwarePrompt(subject, grade)
+        promptType = `SUBJECT_AWARE(${subject || 'none'}, grade-${grade || 'none'})`
+      } else {
+        promptToUse = PROMPTS.DEFAULT_EXAM_GENERATION
+        promptType = 'DEFAULT'
+      }
+
+      console.log('Using prompt type:', promptType)
       
       // Log full prompt for quality analysis
       console.log('=== FULL PROMPT SENT TO GEMINI ===')

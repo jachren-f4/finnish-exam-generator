@@ -5,36 +5,63 @@ import { RequestProcessor } from '@/lib/middleware/request-processor'
 import { MobileApiService } from '@/lib/services/mobile-api-service'
 import { ApiResponseBuilder } from '@/lib/utils/api-response'
 import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
+import { withOptionalAuth } from '@/middleware/auth'
+import { FINNISH_SUBJECTS, FinnishSubject } from '@/lib/supabase'
 
 /**
- * Refactored Mobile API Route - Handles exam generation requests
- * Uses new middleware and services for clean separation of concerns
+ * ExamGenie MVP Mobile API Route - Handles subject-aware exam generation
+ * Supports multi-user architecture with optional authentication
  */
 export async function POST(request: NextRequest) {
-  const processingId = uuidv4()
-  const timer = new OperationTimer('Mobile API Processing')
-  
-  // Build error context for better debugging
-  const clientInfo = RequestProcessor.getClientInfo(request)
-  const errorContext = {
-    requestId: processingId,
-    endpoint: '/api/mobile/exam-questions',
-    method: 'POST',
-    ...clientInfo
-  }
+  return withOptionalAuth(request, async (req, authContext) => {
+    const processingId = uuidv4()
+    const timer = new OperationTimer('ExamGenie Mobile API Processing')
 
-  try {
-    // Validate request method (though Next.js handles this, good practice)
-    if (!RequestProcessor.validateMethod(request, ['POST'])) {
-      return ApiResponseBuilder.methodNotAllowed(['POST'])
+    // Build error context for better debugging
+    const clientInfo = RequestProcessor.getClientInfo(req)
+    const errorContext = {
+      requestId: processingId,
+      endpoint: '/api/mobile/exam-questions',
+      method: 'POST',
+      userId: authContext.user?.id,
+      ...clientInfo
     }
 
-    // Process and validate form data
-    const processedData = await RequestProcessor.processFormData(
-      request, 
-      timer, 
-      processingId
-    )
+    try {
+      // Validate request method (though Next.js handles this, good practice)
+      if (!RequestProcessor.validateMethod(req, ['POST'])) {
+        return ApiResponseBuilder.methodNotAllowed(['POST'])
+      }
+
+      // Process and validate form data with ExamGenie parameters
+      const processedData = await RequestProcessor.processFormData(
+        req,
+        timer,
+        processingId
+      )
+
+      // Extract ExamGenie-specific parameters
+      const {
+        subject,
+        grade,
+        student_id
+      } = await extractExamGenieParams(req)
+
+      // Validate subject if provided
+      if (subject && !FINNISH_SUBJECTS.includes(subject as FinnishSubject)) {
+        return ApiResponseBuilder.validationError(
+          'Invalid subject. Must be one of the supported Finnish subjects.',
+          `Valid subjects: ${FINNISH_SUBJECTS.join(', ')}`
+        )
+      }
+
+      // Validate grade if provided
+      if (grade && (typeof grade !== 'number' || grade < 1 || grade > 9)) {
+        return ApiResponseBuilder.validationError(
+          'Invalid grade. Must be between 1 and 9.',
+          'Grade must be a number from 1 to 9 representing the student\'s school year.'
+        )
+      }
 
     // Validate images
     const validation = RequestProcessor.validateImages(processedData.images)
@@ -61,12 +88,17 @@ export async function POST(request: NextRequest) {
       'User Agent': clientInfo.userAgent.substring(0, 100)
     })
 
-    // Process exam generation through service layer
-    const result = await MobileApiService.generateExam({
-      images: processedData.images,
-      customPrompt: processedData.customPrompt,
-      processingId
-    })
+      // Process exam generation through service layer with ExamGenie parameters
+      const result = await MobileApiService.generateExam({
+        images: processedData.images,
+        customPrompt: processedData.customPrompt,
+        processingId,
+        // ExamGenie MVP parameters
+        subject,
+        grade,
+        student_id,
+        user_id: authContext.user?.id
+      })
 
     // Handle service result
     if (!result.success) {
@@ -100,18 +132,19 @@ export async function POST(request: NextRequest) {
       }
     )
 
-  } catch (error) {
-    // Handle unexpected errors
-    const managedError = ErrorManager.handleError(error, errorContext)
-    
-    return ApiResponseBuilder.internalError(
-      ErrorManager.getUserMessage(managedError),
-      managedError.details,
-      { 
-        requestId: processingId
-      }
-    )
-  }
+    } catch (error) {
+      // Handle unexpected errors
+      const managedError = ErrorManager.handleError(error, errorContext)
+
+      return ApiResponseBuilder.internalError(
+        ErrorManager.getUserMessage(managedError),
+        managedError.details,
+        {
+          requestId: processingId
+        }
+      )
+    }
+  })
 }
 
 // Handle CORS preflight requests
@@ -121,4 +154,41 @@ export async function OPTIONS(_request: NextRequest) {
     ['Content-Type', 'Authorization'],
     '*'
   )
+}
+
+/**
+ * Extract ExamGenie-specific parameters from request
+ */
+async function extractExamGenieParams(request: NextRequest): Promise<{
+  subject?: FinnishSubject
+  grade?: number
+  student_id?: string
+}> {
+  try {
+    // Try to get parameters from form data first
+    const formData = await request.formData()
+
+    const subject = formData.get('subject')?.toString()
+    const gradeStr = formData.get('grade')?.toString()
+    const student_id = formData.get('student_id')?.toString()
+
+    return {
+      subject: subject as FinnishSubject,
+      grade: gradeStr ? parseInt(gradeStr, 10) : undefined,
+      student_id
+    }
+  } catch (error) {
+    // If form data parsing fails, try JSON body
+    try {
+      const body = await request.json()
+      return {
+        subject: body.subject as FinnishSubject,
+        grade: body.grade ? parseInt(body.grade, 10) : undefined,
+        student_id: body.student_id
+      }
+    } catch {
+      // Return empty object if both fail
+      return {}
+    }
+  }
 }
