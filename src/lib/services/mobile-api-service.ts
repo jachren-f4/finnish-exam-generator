@@ -4,7 +4,8 @@ import { OperationTimer } from '../utils/performance-logger'
 import { SupabaseStorageManager } from '../storage'
 import { PROMPTS } from '../config'
 import { processImagesWithGemini } from '../gemini'
-import { createExam } from '../exam-service'
+// Import ExamGenie services instead of old exam service
+import { supabaseAdmin } from '../supabase'
 
 export interface MobileApiRequest {
   images: File[]
@@ -102,7 +103,8 @@ export class MobileApiService {
         geminiResult.data!,
         customPrompt,
         diagnosticData,
-        timer
+        timer,
+        request
       )
 
       // Clean up files
@@ -276,43 +278,115 @@ export class MobileApiService {
   }
 
   /**
-   * Create exam from Gemini response
+   * Create ExamGenie exam from Gemini response
    */
   private static async createExamFromResponse(
     geminiData: any,
     customPrompt: string | undefined,
     diagnosticData: DiagnosticData | undefined,
-    timer: OperationTimer
+    timer: OperationTimer,
+    request: MobileApiRequest
   ): Promise<any> {
-    console.log('=== ATTEMPTING TO CREATE EXAM ===')
+    console.log('=== ATTEMPTING TO CREATE EXAMGENIE EXAM ===')
     const examCreationStartTime = Date.now()
     console.log('Raw text length:', geminiData.rawText?.length || 0)
     console.log('Raw text preview:', geminiData.rawText?.substring(0, 200) || 'No raw text')
-    
+
     try {
-      console.log('Using Gemini response for exam creation')
-      
-      // Use the prompt that was sent to Gemini
-      const actualPromptUsed = customPrompt && customPrompt.trim() !== '' ? customPrompt : PROMPTS.DEFAULT_EXAM_GENERATION
-      
-      const examResult = await createExam(
-        geminiData.rawText, 
-        actualPromptUsed, 
-        diagnosticData, 
-        geminiData.geminiUsage
-      )
-      
-      console.log(`⏱️  [TIMER] Exam creation: ${Date.now() - examCreationStartTime}ms`)
-      console.log('Exam creation result:', examResult ? 'SUCCESS' : 'NULL')
-      
-      if (!examResult) {
-        console.log('WARNING: Exam creation returned null - check exam processing and Supabase connection')
+      timer.startPhase('ExamGenie Exam Creation')
+
+      // Parse the Gemini response to extract questions
+      let parsedQuestions = []
+      try {
+        const parsedResult = JSON.parse(geminiData.rawText)
+        parsedQuestions = parsedResult.questions || []
+      } catch (parseError) {
+        console.error('Failed to parse Gemini JSON response:', parseError)
+        return null
       }
-      
-      return examResult
-      
+
+      if (!parsedQuestions || parsedQuestions.length === 0) {
+        console.error('No questions found in Gemini response')
+        return null
+      }
+
+      // Create exam in examgenie_exams table
+      const examId = crypto.randomUUID()
+      const shareId = crypto.randomUUID().substring(0, 8)
+
+      const examData = {
+        id: examId,
+        user_id: request.user_id || null,
+        student_id: request.student_id || null,
+        subject: request.subject || 'Yleinen',
+        grade: request.grade?.toString() || '1',
+        status: 'READY',
+        processed_text: geminiData.rawText,
+        share_id: shareId,
+        created_at: new Date().toISOString(),
+        completed_at: new Date().toISOString()
+      }
+
+      console.log('Creating ExamGenie exam:', examData)
+
+      if (!supabaseAdmin) {
+        console.error('Supabase admin client not available')
+        return null
+      }
+
+      const { data: exam, error: examError } = await supabaseAdmin
+        .from('examgenie_exams')
+        .insert(examData)
+        .select()
+        .single()
+
+      if (examError) {
+        console.error('Failed to create examgenie_exams record:', examError)
+        return null
+      }
+
+      // Create questions in examgenie_questions table
+      const questionsData = parsedQuestions.map((q: any, index: number) => ({
+        id: crypto.randomUUID(),
+        exam_id: examId,
+        question_number: index + 1,
+        question_text: q.question || q.question_text || '',
+        question_type: q.type || q.question_type || 'multiple_choice',
+        options: q.options || null,
+        correct_answer: q.correct_answer || null,
+        explanation: q.explanation || null,
+        max_points: 2,
+        is_selected: true
+      }))
+
+      console.log(`Creating ${questionsData.length} questions for exam ${examId}`)
+
+      const { error: questionsError } = await supabaseAdmin
+        .from('examgenie_questions')
+        .insert(questionsData)
+
+      if (questionsError) {
+        console.error('Failed to create examgenie_questions:', questionsError)
+        // Clean up exam record
+        await supabaseAdmin.from('examgenie_exams').delete().eq('id', examId)
+        return null
+      }
+
+      timer.endPhase('ExamGenie Exam Creation')
+      console.log(`⏱️  [TIMER] ExamGenie exam creation: ${Date.now() - examCreationStartTime}ms`)
+
+      // Return exam URLs in the expected format
+      const examUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/exam/${examId}`
+      const gradingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/grading/${examId}`
+
+      return {
+        examId,
+        examUrl,
+        gradingUrl
+      }
+
     } catch (examError) {
-      console.error('Error creating exam - full error:', examError)
+      console.error('Error creating ExamGenie exam - full error:', examError)
       console.error('Error message:', examError instanceof Error ? examError.message : 'Unknown error')
       console.error('Error stack:', examError instanceof Error ? examError.stack : 'No stack trace')
       return null

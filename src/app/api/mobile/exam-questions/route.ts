@@ -33,19 +33,24 @@ export async function POST(request: NextRequest) {
         return ApiResponseBuilder.methodNotAllowed(['POST'])
       }
 
-      // Process and validate form data with ExamGenie parameters
-      const processedData = await RequestProcessor.processFormData(
-        req,
-        timer,
-        processingId
-      )
+      // Process form data directly to extract both images and ExamGenie parameters
+      const formData = await req.formData()
+
+      // Extract images
+      const images = formData.getAll('images') as File[]
+      const customPrompt = formData.get('prompt') as string
 
       // Extract ExamGenie-specific parameters
-      const {
-        subject,
-        grade,
-        student_id
-      } = await extractExamGenieParams(req)
+      const subject = formData.get('subject')?.toString() as FinnishSubject
+      const gradeStr = formData.get('grade')?.toString()
+      const grade = gradeStr ? parseInt(gradeStr, 10) : undefined
+      const student_id = formData.get('student_id')?.toString()
+
+      // Create processed data structure
+      const processedData = {
+        images,
+        customPrompt: customPrompt?.trim() || ''
+      }
 
       // Validate subject if provided
       if (subject && !FINNISH_SUBJECTS.includes(subject as FinnishSubject)) {
@@ -156,39 +161,3 @@ export async function OPTIONS(_request: NextRequest) {
   )
 }
 
-/**
- * Extract ExamGenie-specific parameters from request
- */
-async function extractExamGenieParams(request: NextRequest): Promise<{
-  subject?: FinnishSubject
-  grade?: number
-  student_id?: string
-}> {
-  try {
-    // Try to get parameters from form data first
-    const formData = await request.formData()
-
-    const subject = formData.get('subject')?.toString()
-    const gradeStr = formData.get('grade')?.toString()
-    const student_id = formData.get('student_id')?.toString()
-
-    return {
-      subject: subject as FinnishSubject,
-      grade: gradeStr ? parseInt(gradeStr, 10) : undefined,
-      student_id
-    }
-  } catch (error) {
-    // If form data parsing fails, try JSON body
-    try {
-      const body = await request.json()
-      return {
-        subject: body.subject as FinnishSubject,
-        grade: body.grade ? parseInt(body.grade, 10) : undefined,
-        student_id: body.student_id
-      }
-    } catch {
-      // Return empty object if both fail
-      return {}
-    }
-  }
-}
