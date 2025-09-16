@@ -314,9 +314,65 @@ export class MobileApiService {
       const examId = crypto.randomUUID()
       const shareId = crypto.randomUUID().substring(0, 8)
 
+      // Use system user ID for mobile API requests when no user is authenticated
+      const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000001'
+      let userId = request.user_id || SYSTEM_USER_ID
+
+      console.log('Using user_id for exam creation:', userId)
+
+      // Ensure system user exists in auth.users table
+      if (userId === SYSTEM_USER_ID) {
+        try {
+          // First try to find existing system user by email
+          const { data: existingUsers, error: listError } = await supabaseAdmin!.auth.admin.listUsers()
+
+          if (listError) {
+            console.error('Failed to list users:', listError)
+            return null
+          }
+
+          // Look for existing system user
+          const systemUser = existingUsers.users.find(user =>
+            user.email === 'system@examgenie.mobile' ||
+            user.user_metadata?.created_for === 'mobile_api'
+          )
+
+          if (systemUser) {
+            console.log('Found existing system user:', systemUser.id)
+            userId = systemUser.id
+          } else {
+            console.log('Creating system user for mobile API...')
+            const { data: newUser, error: createError } = await supabaseAdmin!.auth.admin.createUser({
+              email: 'system@examgenie.mobile',
+              email_confirm: true,
+              user_metadata: {
+                role: 'system',
+                created_for: 'mobile_api'
+              }
+            })
+
+            if (createError) {
+              console.error('Failed to create system user:', createError)
+              // Fallback - skip exam creation for now
+              console.log('Skipping exam creation due to system user creation failure')
+              return null
+            } else {
+              console.log('System user created successfully:', newUser.user?.id)
+              // Use the newly created user's actual ID
+              userId = newUser.user?.id || SYSTEM_USER_ID
+            }
+          }
+        } catch (userError) {
+          console.error('Error checking/creating system user:', userError)
+          // Fallback - skip exam creation for now
+          console.log('Skipping exam creation due to system user error')
+          return null
+        }
+      }
+
       const examData = {
         id: examId,
-        user_id: request.user_id || null,
+        user_id: userId,
         student_id: request.student_id || null,
         subject: request.subject || 'Yleinen',
         grade: request.grade?.toString() || '1',
