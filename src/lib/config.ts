@@ -141,7 +141,7 @@ VALIDATION CHECK before finalizing:
 Important: Only return the JSON object with the extracted text. Do not include any additional explanations or notes.`,
 
   // ExamGenie MVP Subject-Aware Prompts
-  getSubjectAwarePrompt: (subject?: string, grade?: number) => {
+  getSubjectAwarePrompt: (subject?: string, grade?: number, _language: string = 'fi') => {
     const basePrompt = `Lue kuvista teksti ja luo aiheeseen sopivia koekysymyksiä suomeksi.`
 
     let subjectContext = ''
@@ -207,7 +207,135 @@ Palauta vastauksesi JSON-objektina tällä tarkalleen tämän rakenteen mukaises
   "difficulty": "${grade ? `luokka-${grade}` : 'ala-aste'}"
 }
 
-Tärkeää: Palauta VAIN JSON-objekti. Luo tarkalleen 10 kysymystä suomeksi kuvan sisällön perusteella.`
+TÄRKEÄÄ:
+- Palauta VAIN JSON-objekti
+- Luo tarkalleen 10 kysymystä suomeksi tekstin perusteella
+- ÄLÄ luo kysymyksiä, jotka viittaavat kuviin, kaavioihin tai tehtäväkuviin
+- ÄLÄ käytä sanoja kuten "kuvassa", "tehtävässä a)", "ylempänä", "alla olevassa"
+- Kaikki kysymykset on voitava vastata pelkän tekstin perusteella`
+  },
+
+  // ITERATION 2: Simplified Natural Language Prompt (75% size reduction)
+  getSimplifiedCategoryPrompt: (category: string, grade?: number, language: string = 'en') => {
+    const { LanguageService } = require('./services/language-service')
+    const languageName = LanguageService.getLanguageName(language)
+
+    return `Read the educational content and create 10 exam questions in ${languageName}.
+
+Target: Grade ${grade || '5'} students
+Subject: ${category}
+
+Generate varied question types:
+- 6 multiple choice
+- 2 short answer
+- 1 true/false
+- 1 fill-in-blank
+
+Requirements:
+- Questions must sound natural in ${languageName}
+- Based only on text content (no image references)
+- Age-appropriate difficulty
+- Clear, simple phrasing
+
+JSON format:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "question text",
+      "options": ["option A", "option B", "option C", "option D"],
+      "correct_answer": "option A",
+      "explanation": "brief explanation"
+    }
+  ]
+}
+
+Return only JSON.`
+  },
+
+  getCategoryAwarePrompt: (category: string, grade?: number, language: string = 'en') => {
+    const { LanguageService } = require('./services/language-service')
+    const languageName = LanguageService.getLanguageName(language)
+
+    const categoryDescriptions = {
+      mathematics: 'Mathematics and logic problems',
+      core_academics: 'Science, history, geography, biology, physics, chemistry, environmental studies, or social studies',
+      language_studies: 'Foreign language learning including vocabulary, grammar, translation, and comprehension'
+    }
+
+    return `Analyze the educational material and generate exam questions in one integrated process.
+
+Category: ${category} (${categoryDescriptions[category as keyof typeof categoryDescriptions] || category})
+Grade Level: ${grade || 'detect from content'}
+Target Language: ${languageName} (${language})
+
+Instructions:
+1. First, identify the specific subject within the category
+2. Detect the main topics and concepts covered
+3. Then generate 10 appropriate questions based on your findings
+4. If subject identification is uncertain, create versatile questions that work across related subjects
+
+Return JSON:
+{
+  "subject_analysis": {
+    "detected_subject": "specific subject identified",
+    "confidence": 0.9,
+    "topics_found": ["topic1", "topic2"],
+    "reasoning": "brief explanation of identification"
+  },
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "question text in ${languageName}",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_answer": "correct option",
+      "explanation": "explanation in ${languageName}",
+      "topic_area": "specific topic this tests"
+    }
+  ]
+}
+
+CRITICAL REQUIREMENTS:
+- All questions, options, and explanations MUST be in ${languageName}
+- Generate exactly 10 questions
+- Questions should naturally adapt to the detected subject
+
+LANGUAGE QUALITY REQUIREMENTS:
+- Questions MUST be grammatically correct and natural-sounding in ${languageName}
+- Use proper sentence structure and word order for the target language
+- Ensure questions make logical sense and are clearly understandable
+- Avoid awkward translations or unnatural phrasing
+- Questions should read as if written by a native speaker of ${languageName}
+- Double-check that each question is coherent and well-formed in the target language
+
+ABSOLUTELY FORBIDDEN - DO NOT INCLUDE:
+- ANY references to images, pictures, diagrams, or visual elements
+- Words that reference visuals (such as "shown", "depicted", "illustrated", or equivalent words in any language)
+- Questions that assume visual context or require seeing anything
+- References to visual layouts, positions, arrangements, or locations
+
+MANDATORY TEXT-ONLY APPROACH:
+- ALL questions must be answerable using ONLY the extracted text content
+- Base questions entirely on written information, descriptions, and facts from the text
+- Create questions about concepts, definitions, processes, and factual information
+- Never assume students can see images, charts, diagrams, or any visual content
+- If generating in languages other than English, avoid equivalent words for "in the image", "in the picture", etc.
+
+EXAMPLES OF FORBIDDEN PHRASES (in any language):
+- English: "in the image", "shown above", "depicted", "illustrated"
+- Finnish: "kuvassa", "kuvaan", "näkyy", "esitetty", "ylläolevassa"
+- Spanish: "en la imagen", "mostrado", "ilustrado"
+- All similar phrases in any target language
+
+EXAMPLES OF PROPER QUESTION FORMATION:
+- GOOD Finnish: "Mikä aiheuttaa tulipalon?" (What causes a fire?)
+- BAD Finnish: "Mihin tulipalo voi syttyä sähkölaitteesta?" (Grammatically awkward)
+- GOOD Finnish: "Mitä tulee tehdä tulipalon sattuessa?" (What should be done when a fire occurs?)
+- GOOD Finnish: "Mikä on yleinen hätänumero?" (What is the general emergency number?)
+
+- Return ONLY the JSON object, no additional text`
   }
 } as const
 

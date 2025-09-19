@@ -11,7 +11,7 @@ export default function GradingPage() {
   const [grading, setGrading] = useState<GradingResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const [showAllQuestions, setShowAllQuestions] = useState(false)
+  const [showAllQuestions, setShowAllQuestions] = useState(true)
 
   useEffect(() => {
     if (examId) {
@@ -26,7 +26,7 @@ export default function GradingPage() {
       
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Tulosten lataus epäonnistui')
+        throw new Error(errorData.error || 'Failed to load results')
       }
 
       const responseData = await response.json()
@@ -210,6 +210,23 @@ export default function GradingPage() {
             </div>
           )}
         </div>
+
+        {/* Personalized Learning Feedback */}
+        {(grading as any).personalized_feedback && (
+          <div className="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 className="font-semibold text-gray-900 mb-4">📋 Oppimispalaute</h3>
+            <div className="prose prose-sm max-w-none text-gray-700">
+              <div className="whitespace-pre-wrap bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
+                {(grading as any).personalized_feedback}
+              </div>
+              {(grading as any).feedback_language && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Palaute generoitu kielellä: {(grading as any).feedback_language}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Metadata */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
