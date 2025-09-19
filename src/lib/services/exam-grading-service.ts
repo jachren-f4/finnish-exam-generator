@@ -15,6 +15,7 @@ export interface QuestionGradingResult {
 export interface ExamGradingOptions {
   gradeScale?: string
   useAiGrading?: boolean
+  studentLanguage?: string // Language for feedback generation
 }
 
 /**
@@ -22,6 +23,160 @@ export interface ExamGradingOptions {
  * Extracted from exam-service.ts to create focused grading functionality
  */
 export class ExamGradingService {
+  /**
+   * Grade multiple questions with a single AI call (BATCH GRADING)
+   */
+  static async gradeQuestionsWithBatchAI(
+    questions: any[],
+    studentAnswers: StudentAnswer[]
+  ): Promise<Map<string, QuestionGradingResult> | null> {
+    try {
+      const model = genAI.getGenerativeModel({ model: GEMINI_CONFIG.MODEL_NAME })
+
+      // Build batch grading prompt
+      const questionsData = questions.map((q, index) => {
+        const studentAnswer = studentAnswers.find(a => a.question_id === q.id)
+        const studentText = studentAnswer?.answer_text?.trim() || ''
+
+        return `
+KYSYMYS ${index + 1} (ID: ${q.id}):
+Kysymysteksti: "${q.question_text}"
+Kysymystyyppi: ${q.question_type}
+Malliovastaus: "${q.answer_text}"
+Maksimipisteet: ${q.max_points}
+${q.options ? `Vastausvaihtoehdot: ${q.options.join(', ')}` : ''}
+${q.explanation ? `Selitys: ${q.explanation}` : ''}
+OPISKELIJAN VASTAUS: "${studentText}"
+`
+      }).join('\n---\n')
+
+      const batchPrompt = `${getGradingPrompt()}
+
+TEHTÄVÄ: Arvioi kaikki seuraavat kysymykset yhdessä erässä. Anna jokaiselle kysymykselle pisteet ja palaute.
+
+${questionsData}
+
+PALAUTUSMUOTO (JSON):
+{
+  "grading_results": [
+    {
+      "question_id": "kysymyksen ID",
+      "points_awarded": pisteet (numero),
+      "percentage": prosentti (numero),
+      "feedback": "yksityiskohtainen palaute suomeksi",
+      "grade_reasoning": "arviointiperustelut"
+    }
+  ]
+}
+
+Arvioi jokainen kysymys huolellisesti ja anna rakentavaa palautetta.`
+
+      const result = await model.generateContent(batchPrompt)
+      const responseText = result.response.text()
+
+      // Log API usage for cost tracking
+      const usageMetadata = result.response.usageMetadata
+      if (usageMetadata) {
+        const promptTokenCount = usageMetadata.promptTokenCount || 0
+        const candidatesTokenCount = usageMetadata.candidatesTokenCount || 0
+        const inputCost = (promptTokenCount / 1000000) * 0.10
+        const outputCost = (candidatesTokenCount / 1000000) * 0.40
+        const estimatedCost = inputCost + outputCost
+
+        console.log('Gemini BATCH grading API usage:', {
+          promptTokenCount,
+          candidatesTokenCount,
+          totalTokenCount: promptTokenCount + candidatesTokenCount,
+          estimatedCost: estimatedCost.toFixed(6),
+          questionsGraded: questions.length
+        })
+      }
+
+      // Parse batch response
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) {
+        console.error('No JSON found in Gemini batch grading response:', responseText)
+        return null
+      }
+
+      const batchResult = JSON.parse(jsonMatch[0])
+      const gradingResults = new Map<string, QuestionGradingResult>()
+
+      // Process each graded question
+      if (batchResult.grading_results && Array.isArray(batchResult.grading_results)) {
+        batchResult.grading_results.forEach((result: any) => {
+          const questionId = result.question_id
+          const question = questions.find(q => q.id === questionId)
+          if (question) {
+            // Validate and constrain points
+            const pointsAwarded = Math.max(0, Math.min(question.max_points, result.points_awarded || 0))
+
+            gradingResults.set(questionId, {
+              points_awarded: pointsAwarded,
+              percentage: Math.round((pointsAwarded / question.max_points) * 100),
+              feedback: result.feedback || 'Ei palautetta',
+              grade_reasoning: result.grade_reasoning || 'Batch AI grading',
+              usage_metadata: usageMetadata
+            })
+          }
+        })
+      }
+
+      console.log(`✅ Batch graded ${gradingResults.size}/${questions.length} questions successfully`)
+      return gradingResults
+
+    } catch (error) {
+      console.error('Batch AI grading failed:', error)
+      return null
+    }
+  }
+
+  /**
+   * Generate personalized feedback in student's language
+   */
+  static async generatePersonalizedFeedback(
+    gradingResult: GradingResult,
+    studentLanguage: string = 'en',
+    materialSummary?: string
+  ): Promise<string | null> {
+    try {
+      const { LanguageService } = await import('./language-service')
+      const model = genAI.getGenerativeModel({ model: GEMINI_CONFIG.MODEL_NAME })
+
+      // Identify correct and incorrect questions
+      const correctQuestions = gradingResult.questions.filter(q => q.percentage >= 95)
+      const incorrectQuestions = gradingResult.questions.filter(q => q.percentage < 50)
+
+      const feedbackPrompt = LanguageService.generateGradingPrompt(
+        studentLanguage,
+        parseInt(gradingResult.grade),
+        gradingResult.total_points,
+        correctQuestions.map(q => q.question_text),
+        incorrectQuestions.map(q => q.question_text),
+        materialSummary || 'Not available'
+      )
+
+      const result = await model.generateContent(feedbackPrompt)
+      const feedbackText = result.response.text()
+
+      // Log usage for tracking
+      const usageMetadata = result.response.usageMetadata
+      if (usageMetadata) {
+        console.log('Feedback generation API usage:', {
+          promptTokenCount: usageMetadata.promptTokenCount,
+          candidatesTokenCount: usageMetadata.candidatesTokenCount,
+          language: studentLanguage
+        })
+      }
+
+      return feedbackText
+
+    } catch (error) {
+      console.error('Error generating personalized feedback:', error)
+      return null
+    }
+  }
+
   /**
    * Grade a single question using Gemini AI
    */
@@ -187,29 +342,39 @@ Arvioi vastaus ja anna pisteet välillä 0-${maxPoints}.`
       let partialCount = 0
       let incorrectCount = 0
 
-      // Grade questions using AI with fallback to rule-based
-      const gradedQuestions = await Promise.all(questions.map(async (q: any) => {
+      // Try BATCH AI grading first if enabled
+      let batchGradingResults: Map<string, QuestionGradingResult> | null = null
+      if (useAiGrading) {
+        try {
+          console.log(`🚀 Starting BATCH grading for ${questions.length} questions...`)
+          batchGradingResults = await this.gradeQuestionsWithBatchAI(questions, studentAnswers)
+          if (batchGradingResults) {
+            console.log(`✅ BATCH grading completed for ${batchGradingResults.size} questions`)
+          }
+        } catch (error) {
+          console.warn('Batch AI grading failed, falling back to individual processing:', error)
+        }
+      }
+
+      // Process all questions (using batch results where available)
+      const gradedQuestions = questions.map((q: any) => {
         const studentAnswer = studentAnswers.find(a => a.question_id === q.id)
         const studentText = studentAnswer?.answer_text?.trim() || ''
         let gradingResult: QuestionGradingResult | null = null
         let gradingMethod = 'rule-based'
 
-        // Try AI grading first if enabled
-        if (studentText && useAiGrading) {
-          try {
-            gradingResult = await this.gradeQuestionWithAI(q, studentText, q.max_points)
-            if (gradingResult) {
-              gradingMethod = 'gemini'
-              console.log(`Question ${q.id} graded by Gemini: ${gradingResult.points_awarded}/${q.max_points} points`)
-            }
-          } catch (error) {
-            console.warn(`AI grading failed for question ${q.id}, falling back to rule-based:`, error)
-          }
+        // Use batch result if available
+        if (batchGradingResults && batchGradingResults.has(q.id)) {
+          gradingResult = batchGradingResults.get(q.id)!
+          gradingMethod = 'batch-gemini'
+          console.log(`Question ${q.id} graded by BATCH Gemini: ${gradingResult.points_awarded}/${q.max_points} points`)
         }
-
         // Fallback to rule-based grading
-        if (!gradingResult) {
+        else {
           gradingResult = this.gradeQuestionWithRules(q, studentText, q.max_points)
+          if (!batchGradingResults) {
+            console.log(`Question ${q.id} graded by rules: ${gradingResult.points_awarded}/${q.max_points} points`)
+          }
         }
 
         // Update counters
@@ -236,7 +401,7 @@ Arvioi vastaus ja anna pisteet välillä 0-${maxPoints}.`
           grading_method: gradingMethod,
           usage_metadata: gradingResult.usage_metadata
         }
-      }))
+      })
 
       // Calculate final grade (Finnish scale 4-10)
       const percentage = (totalPoints / maxTotalPoints) * 100
@@ -250,13 +415,13 @@ Arvioi vastaus ja anna pisteet välillä 0-${maxPoints}.`
       else finalGrade = '4'
 
       // Calculate grading method statistics and API usage
-      const geminiGradedCount = gradedQuestions.filter(q => q.grading_method === 'gemini').length
-      const ruleBasedGradedCount = gradedQuestions.filter(q => q.grading_method === 'rule-based').length
+      const geminiGradedCount = gradedQuestions.filter((q: any) => q.grading_method === 'batch-gemini' || q.grading_method === 'gemini').length
+      const ruleBasedGradedCount = gradedQuestions.filter((q: any) => q.grading_method === 'rule-based').length
       
       // Aggregate Gemini API usage for cost tracking
       const totalGeminiUsage = gradedQuestions
-        .filter(q => q.usage_metadata)
-        .reduce((acc, q) => {
+        .filter((q: any) => q.usage_metadata)
+        .reduce((acc: any, q: any) => {
           const usage = q.usage_metadata
           return {
             promptTokenCount: (acc.promptTokenCount || 0) + (usage?.promptTokenCount || 0),
@@ -275,11 +440,11 @@ Arvioi vastaus ja anna pisteet välillä 0-${maxPoints}.`
           estimatedCost: 0
         })
 
-      return {
+      const baseResult = {
         exam_id: examData.exam_id,
         subject: examData.subject,
         grade: examData.grade,
-        status: 'graded',
+        status: 'graded' as const,
         final_grade: finalGrade,
         grade_scale: options.gradeScale || '4-10',
         total_points: totalPoints,
@@ -296,12 +461,30 @@ Arvioi vastaus ja anna pisteet välillä 0-${maxPoints}.`
         grading_metadata: {
           gemini_graded: geminiGradedCount,
           rule_based_graded: ruleBasedGradedCount,
-          primary_method: geminiGradedCount > ruleBasedGradedCount ? 'gemini' : 'rule-based',
+          primary_method: (geminiGradedCount > ruleBasedGradedCount ? 'gemini' : 'rule-based') as 'gemini' | 'rule-based',
           gemini_available: !!process.env.GEMINI_API_KEY,
           total_gemini_usage: totalGeminiUsage,
           grading_prompt: getGradingPrompt()
         }
       }
+
+      // Generate personalized feedback if language is specified
+      if (options.studentLanguage) {
+        const feedbackText = await this.generatePersonalizedFeedback(
+          baseResult,
+          options.studentLanguage,
+          examData.ocr_raw_text // Use OCR text as material summary if available
+        )
+        if (feedbackText) {
+          return {
+            ...baseResult,
+            personalized_feedback: feedbackText,
+            feedback_language: options.studentLanguage
+          } as any // Extended interface not defined yet
+        }
+      }
+
+      return baseResult
 
     } catch (error) {
       console.error('Error in exam grading:', error)

@@ -1,4 +1,4 @@
-import { supabase, ExamData, StudentAnswer, GradingResult } from './supabase'
+import { supabase, supabaseAdmin, ExamData, StudentAnswer, GradingResult } from './supabase'
 import { ExamCreator, ExamCreationOptions } from './services/exam-creator'
 import { ExamRepository } from './services/exam-repository'
 import { ExamGradingService } from './services/exam-grading-service'
@@ -91,24 +91,125 @@ export async function getExamState(examId: string): Promise<{
 // Submit student answers and trigger grading
 export async function submitAnswers(examId: string, answers: StudentAnswer[]): Promise<GradingResult | null> {
   try {
-    // First, get the original exam with correct answers
-    const examResult = await DatabaseManager.executeQuery(
+    // First, try to get the original exam from legacy table
+    let exam = null
+    let examgenieResult = null
+    const legacyExamResult = await DatabaseManager.executeQuery(
       async () => {
         return await supabase
           .from('exams')
           .select('*')
           .eq('exam_id', examId)
           .eq('status', 'created')
-          .single()
+          .maybeSingle()
       },
-      'Get Exam for Submission'
+      'Get Legacy Exam for Submission'
     )
 
-    if (examResult.error || !examResult.data) {
+    if (!legacyExamResult.error && legacyExamResult.data) {
+      exam = legacyExamResult.data
+    } else {
+      // If not found in legacy table, try ExamGenie table
+      if (!supabaseAdmin) {
+        console.error('supabaseAdmin not available for ExamGenie exam submission')
+        return null
+      }
+
+      examgenieResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabaseAdmin!
+            .from('examgenie_exams')
+            .select('*')
+            .eq('id', examId)
+            .eq('status', 'READY')
+            .maybeSingle()
+        },
+        'Get ExamGenie Exam for Submission'
+      )
+
+      if (examgenieResult.error || !examgenieResult.data) {
+        console.log('Exam not found in either table:', examId)
+        return null
+      }
+
+      // Get questions for ExamGenie exam
+      const questionsResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabaseAdmin!
+            .from('examgenie_questions')
+            .select('*')
+            .eq('exam_id', examId)
+            .order('question_number', { ascending: true })
+        },
+        'Get ExamGenie Questions for Submission'
+      )
+
+      if (questionsResult.error || !questionsResult.data) {
+        console.log('Questions not found for ExamGenie exam:', examId)
+        return null
+      }
+
+      // Transform ExamGenie exam to legacy format
+      const examgenieExam = examgenieResult.data as any
+      exam = {
+        exam_id: examgenieExam.id,
+        subject: examgenieExam.subject,
+        grade: examgenieExam.grade,
+        status: 'created',
+        created_at: examgenieExam.created_at,
+        exam_json: {
+          exam: {
+            questions: (questionsResult.data as any).map((q: any) => ({
+              id: q.id,
+              question_text: q.question_text,
+              question_type: q.question_type,
+              options: q.options,
+              answer_text: q.correct_answer,
+              explanation: q.explanation,
+              max_points: q.max_points || 2
+            }))
+          },
+          topic: examgenieExam.subject,
+          difficulty: 'elementary'
+        }
+      }
+    }
+
+    if (!exam) {
+      console.log('No exam found for submission:', examId)
       return null
     }
 
-    const exam = examResult.data
+    // For ExamGenie exams, we need to create a bridge record in the legacy exams table
+    // since the answers table has a foreign key constraint to exams, not examgenie_exams
+    let isExamGenieExam = false
+    if (!legacyExamResult.data && examgenieResult?.data) {
+      isExamGenieExam = true
+      console.log('Creating bridge record for ExamGenie exam in legacy table')
+
+      // Create a minimal record in the legacy exams table for foreign key compatibility
+      const bridgeResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabase
+            .from('exams')
+            .insert({
+              exam_id: examId,
+              subject: exam.subject,
+              grade: exam.grade,
+              exam_json: exam.exam_json,
+              status: 'created'
+            })
+            .select('exam_id')
+            .single()
+        },
+        'Create Bridge Record for ExamGenie Exam'
+      )
+
+      if (bridgeResult.error) {
+        console.error('Failed to create bridge record:', bridgeResult.error)
+        return null
+      }
+    }
 
     // Insert student answers
     const answerResult = await DatabaseManager.insert(
@@ -123,8 +224,12 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
       return null
     }
 
-    // Grade the exam using new grading service
-    const gradingResult = await ExamGradingService.gradeExam(exam, answers)
+    // Grade the exam using new grading service with personalized feedback
+    // TODO: Extract language from exam data, request params, or browser locale
+    const studentLanguage = 'fi' // For testing purposes - should be dynamic
+    const gradingResult = await ExamGradingService.gradeExam(exam, answers, {
+      studentLanguage: studentLanguage
+    })
     if (!gradingResult) {
       return null
     }

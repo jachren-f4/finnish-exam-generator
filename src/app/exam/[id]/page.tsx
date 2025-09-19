@@ -84,7 +84,7 @@ export default function ExamPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Vastausten lähetys epäonnistui')
+        throw new Error(errorData.error || 'Answer submission failed')
       }
 
       const result = await response.json()
@@ -94,7 +94,7 @@ export default function ExamPage() {
       
     } catch (error) {
       console.error('Error submitting answers:', error)
-      setError(error instanceof Error ? error.message : 'Vastausten lähetys epäonnistui')
+      setError(error instanceof Error ? error.message : 'Answer submission failed')
     } finally {
       setIsSubmitting(false)
       setShowConfirmDialog(false)

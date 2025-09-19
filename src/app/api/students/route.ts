@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
   return withAuth(request, async (req, { user, supabase }) => {
     try {
       const body = await req.json()
-      const { name, grade } = body
+      const { name, grade, language } = body
 
       // Validate input
       if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -57,13 +57,34 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // Validate language (default to 'en' if not provided)
+      const validLanguages = ['en', 'fi', 'sv', 'es', 'fr', 'de', 'it', 'pt', 'et', 'no', 'da', 'nl']
+      const studentLanguage = language && validLanguages.includes(language) ? language : 'en'
+
+      const languageNames: Record<string, string> = {
+        'en': 'English',
+        'fi': 'Finnish',
+        'sv': 'Swedish',
+        'es': 'Spanish',
+        'fr': 'French',
+        'de': 'German',
+        'it': 'Italian',
+        'pt': 'Portuguese',
+        'et': 'Estonian',
+        'no': 'Norwegian',
+        'da': 'Danish',
+        'nl': 'Dutch'
+      }
+
       // Create student with RLS automatically filtering by user_id
       const { data: student, error } = await supabase
         .from('students')
         .insert({
           user_id: user.id,
           name: name.trim(),
-          grade: grade
+          grade: grade,
+          language: studentLanguage,
+          language_name: languageNames[studentLanguage]
         })
         .select()
         .single()

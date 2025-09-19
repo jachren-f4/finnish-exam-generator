@@ -12,9 +12,11 @@ export interface MobileApiRequest {
   customPrompt?: string
   processingId: string
   // ExamGenie MVP parameters
-  subject?: string
+  category?: string // 'mathematics', 'core_academics', 'language_studies'
+  subject?: string // Optional - will be detected from content if category is provided
   grade?: number
   student_id?: string
+  language?: string // Student's language for exam generation
   user_id?: string
 }
 
@@ -60,14 +62,16 @@ export class MobileApiService {
    */
   static async generateExam(request: MobileApiRequest): Promise<MobileApiResult> {
     const timer = new OperationTimer('ExamGenie Mobile API Processing')
-    const { images, customPrompt, processingId, subject, grade, student_id, user_id } = request
+    const { images, customPrompt, processingId, category, subject, grade, student_id, language, user_id } = request
 
     try {
       console.log('=== EXAMGENIE MOBILE API ENDPOINT CALLED ===')
       console.log('Processing ID:', processingId)
-      console.log('Subject:', subject || 'not specified')
+      console.log('Category:', category || 'not specified')
+      console.log('Subject:', subject || 'will be detected')
       console.log('Grade:', grade || 'not specified')
       console.log('Student ID:', student_id || 'not specified')
+      console.log('Language:', language || 'en')
       console.log('User ID:', user_id || 'not authenticated')
 
       // Process files using FileProcessor
@@ -85,13 +89,15 @@ export class MobileApiService {
         timer
       )
 
-      // Process with Gemini using subject-aware prompts
+      // Process with Gemini using category and language-aware prompts
       const geminiResult = await this.processWithGemini(
         fileMetadataList,
         customPrompt,
         timer,
+        category,
         subject,
-        grade
+        grade,
+        language || 'en'
       )
 
       if (!geminiResult.success) {
@@ -200,14 +206,16 @@ export class MobileApiService {
   }
 
   /**
-   * Process images with Gemini AI using subject-aware prompts
+   * Process images with Gemini AI using category and language-aware prompts
    */
   private static async processWithGemini(
     fileMetadataList: any[],
     customPrompt: string | undefined,
     timer: OperationTimer,
+    category?: string,
     subject?: string,
-    grade?: number
+    grade?: number,
+    language: string = 'en'
   ): Promise<{ success: true; data: any; processingTime: number } | { success: false; error: string; details: string }> {
     try {
       // Determine which prompt to use
@@ -217,9 +225,19 @@ export class MobileApiService {
       if (customPrompt && customPrompt.trim() !== '') {
         promptToUse = customPrompt
         promptType = 'CUSTOM'
+      } else if (category) {
+        // Use specialized prompt for language studies, regular category prompt for others
+        if (category === 'language_studies') {
+          promptToUse = PROMPTS.getLanguageStudiesPrompt(grade, language)
+          promptType = `LANGUAGE_STUDIES(grade-${grade || 'auto'}, student-lang-${language})`
+        } else {
+          promptToUse = PROMPTS.getCategoryAwarePrompt(category, grade, language)
+          promptType = `CATEGORY_AWARE(${category}, grade-${grade || 'auto'}, lang-${language})`
+        }
       } else if (subject || grade) {
-        promptToUse = PROMPTS.getSubjectAwarePrompt(subject, grade)
-        promptType = `SUBJECT_AWARE(${subject || 'none'}, grade-${grade || 'none'})`
+        // Backwards compatibility: Use subject-aware prompt with language
+        promptToUse = PROMPTS.getSubjectAwarePrompt(subject, grade, language)
+        promptType = `SUBJECT_AWARE(${subject || 'none'}, grade-${grade || 'none'}, lang-${language})`
       } else {
         promptToUse = PROMPTS.DEFAULT_EXAM_GENERATION
         promptType = 'DEFAULT'
@@ -370,10 +388,9 @@ export class MobileApiService {
         }
       }
 
-      const examData = {
+      const examData: any = {
         id: examId,
         user_id: userId,
-        student_id: request.student_id || null,
         subject: request.subject || 'Yleinen',
         grade: request.grade?.toString() || '1',
         status: 'READY',
@@ -383,6 +400,50 @@ export class MobileApiService {
         completed_at: new Date().toISOString()
       }
 
+      // Handle student_id for exam creation
+      if (request.student_id) {
+        examData.student_id = request.student_id
+      } else {
+        // Create or use a system student for testing purposes when no student_id is provided
+        const SYSTEM_STUDENT_ID = '00000000-0000-0000-0000-000000000002' // Different from user ID
+        try {
+          // Check if system student exists, create if not
+          const { data: existingStudent } = await supabaseAdmin!
+            .from('students')
+            .select('id')
+            .eq('id', SYSTEM_STUDENT_ID)
+            .single()
+
+          if (!existingStudent) {
+            console.log('Creating system student for testing...')
+            const { error: studentError } = await supabaseAdmin!
+              .from('students')
+              .insert({
+                id: SYSTEM_STUDENT_ID,
+                user_id: userId, // Use the same system user ID
+                name: 'System Test Student',
+                grade: parseInt(request.grade?.toString() || '1'),
+                language: request.language || 'en',
+                created_at: new Date().toISOString()
+              })
+
+            if (studentError) {
+              console.warn('Failed to create system student:', studentError.message)
+              // Don't include student_id if creation fails
+            } else {
+              console.log('System student created successfully')
+              examData.student_id = SYSTEM_STUDENT_ID
+            }
+          } else {
+            console.log('Using existing system student')
+            examData.student_id = SYSTEM_STUDENT_ID
+          }
+        } catch (studentError) {
+          console.warn('Error handling system student:', studentError)
+          // Don't include student_id if there's an error
+        }
+      }
+
       console.log('Creating ExamGenie exam:', examData)
 
       if (!supabaseAdmin) {
@@ -390,11 +451,13 @@ export class MobileApiService {
         return null
       }
 
+      console.log('Attempting to insert exam:', JSON.stringify(examData, null, 2))
       const { data: exam, error: examError } = await supabaseAdmin
         .from('examgenie_exams')
         .insert(examData)
         .select()
-        .single()
+
+      console.log('Exam insert result:', { exam, examError })
 
       if (examError) {
         console.error('Failed to create examgenie_exams record:', examError)

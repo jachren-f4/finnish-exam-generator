@@ -4,7 +4,7 @@
  * Handles all exam-related database interactions
  */
 
-import { supabase, DbExam, ExamData } from '../supabase'
+import { supabase, supabaseAdmin, DbExam, ExamData } from '../supabase'
 import { DatabaseInsertData } from './exam-creator'
 import { createTimer, endTimer } from '../utils/performance-logger'
 
@@ -67,25 +67,67 @@ export class ExamRepository {
 
   /**
    * Finds an exam by ID with full data (including answers)
+   * Checks both legacy 'exams' table and new 'examgenie_exams' table
    */
   static async findById(examId: string): Promise<DbExam | null> {
     const timer = createTimer('Find Exam by ID', { examId })
-    
+
     try {
-      const { data: exam, error } = await supabase
+      console.log('🔍 Looking for exam in legacy table:', examId)
+      // First try the legacy 'exams' table
+      const { data: legacyExam, error: legacyError } = await supabase
         .from('exams')
         .select('*')
         .eq('exam_id', examId)
-        .single()
+        .maybeSingle()
 
-      endTimer(timer)
+      console.log('🔍 Legacy table lookup result:', { legacyExam: !!legacyExam, legacyError })
 
-      if (error || !exam) {
-        console.warn(`Exam not found: ${examId}`, error?.message || 'No data returned')
+      if (legacyExam && !legacyError) {
+        endTimer(timer)
+        return legacyExam as DbExam
+      }
+
+      console.log('🔍 Looking for exam in examgenie_exams table:', examId)
+      // If not found in legacy table, try the ExamGenie table with admin client
+      if (!supabaseAdmin) {
+        console.error('supabaseAdmin not available')
+        endTimer(timer)
         return null
       }
 
-      return exam as DbExam
+      const { data: examgenieExam, error: examgenieError } = await supabaseAdmin
+        .from('examgenie_exams')
+        .select('*')
+        .eq('id', examId)
+        .maybeSingle()
+
+      console.log('🔍 ExamGenie table lookup result:', { examgenieExam: !!examgenieExam, examgenieError })
+
+      endTimer(timer)
+
+      if (examgenieError || !examgenieExam) {
+        console.warn(`Exam not found in both tables: ${examId}`, examgenieError?.message || 'No data returned')
+        return null
+      }
+
+      // Transform ExamGenie exam to legacy format for compatibility
+      const transformedExam: DbExam = {
+        exam_id: examgenieExam.id,
+        subject: examgenieExam.subject,
+        grade: examgenieExam.grade, // Keep as string to match DbExam interface
+        status: examgenieExam.status === 'READY' ? 'created' : examgenieExam.status.toLowerCase(),
+        created_at: examgenieExam.created_at,
+        exam_json: {
+          exam: {
+            questions: [] // Will be populated from examgenie_questions table if needed
+          },
+          topic: examgenieExam.subject,
+          difficulty: 'elementary'
+        }
+      }
+
+      return transformedExam
 
     } catch (error) {
       endTimer(timer)
@@ -96,43 +138,102 @@ export class ExamRepository {
 
   /**
    * Finds an exam for taking (without answers)
+   * Checks both legacy 'exams' table and new 'examgenie_exams' table
    */
   static async findForTaking(examId: string): Promise<ExamData | null> {
     const timer = createTimer('Find Exam for Taking', { examId })
-    
+
     try {
-      const { data: exam, error } = await supabase
+      // First try the legacy 'exams' table
+      const { data: legacyExam, error: legacyError } = await supabase
         .from('exams')
         .select('*')
         .eq('exam_id', examId)
         .eq('status', 'created')
-        .single()
+        .maybeSingle()
 
-      endTimer(timer)
+      if (legacyExam && !legacyError) {
+        endTimer(timer)
 
-      if (error || !exam) {
+        // Transform database exam to display format (remove answers)
+        const examJson = legacyExam.exam_json
+        const questions = examJson.exam.questions.map((q: any) => ({
+          id: q.id,
+          question_text: q.question_text,
+          question_type: q.question_type,
+          options: q.options,
+          max_points: q.max_points
+          // Note: answer_text and explanation excluded for exam taking
+        }))
+
+        const totalPoints = questions.reduce((sum: number, q: any) => sum + q.max_points, 0)
+
+        return {
+          exam_id: legacyExam.exam_id,
+          subject: legacyExam.subject,
+          grade: legacyExam.grade,
+          status: legacyExam.status,
+          created_at: legacyExam.created_at,
+          questions,
+          total_questions: questions.length,
+          max_total_points: totalPoints
+        }
+      }
+
+      // If not found in legacy table, try the ExamGenie table
+      console.log('🔍 Looking for examgenie exam:', examId)
+      if (!supabaseAdmin) {
+        console.error('supabaseAdmin not available')
+        endTimer(timer)
         return null
       }
 
-      // Transform database exam to display format (remove answers)
-      const examJson = exam.exam_json
-      const questions = examJson.exam.questions.map((q: any) => ({
+      const { data: examgenieExam, error: examgenieError } = await supabaseAdmin
+        .from('examgenie_exams')
+        .select('*')
+        .eq('id', examId)
+        .eq('status', 'READY')
+        .maybeSingle()
+
+      console.log('🔍 ExamGenie lookup result:', { examgenieExam, examgenieError })
+
+      if (examgenieError || !examgenieExam) {
+        endTimer(timer)
+        return null
+      }
+
+      // Get questions from examgenie_questions table
+      const { data: examgenieQuestions, error: questionsError } = await supabaseAdmin
+        .from('examgenie_questions')
+        .select('*')
+        .eq('exam_id', examId)
+        .order('question_number', { ascending: true })
+
+      if (questionsError || !examgenieQuestions) {
+        endTimer(timer)
+        return null
+      }
+
+      // Transform ExamGenie questions to legacy format (without answers)
+      const questions = examgenieQuestions.map((q: any) => ({
         id: q.id,
         question_text: q.question_text,
         question_type: q.question_type,
         options: q.options,
-        max_points: q.max_points
-        // Note: answer_text and explanation excluded for exam taking
+        max_points: q.max_points || 2
+        // Note: correct_answer and explanation excluded for exam taking
       }))
 
       const totalPoints = questions.reduce((sum: number, q: any) => sum + q.max_points, 0)
 
+      endTimer(timer)
+
       return {
-        exam_id: exam.exam_id,
-        subject: exam.subject,
-        grade: exam.grade,
-        status: exam.status,
-        created_at: exam.created_at,
+        exam_id: examgenieExam.id,
+        subject: examgenieExam.subject,
+        grade: examgenieExam.grade, // Keep as string for consistency
+        status: 'created', // Map READY to created for compatibility
+        created_at: examgenieExam.created_at,
         questions,
         total_questions: questions.length,
         max_total_points: totalPoints
@@ -170,6 +271,36 @@ export class ExamRepository {
       endTimer(timer)
       console.error('Exception updating exam status:', error)
       return false
+    }
+  }
+
+  /**
+   * Get grading result for an exam
+   */
+  static async getGradingResult(examId: string): Promise<any | null> {
+    const timer = createTimer('Get Grading Result', { examId })
+
+    try {
+      // First try to get from examgenie_results table
+      const { data: result, error } = await supabase
+        .from('examgenie_results')
+        .select('*')
+        .eq('exam_id', examId)
+        .single()
+
+      endTimer(timer)
+
+      if (error) {
+        console.error('Error getting grading result:', error)
+        return null
+      }
+
+      return result
+
+    } catch (error) {
+      endTimer(timer)
+      console.error('Exception getting grading result:', error)
+      return null
     }
   }
 

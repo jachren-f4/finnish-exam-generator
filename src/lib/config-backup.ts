@@ -397,6 +397,7 @@ QUESTION TYPES for language learning:
 2. Translation (native → target): "How do you say [concept] in [target language]?"
 3. Grammar: "Choose the correct form: [target language options]"
 4. Vocabulary: "Which word means [definition]?"
+5. Comprehension: "Complete the sentence: [target language with blank]"
 
 FORBIDDEN:
 - Testing knowledge of the student's native language
@@ -404,7 +405,98 @@ FORBIDDEN:
 - Pure cultural/geographical facts without language learning
 - Asking students to identify their own language
 - Hardcoded assumptions about specific languages
-- Fill-in-the-blank or completion questions (use multiple choice instead)
+
+Return ONLY the JSON object, no additional text`
+
+Instructions:
+1. STEP 1: SCAN THE TEXT FOR LANGUAGE CLUES
+   Look for character "ö" - if present, this is SWEDISH, not Norwegian
+   Look for "ett" + noun - if present, this is SWEDISH (Norwegian uses "et")
+   Look for pattern "staden, städer, städerna" - this is SWEDISH
+
+2. CAREFULLY identify the foreign language by analyzing these CRITICAL differences:
+
+   SWEDISH IDENTIFICATION (KEY MARKERS):
+   - Characters: "ö" (NOT "ø"), "ä" (NOT "æ")
+   - Articles: "en/ett" (neuter "ett" is common)
+   - Definite patterns: "staden, städer, städerna" (NOT "byen, byer, byene")
+   - Words: "stad" (NOT "by"), "ställe" (NOT "sted"), "också" (NOT "også")
+   - Pronunciation guides: [sta:d] style notation
+
+   NORWEGIAN IDENTIFICATION:
+   - Characters: "ø" (NOT "ö"), "æ" (NOT "ä")
+   - Articles: "en/et" (neuter "et" vs Swedish "ett")
+   - Definite patterns: "byen, byer, byene" (NOT "staden, städer")
+   - Words: "by" (NOT "stad"), "sted" (NOT "ställe"), "også" (NOT "också")
+
+   IF YOU SEE "ö" or "ä" or "ett" or "städer" = SWEDISH
+   IF YOU SEE "ø" or "æ" or "et" or "byer" = NORWEGIAN
+
+   CRITICAL: Look for these exact Swedish patterns in text:
+   - "ett drömyrke" = Swedish (Norwegian would be "et drømmeyrke")
+   - "staden, städer, städerna" = Swedish (Norwegian: "byen, byer, byene")
+   - "ett ställe" = Swedish (Norwegian: "et sted")
+   - Character "ö" appears = DEFINITELY SWEDISH
+2. Extract vocabulary, grammar patterns, and phrases from the IDENTIFIED foreign language
+3. Generate questions that test knowledge OF that specific foreign language
+4. Use the student's native language (${studentLanguageName}) for question instructions
+5. Include the foreign language words/phrases being tested IN the questions
+6. Reference the correct language name in your questions
+
+Return JSON:
+{
+  "subject_analysis": {
+    "detected_subject": "Language being taught (e.g., Swedish, Spanish, English)",
+    "confidence": 0.9,
+    "topics_found": ["vocabulary topics", "grammar patterns"],
+    "reasoning": "brief explanation"
+  },
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "question in ${studentLanguageName} that includes foreign language word/phrase to test",
+      "options": ["mix of translations, meanings, or foreign language options"],
+      "correct_answer": "correct option",
+      "explanation": "explanation in ${studentLanguageName}",
+      "topic_area": "vocabulary/grammar/translation"
+    }
+  ]
+}
+
+CRITICAL LANGUAGE LEARNING REQUIREMENTS:
+- Question instructions MUST be in ${studentLanguageName}
+- Foreign language words/phrases MUST be preserved in questions
+- Test vocabulary meaning, grammar rules, and translation skills
+- DO NOT translate the foreign language words being tested
+- Include the foreign language content that needs to be understood
+
+QUESTION TYPES for language learning:
+1. Translation (foreign → native): "What does [foreign word] mean?"
+2. Translation (native → foreign): "How do you say [native word] in [foreign language]?"
+3. Grammar: "Choose the correct form: [foreign language options]"
+4. Vocabulary: "Which word means [definition]?"
+5. Comprehension: "Complete the sentence: [foreign language with blank]"
+
+EXAMPLES (adapt to detected language):
+Swedish detected - ${studentLanguageName} questions:
+- "Mitä ruotsin sana 'stad' tarkoittaa?" (Options: kaupunki, katu, talo, maa)
+- "Valitse oikea artikkeli sanalle 'museum':" (Options: en, ett, den, det)
+- "Käännä ruotsiksi: 'Asun Oslossa'" (Options: Swedish sentences)
+- "Täydennä: 'Jag bor ___ Stockholm'" (Options: i, på, till, från)
+
+Norwegian detected - ${studentLanguageName} questions:
+- "Mitä norjan sana 'by' tarkoittaa?" (Options: kaupunki, katu, talo, maa)
+- "Valitse oikea artikkeli sanalle 'museum':" (Options: en, et, den, det)
+
+German detected - ${studentLanguageName} questions:
+- "Mitä saksan sana 'Stadt' tarkoittaa?" (Options: kaupunki, katu, talo, maa)
+
+FORBIDDEN:
+- Testing knowledge of the student's native language
+- Questions without any foreign language content
+- Pure cultural/geographical facts without language learning
+- Asking students to identify their own language
 
 Return ONLY the JSON object, no additional text`
   }

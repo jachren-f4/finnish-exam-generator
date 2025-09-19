@@ -41,10 +41,12 @@ export async function POST(request: NextRequest) {
       const customPrompt = formData.get('prompt') as string
 
       // Extract ExamGenie-specific parameters
-      const subject = formData.get('subject')?.toString() as FinnishSubject
+      const category = formData.get('category')?.toString() // 'mathematics', 'core_academics', 'language_studies'
+      const subject = formData.get('subject')?.toString() as FinnishSubject // For backwards compatibility
       const gradeStr = formData.get('grade')?.toString()
       const grade = gradeStr ? parseInt(gradeStr, 10) : undefined
       const student_id = formData.get('student_id')?.toString()
+      const language = formData.get('language')?.toString() || 'en' // Student's language for exam generation
 
       // Create processed data structure
       const processedData = {
@@ -52,8 +54,17 @@ export async function POST(request: NextRequest) {
         customPrompt: customPrompt?.trim() || ''
       }
 
-      // Validate subject if provided
-      if (subject && !FINNISH_SUBJECTS.includes(subject as FinnishSubject)) {
+      // Validate category if provided (subject is now optional for backwards compatibility)
+      const validCategories = ['mathematics', 'core_academics', 'language_studies']
+      if (category && !validCategories.includes(category)) {
+        return ApiResponseBuilder.validationError(
+          'Invalid category. Must be one of: mathematics, core_academics, language_studies',
+          'Category determines the type of exam questions to generate.'
+        )
+      }
+
+      // Validate subject if provided (for backwards compatibility)
+      if (subject && !category && !FINNISH_SUBJECTS.includes(subject as FinnishSubject)) {
         return ApiResponseBuilder.validationError(
           'Invalid subject. Must be one of the supported Finnish subjects.',
           `Valid subjects: ${FINNISH_SUBJECTS.join(', ')}`
@@ -91,9 +102,11 @@ export async function POST(request: NextRequest) {
     console.log('=== MOBILE API REQUEST DETAILS ===')
     console.log('Processing ID:', processingId)
     console.log('Image count:', images.length)
-    console.log('Subject:', subject || 'not specified')
+    console.log('Category:', category || 'not specified')
+    console.log('Subject:', subject || 'not specified (will be detected)')
     console.log('Grade:', grade || 'not specified')
     console.log('Student ID:', student_id || 'not specified')
+    console.log('Language:', language)
     console.log('Client IP:', clientInfo.ip)
     console.log('User Agent:', clientInfo.userAgent.substring(0, 100))
     console.log('=== END REQUEST DETAILS ===')
@@ -104,9 +117,11 @@ export async function POST(request: NextRequest) {
         customPrompt,
         processingId,
         // ExamGenie MVP parameters
-        subject,
+        category: category || undefined,
+        subject: subject && !category ? subject : undefined, // Only use subject if category not provided
         grade,
         student_id,
+        language,
         user_id: authContext.user?.id
       })
 
