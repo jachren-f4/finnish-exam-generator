@@ -72,10 +72,11 @@ export async function POST(
         )
       }
 
-      // Generate replacement questions using the subject-aware prompt
-      const prompt = PROMPTS.getSubjectAwarePrompt(
-        exam.subject,
-        parseInt(exam.grade, 10)
+      // Generate replacement questions using the category-aware prompt
+      const prompt = PROMPTS.getCategoryAwarePrompt(
+        'core_academics',
+        parseInt(exam.grade, 10),
+        'fi'
       ) + `\n\nLuo ${replacement_count} korvaavaa kysymystä tähän tehtävään (kysymys numero ${originalQuestion.question_number}). Keskity samaan aihealueeseen mutta tee kysymykset hieman erilaisilta.`
 
       try {

@@ -228,6 +228,7 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
     // TODO: Extract language from exam data, request params, or browser locale
     const studentLanguage = 'fi' // For testing purposes - should be dynamic
     const gradingResult = await ExamGradingService.gradeExam(exam, answers, {
+      useAiGrading: true,
       studentLanguage: studentLanguage
     })
     if (!gradingResult) {

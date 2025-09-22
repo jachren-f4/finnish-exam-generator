@@ -36,3 +36,6 @@ next-env.d.ts
 
 # uploaded files
 /uploads
+
+# prompt logging (localhost only)
+/prompttests

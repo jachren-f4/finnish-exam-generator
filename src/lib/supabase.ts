@@ -113,7 +113,6 @@ export interface GradedQuestion {
   percentage: number
   question_type: string
   options?: string[]
-  grade_reasoning?: string
   grading_method?: 'gemini' | 'rule-based'
   usage_metadata?: any
 }

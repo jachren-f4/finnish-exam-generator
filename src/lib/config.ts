@@ -140,80 +140,6 @@ VALIDATION CHECK before finalizing:
 
 Important: Only return the JSON object with the extracted text. Do not include any additional explanations or notes.`,
 
-  // ExamGenie MVP Subject-Aware Prompts
-  getSubjectAwarePrompt: (subject?: string, grade?: number, _language: string = 'fi') => {
-    const basePrompt = `Lue kuvista teksti ja luo aiheeseen sopivia koekysymyksiä suomeksi.`
-
-    let subjectContext = ''
-    if (subject) {
-      subjectContext = `\n\nAIHE: ${subject}`
-
-      // Add subject-specific guidance
-      switch (subject) {
-        case 'Äidinkieli':
-          subjectContext += `\nKeskity kielioppi-, kirjallisuus- ja tekstinymmärtämiskysymyksiin.`
-          break
-        case 'Maantieto':
-          subjectContext += `\nKeskity maantiedon käsitteisiin, karttoihin ja maantieteellisiin ilmiöihin.`
-          break
-        case 'Historia':
-          subjectContext += `\nKeskity historiallisiin tapahtumiin, henkilöihin ja aikakausiin.`
-          break
-        case 'Biologia':
-          subjectContext += `\nKeskity elämän tieteeseen, elimistöön ja luonnon ilmiöihin.`
-          break
-        case 'Fysiikka':
-          subjectContext += `\nKeskity fysiikan ilmiöihin, laskutehtäviin ja tieteellisiin käsitteisiin.`
-          break
-        case 'Kemia':
-          subjectContext += `\nKeskity kemiallisiin reaktioihin, aineisiin ja kemian käsitteisiin.`
-          break
-        case 'Ympäristöoppi':
-          subjectContext += `\nKeskity ympäristön ja luonnon tuntemukseen sekä kestävään kehitykseen.`
-          break
-        default:
-          subjectContext += `\nLuo kysymyksiä jotka sopivat ${subject}-aihealueeseen.`
-      }
-    }
-
-    let gradeContext = ''
-    if (grade) {
-      gradeContext = `\nLUOKKA-ASTE: ${grade}. luokka`
-
-      if (grade >= 1 && grade <= 3) {
-        gradeContext += `\nTaso: Ala-aste (1.-3. luokka) - Yksinkertaiset, selkeät kysymykset. Käytä tuttuja sanoja.`
-      } else if (grade >= 4 && grade <= 6) {
-        gradeContext += `\nTaso: Ala-aste (4.-6. luokka) - Haastavia mutta ikätason mukaisia kysymyksiä.`
-      } else if (grade >= 7 && grade <= 9) {
-        gradeContext += `\nTaso: Yläkoulu (7.-9. luokka) - Syvempiä analyysejä ja kriittistä ajattelua vaativia kysymyksiä.`
-      }
-    }
-
-    return `${basePrompt}${subjectContext}${gradeContext}
-
-Palauta vastauksesi JSON-objektina tällä tarkalleen tämän rakenteen mukaisesti:
-{
-  "questions": [
-    {
-      "id": 1,
-      "type": "multiple_choice",
-      "question": "Kysymysteksti suomeksi",
-      "options": ["Vaihtoehto A", "Vaihtoehto B", "Vaihtoehto C", "Vaihtoehto D"],
-      "correct_answer": "Vaihtoehto A",
-      "explanation": "Lyhyt selitys suomeksi"
-    }
-  ],
-  "topic": "Lyhyt aiheen kuvaus",
-  "difficulty": "${grade ? `luokka-${grade}` : 'ala-aste'}"
-}
-
-TÄRKEÄÄ:
-- Palauta VAIN JSON-objekti
-- Luo tarkalleen 10 kysymystä suomeksi tekstin perusteella
-- ÄLÄ luo kysymyksiä, jotka viittaavat kuviin, kaavioihin tai tehtäväkuviin
-- ÄLÄ käytä sanoja kuten "kuvassa", "tehtävässä a)", "ylempänä", "alla olevassa"
-- Kaikki kysymykset on voitava vastata pelkän tekstin perusteella`
-  },
 
   // ITERATION 2: Simplified Natural Language Prompt (75% size reduction)
   getSimplifiedCategoryPrompt: (category: string, grade?: number, language: string = 'en') => {
@@ -264,78 +190,39 @@ Return only JSON.`
       language_studies: 'Foreign language learning including vocabulary, grammar, translation, and comprehension'
     }
 
-    return `Analyze the educational material and generate exam questions in one integrated process.
+    return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students.
 
-Category: ${category} (${categoryDescriptions[category as keyof typeof categoryDescriptions] || category})
-Grade Level: ${grade || 'detect from content'}
-Target Language: ${languageName} (${language})
+CRITICAL CONSTRAINT: Questions must test actual knowledge, not document references. Avoid:
+- Visual references (anything requiring seeing images/diagrams)
+- Document structure (page numbers, chapters, sections)
+- Location-based phrasing (positional references)
 
-Instructions:
-1. First, identify the specific subject within the category
-2. Detect the main topics and concepts covered
-3. Then generate 10 appropriate questions based on your findings
-4. If subject identification is uncertain, create versatile questions that work across related subjects
+TARGET: ${languageName} language, ${categoryDescriptions[category as keyof typeof categoryDescriptions] || category} subject area.
 
-Return JSON:
+TASK: Generate exactly 10 questions that test understanding of the educational concepts.
+
+
+REQUIRED FORMAT:
 {
   "subject_analysis": {
     "detected_subject": "specific subject identified",
-    "confidence": 0.9,
     "topics_found": ["topic1", "topic2"],
-    "reasoning": "brief explanation of identification"
+    "confidence": 0.9
   },
   "questions": [
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "question text in ${languageName}",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct_answer": "correct option",
+      "question": "question in ${languageName}",
+      "options": ["A", "B", "C", "D"],
+      "correct_answer": "A",
       "explanation": "explanation in ${languageName}",
-      "topic_area": "specific topic this tests"
+      "topic_area": "concept being tested"
     }
   ]
 }
 
-CRITICAL REQUIREMENTS:
-- All questions, options, and explanations MUST be in ${languageName}
-- Generate exactly 10 questions
-- Questions should naturally adapt to the detected subject
-
-LANGUAGE QUALITY REQUIREMENTS:
-- Questions MUST be grammatically correct and natural-sounding in ${languageName}
-- Use proper sentence structure and word order for the target language
-- Ensure questions make logical sense and are clearly understandable
-- Avoid awkward translations or unnatural phrasing
-- Questions should read as if written by a native speaker of ${languageName}
-- Double-check that each question is coherent and well-formed in the target language
-
-ABSOLUTELY FORBIDDEN - DO NOT INCLUDE:
-- ANY references to images, pictures, diagrams, or visual elements
-- Words that reference visuals (such as "shown", "depicted", "illustrated", or equivalent words in any language)
-- Questions that assume visual context or require seeing anything
-- References to visual layouts, positions, arrangements, or locations
-
-MANDATORY TEXT-ONLY APPROACH:
-- ALL questions must be answerable using ONLY the extracted text content
-- Base questions entirely on written information, descriptions, and facts from the text
-- Create questions about concepts, definitions, processes, and factual information
-- Never assume students can see images, charts, diagrams, or any visual content
-- If generating in languages other than English, avoid equivalent words for "in the image", "in the picture", etc.
-
-EXAMPLES OF FORBIDDEN PHRASES (in any language):
-- English: "in the image", "shown above", "depicted", "illustrated"
-- Finnish: "kuvassa", "kuvaan", "näkyy", "esitetty", "ylläolevassa"
-- Spanish: "en la imagen", "mostrado", "ilustrado"
-- All similar phrases in any target language
-
-EXAMPLES OF PROPER QUESTION FORMATION:
-- GOOD Finnish: "Mikä aiheuttaa tulipalon?" (What causes a fire?)
-- BAD Finnish: "Mihin tulipalo voi syttyä sähkölaitteesta?" (Grammatically awkward)
-- GOOD Finnish: "Mitä tulee tehdä tulipalon sattuessa?" (What should be done when a fire occurs?)
-- GOOD Finnish: "Mikä on yleinen hätänumero?" (What is the general emergency number?)
-
-- Return ONLY the JSON object, no additional text`
+QUALITY FOCUS: Create questions that test knowledge, not visual recognition. Use clear ${languageName} grammar.`
   },
 
   getLanguageStudiesPrompt: (grade?: number, studentLanguage: string = 'en') => {
@@ -430,45 +317,22 @@ export const isDiagnosticModeEnabled = (): boolean => {
 }
 
 export const getGradingPrompt = (): string => {
-  return `Arvioi seuraava opiskelijan vastaus suomenkielisessä kokeessa älykkäästi ja oikeudenmukaisesti.
+  return `Evaluate the student's answer fairly and objectively. Prioritize the question requirements over the model answer.
 
-KRIITTINEN PROSESSI:
-1. ANALYSOI KYSYMYS ENSIN:
-   - Mitä kysymys tarkalleen ottaen pyytää? (määrä, tyyppi, formaatti)
-   - Onko kysymyksessä määrällistä vaatimusta? (esim. "kaksi", "kolme", "yksi")
-   - Mikä on kysymyksen ydinasia ja tavoite?
+PROCESS:
+1. Check what the question requires (quantity, type, format)
+2. Compare student answer against these requirements
+3. Award points: full points if requirements are met
 
-2. VERTAA MALLIVASTAUS KYSYMYKSEEN:
-   - Vastaako mallivastaus kysymyksen vaatimuksia?
-   - Jos mallivastaus sisältää enemmän vaihtoehtoja kuin pyydetty, tulkitse se järkevästi
-   - Huomioi että "tai" tarkoittaa vaihtoehtoja, ei kaikkia yhdessä
+GRADING SCALE (4-10):
+10: Perfect, 9: Excellent, 8: Good, 7: Satisfactory, 6: Acceptable, 5: Weak, 4: Failed
 
-3. ARVIOI OPISKELIJAN VASTAUS:
-   - Täyttääkö vastaus kysymyksen vaatimukset?
-   - Jos opiskelija antaa oikean määrän oikeita vastauksia, anna täydet pisteet
-   - ÄLYKÄS TULKINTA: Jos kysytään "kaksi soitinta" ja opiskelija antaa tarkalleen kaksi oikeaa soitinta, se on täydellinen vastaus riippumatta malliovastauksen muotoilusta
+Accept synonyms and alternative expressions that convey the same meaning.
 
-ARVIOINTI KRITEERIT (Suomalainen asteikko 4-10):
-- 10: Täydellinen vastaus, täyttää kysymyksen vaatimukset täysin
-- 9: Erinomainen vastaus, pieniä muotoiluvirheitä
-- 8: Hyvä vastaus, sisältää oleelliset asiat
-- 7: Tyydyttävä vastaus, joitain aukkoja
-- 6: Välttävä vastaus, perustiedot hallussa
-- 5: Heikko vastaus, merkittäviä puutteita
-- 4: Hylätty, ei täytä kysymyksen perusvaatimuksia
-
-TÄRKEÄT OHJEET:
-- PRIORISOI KYSYMYKSEN VAATIMUKSET mallivastauksen yli
-- Hyväksy synonyymit ja vaihtoehtoiset ilmaisutavat
-- Jos opiskelijan vastaus täyttää kysymyksen vaatimukset paremmin kuin mallivastaus antaa ymmärtää, anna oikeudenmukainen arviointi
-- Anna rakentavaa palautetta suomeksi
-- Selitä päättelysi selkeästi
-
-Palauta VAIN JSON-objekti:
+JSON:
 {
-  "points_awarded": [0-max_points välillä],
+  "points_awarded": [0-max_points],
   "percentage": [0-100],
-  "feedback": "Yksityiskohtainen palaute suomeksi",
-  "grade_reasoning": "Selitä miksi annoit juuri nämä pisteet, erityisesti jos kysymyksen vaatimukset vs mallivastaus eroavat"
+  "feedback": "Feedback in target language"
 }`
 }

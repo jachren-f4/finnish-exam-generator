@@ -6,6 +6,7 @@ import { PROMPTS } from '../config'
 import { processImagesWithGemini } from '../gemini'
 // Import ExamGenie services instead of old exam service
 import { supabaseAdmin } from '../supabase'
+import { PromptLogger, ImageReference } from '../utils/prompt-logger'
 
 export interface MobileApiRequest {
   images: File[]
@@ -110,7 +111,10 @@ export class MobileApiService {
         customPrompt,
         diagnosticData,
         timer,
-        request
+        request,
+        geminiResult.promptUsed,
+        geminiResult.processingTime,
+        fileMetadataList
       )
 
       // Clean up files
@@ -234,13 +238,10 @@ export class MobileApiService {
           promptToUse = PROMPTS.getCategoryAwarePrompt(category, grade, language)
           promptType = `CATEGORY_AWARE(${category}, grade-${grade || 'auto'}, lang-${language})`
         }
-      } else if (subject || grade) {
-        // Backwards compatibility: Use subject-aware prompt with language
-        promptToUse = PROMPTS.getSubjectAwarePrompt(subject, grade, language)
-        promptType = `SUBJECT_AWARE(${subject || 'none'}, grade-${grade || 'none'}, lang-${language})`
       } else {
-        promptToUse = PROMPTS.DEFAULT_EXAM_GENERATION
-        promptType = 'DEFAULT'
+        // Always use category-aware prompt with core_academics as default
+        promptToUse = PROMPTS.getCategoryAwarePrompt('core_academics', grade, language)
+        promptType = `CATEGORY_AWARE(core_academics, grade-${grade || 'auto'}, lang-${language})`
       }
 
       console.log('Using prompt type:', promptType)
@@ -255,11 +256,11 @@ export class MobileApiService {
       console.log('=== USING LEGACY MODE ===')
       const geminiStartTime = Date.now()
       console.log(`⏱️  [TIMER] Gemini processing started with prompt length: ${promptToUse.length} chars`)
-      
+
       // Use legacy processing method
       const geminiResults = await processImagesWithGemini(fileMetadataList, promptToUse)
       const result = geminiResults[0] // Take first result since we process all images together
-      
+
       const geminiEndTime = Date.now()
       const geminiProcessingTime = geminiEndTime - geminiStartTime
       console.log(`⏱️  [TIMER] Gemini processing completed: ${geminiProcessingTime}ms`)
@@ -268,7 +269,8 @@ export class MobileApiService {
       return {
         success: true,
         data: result,
-        processingTime: geminiProcessingTime
+        processingTime: geminiProcessingTime,
+        promptUsed: promptToUse
       }
 
     } catch (error: any) {
@@ -303,7 +305,10 @@ export class MobileApiService {
     customPrompt: string | undefined,
     diagnosticData: DiagnosticData | undefined,
     timer: OperationTimer,
-    request: MobileApiRequest
+    request: MobileApiRequest,
+    promptUsed?: string,
+    processingTime?: number,
+    fileMetadataList?: any[]
   ): Promise<any> {
     console.log('=== ATTEMPTING TO CREATE EXAMGENIE EXAM ===')
     const examCreationStartTime = Date.now()
@@ -331,6 +336,36 @@ export class MobileApiService {
       // Create exam in examgenie_exams table
       const examId = crypto.randomUUID()
       const shareId = crypto.randomUUID().substring(0, 8)
+
+      // Log exam creation prompt and response
+      if (promptUsed && processingTime && geminiData.geminiUsage) {
+        try {
+          const images: ImageReference[] = fileMetadataList?.map(f => ({
+            filename: f.filename,
+            sizeInBytes: f.fileSize
+          })) || []
+
+          await PromptLogger.logExamCreation(
+            examId,
+            promptUsed,
+            geminiData.rawText || 'No response text',
+            {
+              processingTime: processingTime,
+              promptTokens: geminiData.geminiUsage.promptTokenCount || 0,
+              responseTokens: geminiData.geminiUsage.candidatesTokenCount || 0,
+              totalTokens: geminiData.geminiUsage.totalTokenCount || 0,
+              estimatedCost: geminiData.geminiUsage.estimatedCost || 0,
+              examUrl: `http://localhost:3000/exam/${examId}`
+            },
+            images,
+            request.subject || request.category,
+            request.grade
+          )
+        } catch (logError) {
+          console.error('Failed to log exam creation:', logError)
+          // Continue with exam creation even if logging fails
+        }
+      }
 
       // Use system user ID for mobile API requests when no user is authenticated
       const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000001'

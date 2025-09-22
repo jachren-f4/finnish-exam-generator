@@ -352,12 +352,11 @@ CREATE TABLE learning_feedback (
 
 #### Modified Endpoints
 - `POST /api/examgenie/exams` - Accept category instead of subject, use student's language
-- `POST /api/examgenie/grade` - Return enhanced feedback in student's language
+- `POST /api/examgenie/grade` - Return grading results in student's language
 - `POST /api/students` - Include language preference field
 
 #### New Endpoints
 - `GET /api/languages/supported` - List supported languages (for dropdown)
-- `GET /api/feedback/{examId}` - Get detailed learning feedback
 
 ---
 
