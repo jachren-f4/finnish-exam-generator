@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
   
-  // Headers for production security
+  // Headers for production security and CORS
   async headers() {
     return [
       {
@@ -39,6 +39,18 @@ const nextConfig: NextConfig = {
           {
             key: 'Cache-Control',
             value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization, X-Requested-With',
           },
         ],
       },
