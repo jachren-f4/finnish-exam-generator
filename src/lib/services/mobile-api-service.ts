@@ -112,7 +112,7 @@ export class MobileApiService {
         diagnosticData,
         timer,
         request,
-        geminiResult.promptUsed,
+        undefined, // promptUsed not available from processWithGemini
         geminiResult.processingTime,
         fileMetadataList
       )
@@ -269,8 +269,7 @@ export class MobileApiService {
       return {
         success: true,
         data: result,
-        processingTime: geminiProcessingTime,
-        promptUsed: promptToUse
+        processingTime: geminiProcessingTime
       }
 
     } catch (error: any) {
