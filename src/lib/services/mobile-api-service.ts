@@ -7,6 +7,7 @@ import { processImagesWithGemini } from '../gemini'
 // Import ExamGenie services instead of old exam service
 import { supabaseAdmin } from '../supabase'
 import { PromptLogger, ImageReference } from '../utils/prompt-logger'
+import { shuffleQuestionsOptions, getShuffleStats } from '../utils/question-shuffler'
 
 export interface MobileApiRequest {
   images: File[]
@@ -331,6 +332,21 @@ export class MobileApiService {
         console.error('No questions found in Gemini response')
         return null
       }
+
+      // Shuffle multiple-choice options before storing in database
+      console.log('=== SHUFFLING MULTIPLE CHOICE OPTIONS ===')
+      const originalQuestions = [...parsedQuestions] // Keep copy for stats
+      parsedQuestions = shuffleQuestionsOptions(parsedQuestions)
+
+      // Log shuffle statistics
+      const shuffleStats = getShuffleStats(originalQuestions, parsedQuestions)
+      console.log('Shuffle statistics:', {
+        totalQuestions: shuffleStats.totalQuestions,
+        multipleChoiceCount: shuffleStats.multipleChoiceCount,
+        shuffledCount: shuffleStats.shuffledCount,
+        correctAnswerDistribution: shuffleStats.correctAnswerPositions
+      })
+      console.log('=== END SHUFFLING ===')
 
       // Create exam in examgenie_exams table
       const examId = crypto.randomUUID()
