@@ -170,9 +170,10 @@ export class ApiResponseBuilder {
    */
   static notFound(
     message: string = 'Not found',
+    details?: string,
     options: Omit<ResponseOptions, 'status'> = {}
   ): NextResponse<ApiErrorResponse> {
-    return this.error(message, undefined, { ...options, status: 404 })
+    return this.error(message, details, { ...options, status: 404 })
   }
 
   /**
