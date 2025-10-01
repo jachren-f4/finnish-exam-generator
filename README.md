@@ -1,25 +1,34 @@
-# Finnish Exam Question Generator
+# Finnish Exam Question Generator (ExamGenie)
 
-A Next.js web application that processes textbook images using Google's Gemini 2.5 Flash-Lite API to generate Finnish exam questions for elementary/middle school students.
+A full-stack educational platform that processes textbook images using Google's Gemini 2.5 Flash-Lite API to generate exam questions for elementary/middle school students. Supports both web and mobile (Flutter) clients with comprehensive exam management and grading.
 
 ## Overview
 
-This app transforms Swedish textbook images into structured Finnish exam questions with multiple question types (multiple choice, true/false, short answer). Originally built for OCR compression, it has evolved into an educational tool for Finnish students learning from Swedish materials.
+This app transforms educational content from images into structured exam questions with multiple question types (multiple choice, true/false, short answer, fill-in-the-blank). Originally built for OCR compression, it has evolved into a complete educational technology platform with multi-user support, student management, and AI-powered grading.
 
 ## Tech Stack
 
 - **Frontend:** Next.js 15, TypeScript, Tailwind CSS
+- **Backend:** Next.js API Routes with service layer architecture
 - **AI Processing:** Google Gemini 2.5 Flash-Lite API
+- **Database:** Supabase (PostgreSQL)
+- **Authentication:** Supabase Auth with JWT
 - **File Handling:** Formidable for uploads
-- **Storage:** In-memory job storage (development)
+- **Deployment:** Vercel (Production: https://exam-generator.vercel.app)
 
 ## Key Features
 
-- 📚 **Textbook Image Processing** - Upload and process Swedish textbook pages
-- 🧠 **AI Question Generation** - Generate 10 Finnish exam questions per image set
+- 📚 **Image Processing** - Upload and process educational content (up to 20 images per request)
+- 🧠 **AI Question Generation** - Generate grade-appropriate exam questions using Gemini AI
+- 🎲 **Answer Shuffling** - Fisher-Yates algorithm randomizes multiple-choice options
+- 👥 **Multi-User Support** - Student management with user authentication
+- 📱 **Mobile API** - RESTful endpoints for Flutter app integration
+- 📊 **Exam History** - Retrieve past exams with statistics and metadata
+- ✅ **AI Grading** - Automated exam grading with detailed feedback
 - 💰 **Cost Tracking** - Real-time Gemini API usage and cost monitoring
-- 📱 **Mobile API** - Dedicated endpoint for Flutter app integration
-- 📄 **JSONL Export** - Export questions in structured format
+- 🌍 **Multi-Language** - Support for 12+ languages (Finnish, English, Swedish, etc.)
+- 🔐 **Authentication** - Optional JWT-based authentication via Supabase
+- 📄 **Export Options** - JSONL format for data portability
 - ⚡ **Async Processing** - Background job processing with status tracking
 
 ## Project Structure
@@ -45,7 +54,16 @@ src/
 
 Create `.env.local`:
 ```bash
+# Required
 GEMINI_API_KEY=your_gemini_api_key_here
+
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_key
+
+# Application URL (important for exam sharing)
+NEXT_PUBLIC_APP_URL=https://exam-generator.vercel.app
 ```
 
 ## Installation & Development
@@ -59,13 +77,27 @@ Visit `http://localhost:3000` to access the web interface.
 
 ## API Endpoints
 
-### Web Interface
-- `POST /api/ocr/jobs` - Create processing job
-- `GET /api/ocr/jobs/[id]/status` - Check job status
-- `GET /api/ocr/jobs/[id]/results` - Get completed results
+### Mobile API (Primary)
+- `POST /api/mobile/exam-questions` - Generate exam from images
+- `GET /api/mobile/exams?student_id={id}` - List all exams for a student
+- `GET /api/mobile/exams/{examId}` - Get single exam with questions
+- `GET /api/mobile/stats?student_id={id}` - Get exam statistics
 
-### Mobile API
-- `POST /api/mobile/exam-questions` - Process images directly (for Flutter app)
+### Authentication & Users
+- `GET /api/students` - List user's students (requires auth)
+- `POST /api/students` - Create new student (requires auth)
+
+### Exam Management (Web)
+- `GET /api/exam/{id}` - Get exam for taking
+- `POST /api/exam/{id}/submit` - Submit answers and get grading
+- `GET /api/exam/{id}/grade` - Get grading results
+
+### Legacy Endpoints
+- `POST /api/ocr/jobs` - Create processing job (legacy)
+- `GET /api/ocr/jobs/[id]/status` - Check job status (legacy)
+- `GET /api/ocr/jobs/[id]/results` - Get completed results (legacy)
+
+**See `/docs/api/` for detailed API documentation.**
 
 ## Default Exam Prompt
 
@@ -143,10 +175,49 @@ Returns structured JSON with exam questions and processing metadata.
 
 ## Getting Started as New Developer
 
-1. Set up Gemini API key in environment
-2. Review `/src/lib/gemini.ts` for core AI integration
-3. Check `/src/app/api/mobile/exam-questions/route.ts` for mobile API
-4. Test with sample textbook images
-5. Monitor console logs for detailed processing information
+1. **Read Documentation:**
+   - `/PROJECT_OVERVIEW.md` - Complete project context and architecture
+   - `/CLAUDE.md` - Development guidelines and instructions
+   - `/docs/api/` - API endpoint documentation
 
-The app is production-ready for the core functionality but uses in-memory storage for development simplicity.
+2. **Setup Environment:**
+   - Configure Gemini API key
+   - Set up Supabase project (or use existing)
+   - Configure environment variables in `.env.local`
+
+3. **Review Key Files:**
+   - `/src/lib/services/mobile-api-service.ts` - Mobile API business logic
+   - `/src/lib/services/question-generator-service.ts` - AI question generation
+   - `/src/app/api/mobile/` - Mobile API endpoints
+   - `/src/lib/supabase.ts` - Database types and client
+
+4. **Test:**
+   - Use sample textbook images from `/assets/images/`
+   - Test mobile API with curl or Postman
+   - Monitor console logs for detailed processing information
+
+## Current Status (January 2025)
+
+- ✅ **Production Active** - Deployed at https://exam-generator.vercel.app
+- ✅ **Mobile API Complete** - Full exam generation and retrieval endpoints
+- ✅ **Multi-User Support** - Authentication and student management
+- ✅ **AI Grading** - Automated exam grading with Gemini
+- ✅ **Answer Shuffling** - Prevents predictable correct answer positions
+- ✅ **Multi-Language** - 12+ supported languages for exam generation
+- ⚠️ **No Answer Tracking** - `examgenie_exams` status doesn't track answered/unanswered state
+- ⚠️ **Legacy Code Present** - Old OCR endpoints exist but unused
+
+## Documentation
+
+- **API Docs:** `/docs/api/mobile-exam-retrieval-endpoints.md`
+- **Flutter Integration:** `/FLUTTER_INTEGRATION_RESPONSE.md`
+- **Project Overview:** `/PROJECT_OVERVIEW.md`
+- **Development Guide:** `/CLAUDE.md`
+
+## Contributing
+
+This project is actively maintained. For issues or feature requests, please create an issue in the repository.
+
+## License
+
+Proprietary - All rights reserved
