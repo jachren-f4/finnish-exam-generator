@@ -6,10 +6,11 @@ import { supabaseAdmin } from '@/lib/supabase'
 /**
  * GET /api/mobile/exams
  *
- * Retrieves all exams for a specific student
+ * Retrieves all exams for a specific user
  *
  * Query Parameters:
- * - student_id (required): UUID of the student
+ * - user_id (required): UUID of the user
+ * - student_id (deprecated): Still accepted for backward compatibility
  *
  * Returns:
  * - List of exams with metadata (sorted by most recent first)
@@ -22,15 +23,15 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Extract student_id from query parameters
+    // Extract user_id from query parameters (backward compatible with student_id)
     const { searchParams } = new URL(request.url)
-    const studentId = searchParams.get('student_id')
+    const userId = searchParams.get('user_id') || searchParams.get('student_id')
 
     // Validate required parameter
-    if (!studentId) {
+    if (!userId) {
       return ApiResponseBuilder.validationError(
-        'student_id parameter is required',
-        'Provide the student UUID in the query string: ?student_id=xxx'
+        'user_id parameter is required',
+        'Provide the user UUID in the query string: ?user_id=xxx (student_id still supported for backward compatibility)'
       )
     }
 
@@ -48,14 +49,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log(`Fetching exams for student: ${studentId}`)
+    console.log(`Fetching exams for user: ${userId}`)
 
     // Query exams with question count
     const { data: exams, error: examsError } = await supabaseAdmin
       .from('examgenie_exams')
       .select(`
         id,
-        student_id,
         user_id,
         subject,
         grade,
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
         completed_at,
         examgenie_questions(count)
       `)
-      .eq('student_id', studentId)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
     if (examsError) {
@@ -87,7 +87,6 @@ export async function GET(request: NextRequest) {
 
       return {
         exam_id: exam.id,
-        student_id: exam.student_id,
         user_id: exam.user_id,
         subject: exam.subject,
         grade: exam.grade,
@@ -100,7 +99,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    console.log(`Found ${transformedExams.length} exams for student ${studentId}`)
+    console.log(`Found ${transformedExams.length} exams for user ${userId}`)
 
     return ApiResponseBuilder.success({
       exams: transformedExams,

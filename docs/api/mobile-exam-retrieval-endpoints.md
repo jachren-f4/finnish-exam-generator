@@ -9,16 +9,17 @@
 
 Three new endpoints have been implemented to support exam persistence and retrieval in the mobile app:
 
-1. **GET /api/mobile/exams** - List all exams for a student
+1. **GET /api/mobile/exams** - List all exams for a user
 2. **GET /api/mobile/exams/[examId]** - Get single exam with questions
-3. **GET /api/mobile/stats** - Get student exam statistics
+3. **GET /api/mobile/stats** - Get user exam statistics
 
 All endpoints:
 - ✅ Use existing Supabase database tables (`examgenie_exams`, `examgenie_questions`)
 - ✅ Support CORS for mobile apps
 - ✅ Return consistent JSON format with `success` field
 - ✅ Include proper error handling
-- ✅ Require no authentication (use `student_id` as identifier)
+- ✅ Require no authentication (use `user_id` as identifier)
+- ✅ Support backward compatibility with `student_id` parameter (deprecated)
 
 ---
 
@@ -27,11 +28,12 @@ All endpoints:
 ### Request
 
 ```
-GET https://exam-generator.vercel.app/api/mobile/exams?student_id={studentId}
+GET https://exam-generator.vercel.app/api/mobile/exams?user_id={userId}
 ```
 
 **Query Parameters:**
-- `student_id` (required): UUID of the student
+- `user_id` (required): UUID of the user
+- `student_id` (deprecated): Still accepted for backward compatibility, use `user_id` instead
 
 **Headers:**
 ```
@@ -48,8 +50,7 @@ Content-Type: application/json
     "exams": [
       {
         "exam_id": "550e8400-e29b-41d4-a716-446655440000",
-        "student_id": "660e8400-e29b-41d4-a716-446655440001",
-        "user_id": "770e8400-e29b-41d4-a716-446655440002",
+        "user_id": "660e8400-e29b-41d4-a716-446655440001",
         "subject": "Matematiikka",
         "grade": "5",
         "status": "READY",
@@ -86,8 +87,8 @@ Content-Type: application/json
 ```json
 {
   "success": false,
-  "error": "student_id parameter is required",
-  "details": "Provide the student UUID in the query string: ?student_id=xxx",
+  "error": "user_id parameter is required",
+  "details": "Provide the user UUID in the query string: ?user_id=xxx (student_id still supported for backward compatibility)",
   "metadata": {
     "timestamp": "2025-09-30T14:30:00Z"
   }
@@ -120,7 +121,7 @@ Exams are sorted by **most recent first** (`created_at DESC`)
 ### Example cURL Command
 
 ```bash
-curl -X GET "https://exam-generator.vercel.app/api/mobile/exams?student_id=660e8400-e29b-41d4-a716-446655440001"
+curl -X GET "https://exam-generator.vercel.app/api/mobile/exams?user_id=660e8400-e29b-41d4-a716-446655440001"
 ```
 
 ---
@@ -150,8 +151,7 @@ Content-Type: application/json
   "data": {
     "exam": {
       "exam_id": "550e8400-e29b-41d4-a716-446655440000",
-      "student_id": "660e8400-e29b-41d4-a716-446655440001",
-      "user_id": "770e8400-e29b-41d4-a716-446655440002",
+      "user_id": "660e8400-e29b-41d4-a716-446655440001",
       "subject": "Matematiikka",
       "grade": "5",
       "status": "READY",
@@ -234,16 +234,17 @@ curl -X GET "https://exam-generator.vercel.app/api/mobile/exams/550e8400-e29b-41
 
 ---
 
-## Endpoint 3: Student Statistics
+## Endpoint 3: User Statistics
 
 ### Request
 
 ```
-GET https://exam-generator.vercel.app/api/mobile/stats?student_id={studentId}
+GET https://exam-generator.vercel.app/api/mobile/stats?user_id={userId}
 ```
 
 **Query Parameters:**
-- `student_id` (required): UUID of the student
+- `user_id` (required): UUID of the user
+- `student_id` (deprecated): Still accepted for backward compatibility, use `user_id` instead
 
 **Headers:**
 ```
@@ -300,8 +301,8 @@ Content-Type: application/json
 ```json
 {
   "success": false,
-  "error": "student_id parameter is required",
-  "details": "Provide the student UUID in the query string: ?student_id=xxx",
+  "error": "user_id parameter is required",
+  "details": "Provide the user UUID in the query string: ?user_id=xxx (student_id still supported for backward compatibility)",
   "metadata": {
     "timestamp": "2025-09-30T14:30:00Z"
   }
@@ -315,7 +316,7 @@ Content-Type: application/json
 ### Example cURL Command
 
 ```bash
-curl -X GET "https://exam-generator.vercel.app/api/mobile/stats?student_id=660e8400-e29b-41d4-a716-446655440001"
+curl -X GET "https://exam-generator.vercel.app/api/mobile/stats?user_id=660e8400-e29b-41d4-a716-446655440001"
 ```
 
 ---
@@ -324,14 +325,14 @@ curl -X GET "https://exam-generator.vercel.app/api/mobile/stats?student_id=660e8
 
 ### Prerequisites
 
-You need at least one exam created for the student. Create one via:
+You need at least one exam created for the user. Create one via:
 
 ```bash
 curl -X POST "https://exam-generator.vercel.app/api/mobile/exam-questions" \
   -F "images=@test.jpg" \
   -F "subject=Matematiikka" \
   -F "grade=5" \
-  -F "student_id=YOUR-STUDENT-UUID" \
+  -F "user_id=YOUR-USER-UUID" \
   -F "language=fi"
 ```
 
@@ -345,13 +346,13 @@ curl -X POST "https://exam-generator.vercel.app/api/mobile/exam-questions" \
 ### Example Test Script
 
 ```bash
-# Set your student ID
-STUDENT_ID="660e8400-e29b-41d4-a716-446655440001"
+# Set your user ID
+USER_ID="660e8400-e29b-41d4-a716-446655440001"
 BASE_URL="https://exam-generator.vercel.app"
 
 # Test 1: List exams
 echo "=== Test 1: List Exams ==="
-curl -s "$BASE_URL/api/mobile/exams?student_id=$STUDENT_ID" | jq
+curl -s "$BASE_URL/api/mobile/exams?user_id=$USER_ID" | jq
 
 # Test 2: Get single exam (replace with actual exam_id)
 echo "\n=== Test 2: Get Single Exam ==="
@@ -360,7 +361,7 @@ curl -s "$BASE_URL/api/mobile/exams/$EXAM_ID" | jq
 
 # Test 3: Get statistics
 echo "\n=== Test 3: Get Statistics ==="
-curl -s "$BASE_URL/api/mobile/stats?student_id=$STUDENT_ID" | jq
+curl -s "$BASE_URL/api/mobile/stats?user_id=$USER_ID" | jq
 ```
 
 ---
@@ -423,14 +424,14 @@ No special headers required for basic requests.
 
 ## Authentication
 
-Currently **optional** - endpoints accept any `student_id` without authentication.
+Currently **optional** - endpoints accept any `user_id` without authentication.
 
 For future authentication:
 ```
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
 
-The backend will validate the token and ensure the student belongs to the authenticated user.
+The backend will validate the token and ensure the user is authenticated.
 
 ---
 
@@ -439,8 +440,7 @@ The backend will validate the token and ensure the student belongs to the authen
 ### examgenie_exams table
 ```sql
 - id (uuid, primary key)
-- user_id (uuid)
-- student_id (uuid) -- Used for filtering
+- user_id (uuid) -- Foreign key to users table, used for filtering
 - subject (text)
 - grade (text)
 - status (text: DRAFT | PROCESSING | READY | FAILED)
@@ -467,7 +467,7 @@ The backend will validate the token and ensure the student belongs to the authen
 ## Performance Notes
 
 - List endpoint includes JOIN to count questions (efficient query)
-- No pagination currently - all exams returned (assumes <1000 exams per student)
+- No pagination currently - all exams returned (assumes <1000 exams per user)
 - Results sorted in database (not in-memory)
 - Timestamp fields in ISO 8601 format
 

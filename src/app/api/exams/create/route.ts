@@ -12,7 +12,6 @@ export async function POST(request: NextRequest) {
       // Extract parameters
       const subject = formData.get('subject')?.toString() as FinnishSubject
       const gradeStr = formData.get('grade')?.toString()
-      const student_id = formData.get('student_id')?.toString()
 
       // Get image files
       const imageFiles: File[] = []
@@ -59,23 +58,6 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Validate student ownership if student_id provided
-      if (student_id) {
-        const { data: student, error: studentError } = await supabase
-          .from('students')
-          .select('id')
-          .eq('id', student_id)
-          .eq('user_id', user.id)
-          .single()
-
-        if (studentError || !student) {
-          return NextResponse.json(
-            { error: 'Student not found or access denied' },
-            { status: 404 }
-          )
-        }
-      }
-
       // Create exam record in DRAFT status
       const examId = uuidv4()
       const shareId = uuidv4().substring(0, 8)
@@ -85,7 +67,6 @@ export async function POST(request: NextRequest) {
         .insert({
           id: examId,
           user_id: user.id,
-          student_id: student_id || null,
           subject,
           grade: gradeStr,
           status: 'DRAFT',

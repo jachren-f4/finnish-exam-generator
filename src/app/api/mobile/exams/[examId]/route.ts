@@ -60,7 +60,6 @@ export async function GET(
       .from('examgenie_exams')
       .select(`
         id,
-        student_id,
         user_id,
         subject,
         grade,
@@ -120,7 +119,6 @@ export async function GET(
 
     const transformedExam = {
       exam_id: exam.id,
-      student_id: exam.student_id,
       user_id: exam.user_id,
       subject: exam.subject,
       grade: exam.grade,

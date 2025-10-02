@@ -20,11 +20,7 @@ export async function GET(
           status,
           sharing_url,
           share_id,
-          created_at,
-          students!examgenie_exams_student_id_fkey (
-            name,
-            grade
-          )
+          created_at
         `)
         .eq('id', examId)
         .eq('user_id', user.id)
@@ -73,14 +69,10 @@ export async function GET(
       const questionCount = questions?.length || 0
 
       // Generate Finnish WhatsApp message
-      const studentInfo = exam.students?.name
-        ? `${exam.students.name} (${exam.students.grade}. luokka)`
-        : `${exam.grade}. luokka`
-
       const whatsappText = `🎓 ExamGenie - Uusi koe valmis!
 
 📚 Aine: ${exam.subject}
-👨‍🎓 Oppila: ${studentInfo}
+👨‍🎓 Luokka: ${exam.grade}. luokka
 ❓ Kysymyksiä: ${questionCount}
 📅 Luotu: ${new Date(exam.created_at).toLocaleDateString('fi-FI')}
 
@@ -97,10 +89,6 @@ Luotu ExamGenie-sovelluksella 📱`
         share_id: exam.share_id,
         whatsapp_text: whatsappText,
         whatsapp_url: whatsappUrl,
-        student_info: {
-          name: exam.students?.name || null,
-          grade: exam.students?.grade || exam.grade
-        },
         question_count: questionCount
       })
 

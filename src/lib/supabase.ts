@@ -130,7 +130,6 @@ export interface Student {
 export interface ExamGenieExam {
   id: string
   user_id: string
-  student_id: string | null
   subject: string
   grade: string
   status: 'DRAFT' | 'PROCESSING' | 'READY' | 'FAILED'

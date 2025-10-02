@@ -37,7 +37,8 @@ The Mobile Exam Questions endpoint is a core API for the ExamGenie MVP mobile ap
 | `category` | string | No | Question category type | One of: `mathematics`, `core_academics`, `language_studies` |
 | `subject` | string | No | Finnish subject (legacy) | Valid Finnish subject from predefined list |
 | `grade` | integer | No | Student grade level | Number between 1-9 |
-| `student_id` | string | No | Student identifier | UUID format |
+| `user_id` | string | No | User identifier | UUID format |
+| `student_id` | string | No | (Deprecated) Use `user_id` instead | UUID format |
 | `language` | string | No | Output language | Default: `en` |
 
 ### Category vs Subject

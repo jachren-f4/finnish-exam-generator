@@ -107,7 +107,6 @@ async function processExamAsync(
       processingId: uuidv4(),
       subject: exam.subject,
       grade: parseInt(exam.grade, 10),
-      student_id: exam.student_id,
       user_id: exam.user_id
     })
 

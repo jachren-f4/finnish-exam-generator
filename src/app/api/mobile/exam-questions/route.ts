@@ -45,8 +45,9 @@ export async function POST(request: NextRequest) {
       const subject = formData.get('subject')?.toString() as FinnishSubject // For backwards compatibility
       const gradeStr = formData.get('grade')?.toString()
       const grade = gradeStr ? parseInt(gradeStr, 10) : undefined
-      const student_id = formData.get('student_id')?.toString()
-      const language = formData.get('language')?.toString() || 'en' // Student's language for exam generation
+      // Backward compatibility: Accept both user_id and student_id (mobile app currently sends student_id)
+      const user_id = formData.get('user_id')?.toString() || formData.get('student_id')?.toString()
+      const language = formData.get('language')?.toString() || 'en' // User's language for exam generation
 
       // Create processed data structure
       const processedData = {
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
     console.log('Category:', category || 'not specified')
     console.log('Subject:', subject || 'not specified (will be detected)')
     console.log('Grade:', grade || 'not specified')
-    console.log('Student ID:', student_id || 'not specified')
+    console.log('User ID:', user_id || 'not specified')
     console.log('Language:', language)
     console.log('Client IP:', clientInfo.ip)
     console.log('User Agent:', clientInfo.userAgent.substring(0, 100))
@@ -120,9 +121,8 @@ export async function POST(request: NextRequest) {
         category: category || undefined,
         subject: subject && !category ? subject : undefined, // Only use subject if category not provided
         grade,
-        student_id,
         language,
-        user_id: authContext.user?.id
+        user_id: user_id || authContext.user?.id // Use user_id from mobile app or authenticated user
       })
 
     // Handle service result

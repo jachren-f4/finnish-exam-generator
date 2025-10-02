@@ -22,8 +22,7 @@ export async function GET(
           updated_at,
           completed_at,
           diagnostic_enabled,
-          creation_gemini_usage,
-          student_id
+          creation_gemini_usage
         `)
         .eq('id', examId)
         .eq('user_id', user.id)
@@ -90,7 +89,6 @@ export async function GET(
         progress_message: progressMessage,
         subject: exam.subject,
         grade: exam.grade,
-        student_id: exam.student_id,
         created_at: exam.created_at,
         updated_at: exam.updated_at,
         completed_at: exam.completed_at,

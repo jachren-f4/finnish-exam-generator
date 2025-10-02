@@ -6,10 +6,11 @@ import { supabaseAdmin } from '@/lib/supabase'
 /**
  * GET /api/mobile/stats
  *
- * Retrieves statistics for a specific student's exams
+ * Retrieves statistics for a specific user's exams
  *
  * Query Parameters:
- * - student_id (required): UUID of the student
+ * - user_id (required): UUID of the user
+ * - student_id (deprecated): Still accepted for backward compatibility
  *
  * Returns:
  * - Total exam count
@@ -24,15 +25,15 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Extract student_id from query parameters
+    // Extract user_id from query parameters (backward compatible with student_id)
     const { searchParams } = new URL(request.url)
-    const studentId = searchParams.get('student_id')
+    const userId = searchParams.get('user_id') || searchParams.get('student_id')
 
     // Validate required parameter
-    if (!studentId) {
+    if (!userId) {
       return ApiResponseBuilder.validationError(
-        'student_id parameter is required',
-        'Provide the student UUID in the query string: ?student_id=xxx'
+        'user_id parameter is required',
+        'Provide the user UUID in the query string: ?user_id=xxx (student_id still supported for backward compatibility)'
       )
     }
 
@@ -50,13 +51,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log(`Fetching statistics for student: ${studentId}`)
+    console.log(`Fetching statistics for user: ${userId}`)
 
-    // Query all exams for the student
+    // Query all exams for the user
     const { data: exams, error: examsError } = await supabaseAdmin
       .from('examgenie_exams')
       .select('id, subject, status, created_at')
-      .eq('student_id', studentId)
+      .eq('user_id', userId)
 
     if (examsError) {
       console.error('Database error fetching exam statistics:', examsError)
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
       exams_by_status: examsByStatus
     }
 
-    console.log(`Statistics for student ${studentId}:`, stats)
+    console.log(`Statistics for user ${userId}:`, stats)
 
     return ApiResponseBuilder.success({
       stats

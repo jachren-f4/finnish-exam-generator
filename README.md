@@ -1,10 +1,10 @@
 # Finnish Exam Question Generator (ExamGenie)
 
-A full-stack educational platform that processes textbook images using Google's Gemini 2.5 Flash-Lite API to generate exam questions for elementary/middle school students. Supports both web and mobile (Flutter) clients with comprehensive exam management and grading.
+A full-stack educational platform that processes textbook images using Google's Gemini 2.5 Flash-Lite API to generate exam questions for elementary/middle school education. Supports both web and mobile (Flutter) clients with comprehensive exam management and grading.
 
 ## Overview
 
-This app transforms educational content from images into structured exam questions with multiple question types (multiple choice, true/false, short answer, fill-in-the-blank). Originally built for OCR compression, it has evolved into a complete educational technology platform with multi-user support, student management, and AI-powered grading.
+This app transforms educational content from images into structured exam questions with multiple question types (multiple choice, true/false, short answer, fill-in-the-blank). Originally built for OCR compression, it has evolved into a complete educational technology platform with multi-user support and AI-powered grading.
 
 ## Tech Stack
 
@@ -21,7 +21,7 @@ This app transforms educational content from images into structured exam questio
 - 📚 **Image Processing** - Upload and process educational content (up to 20 images per request)
 - 🧠 **AI Question Generation** - Generate grade-appropriate exam questions using Gemini AI
 - 🎲 **Answer Shuffling** - Fisher-Yates algorithm randomizes multiple-choice options
-- 👥 **Multi-User Support** - Student management with user authentication
+- 👥 **Multi-User Support** - User authentication and exam management
 - 📱 **Mobile API** - RESTful endpoints for Flutter app integration
 - 📊 **Exam History** - Retrieve past exams with statistics and metadata
 - ✅ **AI Grading** - Automated exam grading with detailed feedback
@@ -79,13 +79,9 @@ Visit `http://localhost:3000` to access the web interface.
 
 ### Mobile API (Primary)
 - `POST /api/mobile/exam-questions` - Generate exam from images
-- `GET /api/mobile/exams?student_id={id}` - List all exams for a student
+- `GET /api/mobile/exams?user_id={id}` - List all exams for a user
 - `GET /api/mobile/exams/{examId}` - Get single exam with questions
-- `GET /api/mobile/stats?student_id={id}` - Get exam statistics
-
-### Authentication & Users
-- `GET /api/students` - List user's students (requires auth)
-- `POST /api/students` - Create new student (requires auth)
+- `GET /api/mobile/stats?user_id={id}` - Get exam statistics
 
 ### Exam Management (Web)
 - `GET /api/exam/{id}` - Get exam for taking
@@ -200,7 +196,7 @@ Returns structured JSON with exam questions and processing metadata.
 
 - ✅ **Production Active** - Deployed at https://exam-generator.vercel.app
 - ✅ **Mobile API Complete** - Full exam generation and retrieval endpoints
-- ✅ **Multi-User Support** - Authentication and student management
+- ✅ **Multi-User Support** - User authentication and exam management
 - ✅ **AI Grading** - Automated exam grading with Gemini
 - ✅ **Answer Shuffling** - Prevents predictable correct answer positions
 - ✅ **Multi-Language** - 12+ supported languages for exam generation

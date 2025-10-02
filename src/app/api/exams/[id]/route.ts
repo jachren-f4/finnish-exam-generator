@@ -13,14 +13,7 @@ export async function GET(
       // Get exam and verify ownership
       const { data: exam, error: examError } = await supabase
         .from('examgenie_exams')
-        .select(`
-          *,
-          students!examgenie_exams_student_id_fkey (
-            id,
-            name,
-            grade
-          )
-        `)
+        .select('*')
         .eq('id', examId)
         .eq('user_id', user.id)
         .single()
@@ -58,8 +51,7 @@ export async function GET(
           sharing_url: exam.sharing_url,
           share_id: exam.share_id,
           diagnostic_enabled: exam.diagnostic_enabled,
-          creation_gemini_usage: exam.creation_gemini_usage,
-          student: exam.students || null
+          creation_gemini_usage: exam.creation_gemini_usage
         },
         questions: questions,
         question_count: questions ? questions.length : 0
