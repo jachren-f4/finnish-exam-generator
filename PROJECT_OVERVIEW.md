@@ -132,11 +132,13 @@ Receive JSON with questions
 - Generates 10 multiple-choice questions
 - Includes Finnish translations
 - Provides explanations and correct answers
+- **Answer Shuffling**: Multiple-choice options are automatically shuffled using Fisher-Yates algorithm to randomize correct answer positions
 
 ### 4. Exam Storage
 - Creates exam record in database
 - Generates shareable URLs
 - Stores for student access and grading
+- Questions stored with shuffled options (correct answers distributed across A/B/C/D positions)
 
 ## Common Development Tasks
 
@@ -191,6 +193,13 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 - 24 supported Finnish subjects
 - Questions follow Finnish curriculum standards
 
+### 6. Answer Randomization
+- Multiple-choice options shuffled server-side using Fisher-Yates algorithm
+- Shuffling occurs after Gemini generates questions, before database storage
+- Correct answer position tracked using letter codes (A/B/C/D)
+- Prevents predictable patterns in correct answer positions
+- Implementation: `/src/lib/utils/question-shuffler.ts`
+
 ## Known Issues and Gotchas
 
 1. **Legacy OCR Endpoints**: `/api/ocr/*` exist but aren't used - ignore them
@@ -206,6 +215,7 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 - ✅ Finnish exam generation working
 - ✅ AI grading implemented
 - ✅ Multi-image support (up to 20)
+- ✅ Answer shuffling implemented (prevents correct answers always appearing in position A)
 - ⚠️  OCR endpoints exist but unused
 - ⚠️  Some documentation refers to old "OCR + compression" purpose
 

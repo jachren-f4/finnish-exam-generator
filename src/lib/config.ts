@@ -92,23 +92,25 @@ export const PROMPTS = {
   DEFAULT_EXAM_GENERATION: `
 Extract text from the images and generate exam questions.
 
+Use the same language as the source material for all questions and explanations.
+
 Return your response as a JSON object with this exact structure:
 {
   "questions": [
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "Question text in Finnish",
+      "question": "Question text",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correct_answer": "Option A",
-      "explanation": "Brief explanation in Finnish"
+      "explanation": "Brief explanation"
     }
   ],
   "topic": "Brief topic description",
   "difficulty": "elementary"
 }
 
-Important: Return only the JSON object. Generate exactly 10 questions in Finnish based on the image content.`,
+Important: Return only the JSON object. Generate exactly 10 questions based on the image content.`,
 
   OCR_EXTRACTION: `STEP 1: Extract text from each image separately
 - Process each image individually (numbered 0, 1, 2, etc.)
@@ -143,10 +145,9 @@ Important: Only return the JSON object with the extracted text. Do not include a
 
   // ITERATION 2: Simplified Natural Language Prompt (75% size reduction)
   getSimplifiedCategoryPrompt: (category: string, grade?: number, language: string = 'en') => {
-    const { LanguageService } = require('./services/language-service')
-    const languageName = LanguageService.getLanguageName(language)
+    return `Read the educational content and create 10 exam questions.
 
-    return `Read the educational content and create 10 exam questions in ${languageName}.
+Use the same language as the source material for all questions and explanations.
 
 Target: Grade ${grade || '5'} students
 Subject: ${category}
@@ -158,7 +159,7 @@ Generate varied question types:
 - 1 fill-in-blank
 
 Requirements:
-- Questions must sound natural in ${languageName}
+- Questions must sound natural
 - Based only on text content (no image references)
 - Age-appropriate difficulty
 - Clear, simple phrasing
@@ -181,9 +182,6 @@ Return only JSON.`
   },
 
   getCategoryAwarePrompt: (category: string, grade?: number, language: string = 'en') => {
-    const { LanguageService } = require('./services/language-service')
-    const languageName = LanguageService.getLanguageName(language)
-
     const categoryDescriptions = {
       mathematics: 'Mathematics and logic problems',
       core_academics: 'Science, history, geography, biology, physics, chemistry, environmental studies, or social studies',
@@ -192,12 +190,14 @@ Return only JSON.`
 
     return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students.
 
+Use the same language as the source material for all questions and explanations.
+
 CRITICAL CONSTRAINT: Questions must test actual knowledge, not document references. Avoid:
 - Visual references (anything requiring seeing images/diagrams)
 - Document structure (page numbers, chapters, sections)
 - Location-based phrasing (positional references)
 
-TARGET: ${languageName} language, ${categoryDescriptions[category as keyof typeof categoryDescriptions] || category} subject area.
+TARGET: ${categoryDescriptions[category as keyof typeof categoryDescriptions] || category} subject area.
 
 TASK: Generate exactly 10 questions that test understanding of the educational concepts.
 
@@ -213,30 +213,22 @@ REQUIRED FORMAT:
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "question in ${languageName}",
+      "question": "question text",
       "options": ["A", "B", "C", "D"],
       "correct_answer": "A",
-      "explanation": "explanation in ${languageName}",
+      "explanation": "explanation text",
       "topic_area": "concept being tested"
     }
   ]
 }
 
-QUALITY FOCUS: Create questions that test knowledge, not visual recognition. Use clear ${languageName} grammar.`
+QUALITY FOCUS: Create questions that test knowledge, not visual recognition. Use clear grammar.`
   },
 
   getLanguageStudiesPrompt: (grade?: number, studentLanguage: string = 'en') => {
-    const { LanguageService } = require('./services/language-service')
-    const studentLanguageName = LanguageService.getLanguageName(studentLanguage)
-
     return `Analyze the foreign language learning material and generate language exam questions.
 
 IMPORTANT: This is a LANGUAGE LEARNING exam. The textbook contains foreign language content that students are learning.
-
-Student Information:
-- Grade Level: ${grade || 'detect from content'}
-- Student's Native Language: ${studentLanguageName} (${studentLanguage})
-- Material Type: Foreign language textbook/learning material
 
 Instructions:
 1. DETECT the target language being taught by analyzing:
@@ -245,16 +237,21 @@ Instructions:
    - Word patterns and linguistic features
    - Context clues from the educational material
 
-2. Extract vocabulary, grammar patterns, and phrases from the IDENTIFIED target language
-3. Generate questions that test knowledge OF that specific target language
-4. Use the student's native language (${studentLanguageName}) for question instructions
-5. Include the target language words/phrases being tested IN the questions
-6. Reference the correct language name in your questions
+2. DETECT the student's native language from any context clues in the material (instructions, translations, or explanations)
+
+3. Extract vocabulary, grammar patterns, and phrases from the IDENTIFIED target language
+
+4. Generate questions that test knowledge OF that specific target language
+
+5. Use the detected student's native language for question instructions
+
+6. Include the target language words/phrases being tested IN the questions
 
 Return JSON:
 {
   "subject_analysis": {
     "detected_subject": "Language being taught (detected from content)",
+    "student_language_detected": "Native language detected from context",
     "confidence": 0.9,
     "topics_found": ["vocabulary topics", "grammar patterns"],
     "reasoning": "brief explanation of language identification"
@@ -263,17 +260,17 @@ Return JSON:
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "question in ${studentLanguageName} that includes target language word/phrase to test",
+      "question": "question in student's native language that includes target language word/phrase to test",
       "options": ["mix of translations, meanings, or target language options"],
       "correct_answer": "correct option",
-      "explanation": "explanation in ${studentLanguageName}",
+      "explanation": "explanation in student's native language",
       "topic_area": "vocabulary/grammar/translation"
     }
   ]
 }
 
 CRITICAL LANGUAGE LEARNING REQUIREMENTS:
-- Question instructions MUST be in ${studentLanguageName}
+- Question instructions MUST be in the student's native language (detected from context)
 - Target language words/phrases MUST be preserved in questions
 - Test vocabulary meaning, grammar rules, and translation skills
 - DO NOT translate the target language words being tested
