@@ -244,12 +244,20 @@ export class MobileApiService {
       }
 
       console.log('Using prompt type:', promptType)
-      
-      // Log full prompt for quality analysis
+
+      // Log full prompt for quality analysis (console)
       console.log('=== FULL PROMPT SENT TO GEMINI ===')
       console.log(promptToUse)
       console.log('=== END PROMPT ===')
       console.log('Prompt length:', promptToUse.length, 'characters')
+
+      // Log prompt to file for user review
+      await this.logPromptToFile(promptToUse, promptType, {
+        category,
+        grade,
+        language,
+        imageCount: fileMetadataList.length
+      })
 
       console.log('Starting Gemini processing...')
       console.log('=== USING LEGACY MODE ===')
@@ -292,6 +300,65 @@ export class MobileApiService {
         error: 'Gemini processing failed',
         details: error instanceof Error ? error.message : 'Unknown error'
       }
+    }
+  }
+
+  /**
+   * Log prompt to file for quality analysis
+   */
+  private static async logPromptToFile(
+    prompt: string,
+    promptType: string,
+    metadata: {
+      category?: string
+      grade?: number
+      language?: string
+      imageCount?: number
+    }
+  ): Promise<void> {
+    try {
+      const fs = require('fs').promises
+      const path = require('path')
+
+      const promptsDir = path.join(process.cwd(), 'prompttests')
+
+      // Ensure directory exists
+      try {
+        await fs.access(promptsDir)
+      } catch {
+        await fs.mkdir(promptsDir, { recursive: true })
+      }
+
+      const timestamp = new Date().toISOString()
+      const filename = `prompt-${Date.now()}.txt`
+      const filepath = path.join(promptsDir, filename)
+
+      const logContent = `=== EXAM GENERATION PROMPT ===
+Timestamp: ${timestamp}
+Prompt Type: ${promptType}
+Category: ${metadata.category || 'not specified'}
+Grade: ${metadata.grade || 'not specified'}
+Language: ${metadata.language || 'en'}
+Image Count: ${metadata.imageCount || 0}
+
+PROMPT:
+${prompt}
+
+==================================================
+
+PROMPT SIZE:
+- Characters: ${prompt.length}
+- Approx Tokens: ${Math.ceil(prompt.length / 4)}
+- Lines: ${prompt.split('\n').length}
+
+==================================================
+`
+
+      await fs.writeFile(filepath, logContent, 'utf-8')
+      console.log(`Prompt logged to: ${filepath}`)
+    } catch (error) {
+      console.error('Failed to log prompt to file:', error)
+      // Don't throw - logging failure shouldn't break exam generation
     }
   }
 

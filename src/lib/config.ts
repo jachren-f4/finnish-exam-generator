@@ -188,41 +188,35 @@ Return only JSON.`
       language_studies: 'Foreign language learning including vocabulary, grammar, translation, and comprehension'
     }
 
+    // VARIANT 4: Back to proven structure with minimal fix (text format only)
     return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students.
-
-Use the same language as the source material for all questions and explanations.
 
 CRITICAL CONSTRAINT: Questions must test actual knowledge, not document references. Avoid:
 - Visual references (anything requiring seeing images/diagrams)
 - Document structure (page numbers, chapters, sections)
 - Location-based phrasing (positional references)
 
-TARGET: ${categoryDescriptions[category as keyof typeof categoryDescriptions] || category} subject area.
+TARGET: Use the same language as the source material. Subject area: ${categoryDescriptions[category as keyof typeof categoryDescriptions] || category}.
 
 TASK: Generate exactly 10 questions that test understanding of the educational concepts.
 
-
 REQUIRED FORMAT:
 {
-  "subject_analysis": {
-    "detected_subject": "specific subject identified",
-    "topics_found": ["topic1", "topic2"],
-    "confidence": 0.9
-  },
   "questions": [
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "question text",
-      "options": ["A", "B", "C", "D"],
-      "correct_answer": "A",
-      "explanation": "explanation text",
-      "topic_area": "concept being tested"
+      "question": "Mitä ovat lämpöeristeet?",
+      "options": ["Materiaaleja jotka estävät lämmön siirtymistä", "Materiaaleja jotka edistävät lämmön siirtymistä", "Materiaaleja jotka tuottavat lämpöä", "Materiaaleja jotka kuluttavat lämpöä"],
+      "correct_answer": "Materiaaleja jotka estävät lämmön siirtymistä",
+      "explanation": "Lämpöeristeet estävät lämpöenergian siirtymisen."
     }
   ]
 }
 
-QUALITY FOCUS: Create questions that test knowledge, not visual recognition. Use clear grammar.`
+IMPORTANT: The correct_answer field must contain the exact text from the options array.
+
+QUALITY FOCUS: Create questions that test knowledge, not visual recognition.`
   },
 
   getLanguageStudiesPrompt: (grade?: number, studentLanguage: string = 'en') => {

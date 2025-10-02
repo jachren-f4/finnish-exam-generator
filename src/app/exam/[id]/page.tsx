@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import type { ExamData, StudentAnswer } from '@/lib/supabase'
+import { EXAM_UI } from '@/constants/exam-ui'
+import { ICONS } from '@/constants/exam-icons'
 
 interface ExamState extends ExamData {
   canReuse: boolean
@@ -37,7 +39,7 @@ export default function ExamPage() {
       
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Kokeen lataus epäonnistui')
+        throw new Error(errorData.error || EXAM_UI.LOAD_FAILED)
       }
 
       const responseData = await response.json()
@@ -52,7 +54,7 @@ export default function ExamPage() {
       }
     } catch (err) {
       console.error('Error fetching exam:', err)
-      setError(err instanceof Error ? err.message : 'Kokeen lataus epäonnistui')
+      setError(err instanceof Error ? err.message : EXAM_UI.LOAD_FAILED)
     } finally {
       setIsLoading(false)
     }
@@ -114,10 +116,10 @@ export default function ExamPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Ladataan koetta...</p>
+          <div className="animate-spin rounded-full h-16 w-16 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-6 sm:mt-4 text-base sm:text-sm text-gray-600">{EXAM_UI.LOADING}</p>
         </div>
       </div>
     )
@@ -125,17 +127,17 @@ export default function ExamPage() {
 
   if (error || !exam) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 max-w-md mx-auto w-full">
           <div className="text-center">
-            <div className="text-red-500 text-5xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Virhe</h1>
-            <p className="text-gray-600 mb-4">{error || 'Koetta ei löytynyt'}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            <div className="text-red-500 text-6xl sm:text-5xl mb-6 sm:mb-4">{ICONS.WARNING}</div>
+            <h1 className="text-2xl sm:text-xl font-bold text-gray-900 mb-3 sm:mb-2">{EXAM_UI.ERROR}</h1>
+            <p className="text-base sm:text-sm text-gray-600 mb-6 sm:mb-4">{error || EXAM_UI.NOT_FOUND}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-medium min-h-[48px] transition-all active:scale-95"
             >
-              Yritä uudelleen
+              {EXAM_UI.RETRY}
             </button>
           </div>
         </div>
@@ -146,17 +148,17 @@ export default function ExamPage() {
   // Ensure we have valid questions array and current question exists
   if (!exam.questions || !Array.isArray(exam.questions) || exam.questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 max-w-md mx-auto w-full">
           <div className="text-center">
-            <div className="text-red-500 text-5xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Virhe</h1>
-            <p className="text-gray-600 mb-4">Kokeen kysymyksiä ei löytynyt tai ne ovat virheellisessä muodossa</p>
+            <div className="text-red-500 text-6xl sm:text-5xl mb-6 sm:mb-4">{ICONS.WARNING}</div>
+            <h1 className="text-2xl sm:text-xl font-bold text-gray-900 mb-3 sm:mb-2">{EXAM_UI.ERROR}</h1>
+            <p className="text-base sm:text-sm text-gray-600 mb-6 sm:mb-4">{EXAM_UI.NOT_FOUND}</p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+              className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-medium min-h-[48px] transition-all active:scale-95"
             >
-              Yritä uudelleen
+              {EXAM_UI.RETRY}
             </button>
           </div>
         </div>
@@ -169,17 +171,17 @@ export default function ExamPage() {
   // Additional safety check for current question
   if (!currentQ) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 max-w-md mx-auto w-full">
           <div className="text-center">
-            <div className="text-red-500 text-5xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Virhe</h1>
-            <p className="text-gray-600 mb-4">Nykyistä kysymystä ei löytynyt</p>
+            <div className="text-red-500 text-6xl sm:text-5xl mb-6 sm:mb-4">{ICONS.WARNING}</div>
+            <h1 className="text-2xl sm:text-xl font-bold text-gray-900 mb-3 sm:mb-2">{EXAM_UI.ERROR}</h1>
+            <p className="text-base sm:text-sm text-gray-600 mb-6 sm:mb-4">{EXAM_UI.NOT_FOUND}</p>
             <button
               onClick={() => setCurrentQuestion(0)}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+              className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-medium min-h-[48px] transition-all active:scale-95"
             >
-              Palaa ensimmäiseen kysymykseen
+              {EXAM_UI.RETRY}
             </button>
           </div>
         </div>
@@ -188,20 +190,20 @@ export default function ExamPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{exam.subject}</h1>
-              <p className="text-gray-600">{exam.grade}</p>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header - Sticky */}
+      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+        <div className="w-full px-4 py-3 md:py-4 md:max-w-[640px] lg:max-w-[768px] md:mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{exam.subject}</h1>
+              <p className="text-sm text-gray-600">{exam.grade}</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Kysymys {currentQuestion + 1} / {exam.total_questions}</p>
-              <div className="w-32 bg-gray-200 rounded-full h-2 mt-1">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+            <div className="flex items-center gap-3 sm:flex-col sm:items-end">
+              <p className="text-sm font-medium text-gray-700">{currentQuestion + 1}{EXAM_UI.QUESTION_OF}{exam.total_questions}</p>
+              <div className="flex-1 sm:w-32 bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${getProgress()}%` }}
                 ></div>
               </div>
@@ -213,29 +215,29 @@ export default function ExamPage() {
       {/* Mode Selection */}
       {exam.canReuse && exam.hasBeenCompleted && (
         <div className="bg-blue-50 border-b">
-          <div className="max-w-4xl mx-auto px-4 py-3">
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-blue-700 font-medium">Tila:</span>
-              <div className="flex bg-white rounded-lg p-1">
+          <div className="w-full px-4 py-3 md:max-w-[640px] lg:max-w-[768px] md:mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <span className="text-sm text-blue-700 font-medium sm:hidden">{EXAM_UI.MODE}</span>
+              <div className="flex bg-white rounded-lg p-1 w-full sm:w-auto">
                 <button
                   onClick={() => setMode('take')}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                    mode === 'take' 
-                      ? 'bg-blue-600 text-white' 
+                  className={`flex-1 sm:flex-none px-6 py-3 sm:py-2 text-sm font-medium rounded-md transition-all min-h-[48px] sm:min-h-0 ${
+                    mode === 'take'
+                      ? 'bg-blue-600 text-white'
                       : 'text-blue-600 hover:bg-blue-50'
                   }`}
                 >
-                  Suorita koe uudelleen
+                  {EXAM_UI.RETAKE}
                 </button>
                 <button
                   onClick={() => setMode('review')}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                    mode === 'review' 
-                      ? 'bg-blue-600 text-white' 
+                  className={`flex-1 sm:flex-none px-6 py-3 sm:py-2 text-sm font-medium rounded-md transition-all min-h-[48px] sm:min-h-0 ${
+                    mode === 'review'
+                      ? 'bg-blue-600 text-white'
                       : 'text-blue-600 hover:bg-blue-50'
                   }`}
                 >
-                  Tarkastele tuloksia
+                  {EXAM_UI.REVIEW}
                 </button>
               </div>
             </div>
@@ -243,11 +245,12 @@ export default function ExamPage() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      {/* Main Content - Flex grow to push navigation to bottom */}
+      <div className="flex-1 w-full px-4 py-4 md:py-6 md:max-w-[640px] lg:max-w-[768px] md:mx-auto">
         {mode === 'take' ? (
           <>
-            {/* Question Navigation */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            {/* Question Navigation - Hide on mobile, show on tablet+ */}
+            <div className="hidden md:flex flex-wrap gap-2 mb-6">
               {(exam.questions || []).map((q, index) => (
                 <button
                   key={q.id}
@@ -265,50 +268,50 @@ export default function ExamPage() {
               ))}
             </div>
 
-            {/* Current Question */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-blue-600 bg-blue-100 px-3 py-1 rounded-full">
-                  {currentQ.question_type === 'multiple_choice' && 'Monivalinta'}
-                  {currentQ.question_type === 'true_false' && 'Tosi vai epätosi'}
-                  {currentQ.question_type === 'short_answer' && 'Lyhyt vastaus'}
-                  {currentQ.question_type === 'fill_in_the_blank' && 'Täydennä lause'}
+            {/* Current Question - Card Style */}
+            <div className="bg-white rounded-xl shadow-lg p-5 sm:p-6 md:p-8 mb-4">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <span className="flex items-center gap-1.5 text-sm sm:text-base font-medium text-blue-600 bg-blue-100 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full">
+                  {currentQ.question_type === 'multiple_choice' && `${ICONS.CIRCLE} ${EXAM_UI.MC}`}
+                  {currentQ.question_type === 'true_false' && `${ICONS.TRUE_FALSE} ${EXAM_UI.TF}`}
+                  {currentQ.question_type === 'short_answer' && `${ICONS.PENCIL} ${EXAM_UI.TEXT}`}
+                  {currentQ.question_type === 'fill_in_the_blank' && `${ICONS.DOCUMENT} ${EXAM_UI.FILL}`}
                 </span>
-                <span className="text-sm text-gray-500">{currentQ.max_points} pistettä</span>
+                <span className="flex items-center gap-1 text-sm sm:text-base text-gray-600 font-medium">{ICONS.STAR} {currentQ.max_points} {EXAM_UI.POINTS}</span>
               </div>
 
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">{currentQ.question_text}</h2>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 mb-6">{currentQ.question_text}</h2>
 
               {/* Answer Input */}
               {currentQ.question_type === 'multiple_choice' && currentQ.options ? (
                 <div className="space-y-3">
                   {currentQ.options.map((option, idx) => (
-                    <label key={idx} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <label key={idx} className="flex items-center space-x-3 sm:space-x-4 p-4 sm:p-3 border-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-all min-h-[56px] active:scale-[0.98] active:bg-blue-50">
                       <input
                         type="radio"
                         name={`question-${currentQ.id}`}
                         value={option}
                         checked={answers[currentQ.id] === option}
                         onChange={(e) => handleAnswerChange(currentQ.id, e.target.value)}
-                        className="w-4 h-4 text-blue-600"
+                        className="w-5 h-5 sm:w-4 sm:h-4 text-blue-600"
                       />
-                      <span className="text-gray-900">{option}</span>
+                      <span className="text-base sm:text-base text-gray-900 flex-1">{option}</span>
                     </label>
                   ))}
                 </div>
               ) : currentQ.question_type === 'true_false' ? (
                 <div className="space-y-3">
-                  {['Tosi', 'Epätosi'].map((option) => (
-                    <label key={option} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  {[EXAM_UI.TRUE, EXAM_UI.FALSE].map((option) => (
+                    <label key={option} className="flex items-center space-x-3 sm:space-x-4 p-4 sm:p-3 border-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-all min-h-[56px] active:scale-[0.98] active:bg-blue-50">
                       <input
                         type="radio"
                         name={`question-${currentQ.id}`}
-                        value={option === 'Tosi' ? 'true' : 'false'}
-                        checked={answers[currentQ.id] === (option === 'Tosi' ? 'true' : 'false')}
+                        value={option === EXAM_UI.TRUE ? 'true' : 'false'}
+                        checked={answers[currentQ.id] === (option === EXAM_UI.TRUE ? 'true' : 'false')}
                         onChange={(e) => handleAnswerChange(currentQ.id, e.target.value)}
-                        className="w-4 h-4 text-blue-600"
+                        className="w-5 h-5 sm:w-4 sm:h-4 text-blue-600"
                       />
-                      <span className="text-gray-900">{option}</span>
+                      <span className="text-base sm:text-base text-gray-900 flex-1">{option}</span>
                     </label>
                   ))}
                 </div>
@@ -316,108 +319,81 @@ export default function ExamPage() {
                 <textarea
                   value={answers[currentQ.id] || ''}
                   onChange={(e) => handleAnswerChange(currentQ.id, e.target.value)}
-                  placeholder="Kirjoita vastauksesi tähän..."
-                  rows={4}
-                  className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
+                  placeholder={EXAM_UI.YOUR_ANSWER}
+                  rows={5}
+                  className="w-full p-4 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base sm:text-base text-gray-900 placeholder-gray-400 min-h-[120px]"
                 />
               )}
             </div>
 
-            {/* Navigation */}
-            <div className="flex items-center justify-between mb-8">
-              <button
-                onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
-                disabled={currentQuestion === 0}
-                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                ← Edellinen
-              </button>
 
-              {currentQuestion === (exam.questions?.length || 0) - 1 ? (
-                <button
-                  onClick={() => setShowConfirmDialog(true)}
-                  disabled={!isAllAnswered()}
-                  className="px-8 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                >
-                  Lähetä vastaukset
-                </button>
-              ) : (
-                <button
-                  onClick={() => setCurrentQuestion(Math.min((exam.questions?.length || 0) - 1, currentQuestion + 1))}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Seuraava →
-                </button>
-              )}
-            </div>
-
-            {/* Progress Summary */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Edistyminen</h3>
+            {/* Progress Summary - Hidden on mobile, visible on tablet+ */}
+            <div className="hidden md:block bg-white rounded-lg shadow-sm p-6 mb-20">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{EXAM_UI.PROGRESS}</h3>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-2xl font-bold text-blue-600">{Object.keys(answers).filter(id => answers[id]?.trim()).length}</div>
-                  <div className="text-sm text-gray-600">Vastattu</div>
+                  <div className="text-sm text-gray-600">{EXAM_UI.DONE}</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-gray-400">{(exam.questions?.length || 0) - Object.keys(answers).filter(id => answers[id]?.trim()).length}</div>
-                  <div className="text-sm text-gray-600">Jäljellä</div>
+                  <div className="text-sm text-gray-600">{EXAM_UI.LEFT}</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-gray-900">{getProgress()}%</div>
-                  <div className="text-sm text-gray-600">Valmis</div>
+                  <div className="text-sm text-gray-600"></div>
                 </div>
               </div>
             </div>
           </>
         ) : (
           /* Review Mode */
-          <div className="space-y-6">
+          <div className="space-y-6 mb-6">
             {exam.latestGrading ? (
-              <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
                 <div className="text-center mb-6">
-                  <div className="text-6xl mb-4">
-                    {exam.latestGrading.percentage >= 80 ? '🎉' : 
+                  <div className="text-7xl sm:text-8xl mb-4">
+                    {exam.latestGrading.percentage >= 80 ? '🎉' :
                      exam.latestGrading.percentage >= 60 ? '👍' : '📚'}
                   </div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-3">
                     {exam.latestGrading.final_grade}
                   </h2>
-                  <p className="text-xl text-gray-600">
-                    {exam.latestGrading.total_points} / {exam.latestGrading.max_total_points} pistettä 
+                  <p className="text-lg sm:text-xl text-gray-600">
+                    {exam.latestGrading.total_points} / {exam.latestGrading.max_total_points} {EXAM_UI.POINTS}
                     ({exam.latestGrading.percentage}%)
                   </p>
                 </div>
 
-                <div className="grid grid-cols-4 gap-4 text-center border-t pt-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center border-t pt-6">
                   <div>
-                    <div className="text-2xl font-bold text-green-600">{exam.latestGrading.questions_correct}</div>
-                    <div className="text-sm text-gray-600">Oikein</div>
+                    <div className="text-3xl sm:text-2xl font-bold text-green-600">{exam.latestGrading.questions_correct}</div>
+                    <div className="text-sm text-gray-600">{ICONS.CHECK}</div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-yellow-600">{exam.latestGrading.questions_partial}</div>
-                    <div className="text-sm text-gray-600">Osittain</div>
+                    <div className="text-3xl sm:text-2xl font-bold text-yellow-600">{exam.latestGrading.questions_partial}</div>
+                    <div className="text-sm text-gray-600">~</div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-red-600">{exam.latestGrading.questions_incorrect}</div>
-                    <div className="text-sm text-gray-600">Väärin</div>
+                    <div className="text-3xl sm:text-2xl font-bold text-red-600">{exam.latestGrading.questions_incorrect}</div>
+                    <div className="text-sm text-gray-600">{ICONS.CROSS}</div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-gray-900">{exam.latestGrading.questions_count}</div>
-                    <div className="text-sm text-gray-600">Yhteensä</div>
+                    <div className="text-3xl sm:text-2xl font-bold text-gray-900">{exam.latestGrading.questions_count}</div>
+                    <div className="text-sm text-gray-600">{EXAM_UI.TOTAL}</div>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-                <div className="text-gray-500 text-4xl mb-4">📊</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Ei tuloksia saatavilla</h3>
-                <p className="text-gray-600 mb-4">Tätä koetta ei ole vielä arvosteltu.</p>
+                <div className="text-gray-500 text-4xl mb-4">{ICONS.CHART}</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{EXAM_UI.NO_RESULTS}</h3>
+                <p className="text-gray-600 mb-4">{EXAM_UI.NOT_GRADED_DESC}</p>
                 <button
                   onClick={() => setMode('take')}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
                 >
-                  Suorita koe
+                  {EXAM_UI.START}
                 </button>
               </div>
             )}
@@ -425,28 +401,80 @@ export default function ExamPage() {
         )}
       </div>
 
-      {/* Confirmation Dialog */}
+      {/* Confirmation Dialog - Mobile optimized */}
       {showConfirmDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Vahvista vastausten lähetys</h3>
-            <p className="text-gray-600 mb-6">
-              Oletko varma, että haluat lähettää vastauksesi? Vastauksia ei voi muuttaa lähetyksen jälkeen.
-            </p>
-            <div className="flex justify-end gap-3">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-label={EXAM_UI.ARIA.SUBMIT_DIALOG}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full mx-auto">
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-4">{ICONS.WARNING}</div>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">{EXAM_UI.CONFIRM_SUBMIT}</h3>
+              <p className="text-base text-gray-600">
+                {EXAM_UI.SUBMIT_WARNING}
+              </p>
+            </div>
+            <div className="flex flex-col-reverse sm:flex-row justify-center gap-3">
               <button
                 onClick={() => setShowConfirmDialog(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="w-full sm:w-auto px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-medium min-h-[48px] transition-all active:scale-95"
+                aria-label={EXAM_UI.ARIA.CANCEL_SUBMISSION}
               >
-                Peruuta
+                {EXAM_UI.CANCEL}
               </button>
               <button
                 onClick={submitAnswers}
                 disabled={isSubmitting}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                className="w-full sm:w-auto px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 font-medium min-h-[48px] transition-all active:scale-95"
+                aria-label={EXAM_UI.ARIA.SUBMIT_ANSWERS}
               >
-                {isSubmitting ? 'Lähetetään...' : 'Lähetä vastaukset'}
+                {isSubmitting ? EXAM_UI.SENDING : EXAM_UI.SUBMIT}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sticky Bottom Navigation - Only in take mode */}
+      {mode === 'take' && (
+        <div className="sticky bottom-0 bg-white border-t shadow-lg z-10">
+          <div className="w-full px-4 py-4 md:max-w-[640px] lg:max-w-[768px] md:mx-auto">
+            <div className="flex items-center justify-between gap-3">
+              {/* Previous Button */}
+              <button
+                onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
+                disabled={currentQuestion === 0}
+                className="flex items-center gap-2 px-4 sm:px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium min-h-[48px] transition-all active:scale-95"
+                aria-label={EXAM_UI.ARIA.PREVIOUS_QUESTION}
+              >
+                {ICONS.ARROW_LEFT} <span className="hidden sm:inline">{EXAM_UI.PREV}</span>
+              </button>
+
+              {/* Progress Indicator */}
+              <div className="flex flex-col items-center flex-1 min-w-0">
+                <div className="text-sm font-semibold text-gray-700">
+                  {currentQuestion + 1}{EXAM_UI.QUESTION_OF}{exam.total_questions}
+                </div>
+                <div className="text-xs text-gray-500">{getProgress()}%</div>
+              </div>
+
+              {/* Next/Submit Button */}
+              {currentQuestion === (exam.questions?.length || 0) - 1 ? (
+                <button
+                  onClick={() => setShowConfirmDialog(true)}
+                  disabled={!isAllAnswered()}
+                  className="flex items-center gap-2 px-4 sm:px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium min-h-[48px] transition-all active:scale-95"
+                  aria-label={EXAM_UI.ARIA.SUBMIT_ANSWERS}
+                >
+                  <span>{EXAM_UI.SUBMIT}</span> {ICONS.CHECK}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setCurrentQuestion(Math.min((exam.questions?.length || 0) - 1, currentQuestion + 1))}
+                  className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium min-h-[48px] transition-all active:scale-95"
+                  aria-label={EXAM_UI.ARIA.NEXT_QUESTION}
+                >
+                  <span className="hidden sm:inline">{EXAM_UI.NEXT}</span> {ICONS.ARROW_RIGHT}
+                </button>
+              )}
             </div>
           </div>
         </div>
