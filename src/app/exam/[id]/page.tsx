@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import type { ExamData, StudentAnswer } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
 import { ICONS } from '@/constants/exam-icons'
+import { NavigationDots } from '@/components/exam/NavigationDots'
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
 
 interface ExamState extends ExamData {
   canReuse: boolean
@@ -36,17 +38,16 @@ export default function ExamPage() {
     try {
       setIsLoading(true)
       const response = await fetch(`/api/exam/${examId}`)
-      
+
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.error || EXAM_UI.LOAD_FAILED)
       }
 
       const responseData = await response.json()
-      const examData = responseData.data || responseData // Handle both old and new API formats
+      const examData = responseData.data || responseData
       setExam(examData)
 
-      // Determine initial mode based on exam state
       if (examData.hasBeenCompleted && examData.latestGrading) {
         setMode('review')
       } else {
@@ -72,7 +73,7 @@ export default function ExamPage() {
 
     try {
       setIsSubmitting(true)
-      
+
       const studentAnswers: StudentAnswer[] = Object.entries(answers).map(([questionId, answerText]) => ({
         question_id: questionId,
         answer_text: answerText
@@ -90,10 +91,8 @@ export default function ExamPage() {
       }
 
       const result = await response.json()
-      
-      // Redirect to grading page
       router.push(`/grading/${examId}`)
-      
+
     } catch (error) {
       console.error('Error submitting answers:', error)
       setError(error instanceof Error ? error.message : 'Answer submission failed')
@@ -116,26 +115,85 @@ export default function ExamPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-6 sm:mt-4 text-base sm:text-sm text-gray-600">{EXAM_UI.LOADING}</p>
+      <div style={{
+        minHeight: '100vh',
+        background: COLORS.background.primary,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: SPACING.lg,
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: `3px solid ${COLORS.border.light}`,
+            borderTop: `3px solid ${COLORS.primary.dark}`,
+            borderRadius: RADIUS.full,
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto'
+          }}></div>
+          <p style={{
+            marginTop: SPACING.lg,
+            fontSize: TYPOGRAPHY.fontSize.sm,
+            color: COLORS.primary.medium,
+          }}>{EXAM_UI.LOADING}</p>
         </div>
+        <style jsx>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     )
   }
 
   if (error || !exam) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 max-w-md mx-auto w-full">
-          <div className="text-center">
-            <div className="text-red-500 text-6xl sm:text-5xl mb-6 sm:mb-4">{ICONS.WARNING}</div>
-            <h1 className="text-2xl sm:text-xl font-bold text-gray-900 mb-3 sm:mb-2">{EXAM_UI.ERROR}</h1>
-            <p className="text-base sm:text-sm text-gray-600 mb-6 sm:mb-4">{error || EXAM_UI.NOT_FOUND}</p>
+      <div style={{
+        minHeight: '100vh',
+        background: COLORS.background.primary,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: SPACING.lg,
+      }}>
+        <div style={{
+          background: COLORS.background.primary,
+          borderRadius: RADIUS.lg,
+          boxShadow: SHADOWS.card,
+          padding: SPACING.xl,
+          maxWidth: '400px',
+          width: '100%',
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: SPACING.lg }}>{ICONS.WARNING}</div>
+            <h1 style={{
+              fontSize: TYPOGRAPHY.fontSize.xl,
+              fontWeight: TYPOGRAPHY.fontWeight.bold,
+              color: COLORS.primary.text,
+              marginBottom: SPACING.md,
+            }}>{EXAM_UI.ERROR}</h1>
+            <p style={{
+              fontSize: TYPOGRAPHY.fontSize.base,
+              color: COLORS.primary.medium,
+              marginBottom: SPACING.lg,
+            }}>{error || EXAM_UI.NOT_FOUND}</p>
             <button
               onClick={() => window.location.reload()}
-              className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-medium min-h-[48px] transition-all active:scale-95"
+              style={{
+                width: '100%',
+                background: BUTTONS.primary.background,
+                color: BUTTONS.primary.text,
+                padding: BUTTONS.primary.padding,
+                borderRadius: BUTTONS.primary.radius,
+                border: 'none',
+                fontSize: TYPOGRAPHY.fontSize.base,
+                fontWeight: TYPOGRAPHY.fontWeight.medium,
+                minHeight: TOUCH_TARGETS.comfortable,
+                cursor: 'pointer',
+                transition: TRANSITIONS.normal,
+              }}
             >
               {EXAM_UI.RETRY}
             </button>
@@ -145,21 +203,37 @@ export default function ExamPage() {
     )
   }
 
-  // Ensure we have valid questions array and current question exists
   if (!exam.questions || !Array.isArray(exam.questions) || exam.questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 max-w-md mx-auto w-full">
-          <div className="text-center">
-            <div className="text-red-500 text-6xl sm:text-5xl mb-6 sm:mb-4">{ICONS.WARNING}</div>
-            <h1 className="text-2xl sm:text-xl font-bold text-gray-900 mb-3 sm:mb-2">{EXAM_UI.ERROR}</h1>
-            <p className="text-base sm:text-sm text-gray-600 mb-6 sm:mb-4">{EXAM_UI.NOT_FOUND}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-medium min-h-[48px] transition-all active:scale-95"
-            >
-              {EXAM_UI.RETRY}
-            </button>
+      <div style={{
+        minHeight: '100vh',
+        background: COLORS.background.primary,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: SPACING.lg,
+      }}>
+        <div style={{
+          background: COLORS.background.primary,
+          borderRadius: RADIUS.lg,
+          boxShadow: SHADOWS.card,
+          padding: SPACING.xl,
+          maxWidth: '400px',
+          width: '100%',
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: SPACING.lg }}>{ICONS.WARNING}</div>
+            <h1 style={{
+              fontSize: TYPOGRAPHY.fontSize.xl,
+              fontWeight: TYPOGRAPHY.fontWeight.bold,
+              color: COLORS.primary.text,
+              marginBottom: SPACING.md,
+            }}>{EXAM_UI.ERROR}</h1>
+            <p style={{
+              fontSize: TYPOGRAPHY.fontSize.base,
+              color: COLORS.primary.medium,
+              marginBottom: SPACING.lg,
+            }}>{EXAM_UI.NOT_FOUND}</p>
           </div>
         </div>
       </div>
@@ -168,18 +242,46 @@ export default function ExamPage() {
 
   const currentQ = exam.questions[currentQuestion]
 
-  // Additional safety check for current question
   if (!currentQ) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 max-w-md mx-auto w-full">
-          <div className="text-center">
-            <div className="text-red-500 text-6xl sm:text-5xl mb-6 sm:mb-4">{ICONS.WARNING}</div>
-            <h1 className="text-2xl sm:text-xl font-bold text-gray-900 mb-3 sm:mb-2">{EXAM_UI.ERROR}</h1>
-            <p className="text-base sm:text-sm text-gray-600 mb-6 sm:mb-4">{EXAM_UI.NOT_FOUND}</p>
+      <div style={{
+        minHeight: '100vh',
+        background: COLORS.background.primary,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: SPACING.lg,
+      }}>
+        <div style={{
+          background: COLORS.background.primary,
+          borderRadius: RADIUS.lg,
+          boxShadow: SHADOWS.card,
+          padding: SPACING.xl,
+          maxWidth: '400px',
+          width: '100%',
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: SPACING.lg }}>{ICONS.WARNING}</div>
+            <h1 style={{
+              fontSize: TYPOGRAPHY.fontSize.xl,
+              fontWeight: TYPOGRAPHY.fontWeight.bold,
+              color: COLORS.primary.text,
+              marginBottom: SPACING.md,
+            }}>{EXAM_UI.ERROR}</h1>
             <button
               onClick={() => setCurrentQuestion(0)}
-              className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-medium min-h-[48px] transition-all active:scale-95"
+              style={{
+                width: '100%',
+                background: BUTTONS.primary.background,
+                color: BUTTONS.primary.text,
+                padding: BUTTONS.primary.padding,
+                borderRadius: BUTTONS.primary.radius,
+                border: 'none',
+                fontSize: TYPOGRAPHY.fontSize.base,
+                fontWeight: TYPOGRAPHY.fontWeight.medium,
+                minHeight: TOUCH_TARGETS.comfortable,
+                cursor: 'pointer',
+              }}
             >
               {EXAM_UI.RETRY}
             </button>
@@ -190,128 +292,164 @@ export default function ExamPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header - Sticky */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-        <div className="w-full px-4 py-3 md:py-4 md:max-w-[640px] lg:max-w-[768px] md:mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-            <div className="flex-1">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{exam.subject}</h1>
-              <p className="text-sm text-gray-600">{exam.grade}</p>
-            </div>
-            <div className="flex items-center gap-3 sm:flex-col sm:items-end">
-              <p className="text-sm font-medium text-gray-700">{currentQuestion + 1}{EXAM_UI.QUESTION_OF}{exam.total_questions}</p>
-              <div className="flex-1 sm:w-32 bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${getProgress()}%` }}
-                ></div>
-              </div>
-            </div>
+    <div style={{
+      minHeight: '100vh',
+      background: COLORS.background.primary,
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      {/* ExamGenie Branding */}
+      <div style={{
+        padding: SPACING.lg,
+        paddingBottom: SPACING.md,
+      }}>
+        <div style={{
+          maxWidth: '640px',
+          margin: '0 auto',
+          display: 'flex',
+          alignItems: 'center',
+          gap: SPACING.md,
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: COLORS.primary.dark,
+            borderRadius: RADIUS.md,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '24px',
+          }}>
+            🎓
           </div>
+          <h1 style={{
+            fontSize: TYPOGRAPHY.fontSize.xl,
+            fontWeight: TYPOGRAPHY.fontWeight.semibold,
+            color: COLORS.primary.text,
+            margin: 0,
+          }}>
+            ExamGenie
+          </h1>
         </div>
       </div>
 
-      {/* Mode Selection */}
-      {exam.canReuse && exam.hasBeenCompleted && (
-        <div className="bg-blue-50 border-b">
-          <div className="w-full px-4 py-3 md:max-w-[640px] lg:max-w-[768px] md:mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-              <span className="text-sm text-blue-700 font-medium sm:hidden">{EXAM_UI.MODE}</span>
-              <div className="flex bg-white rounded-lg p-1 w-full sm:w-auto">
-                <button
-                  onClick={() => setMode('take')}
-                  className={`flex-1 sm:flex-none px-6 py-3 sm:py-2 text-sm font-medium rounded-md transition-all min-h-[48px] sm:min-h-0 ${
-                    mode === 'take'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-blue-600 hover:bg-blue-50'
-                  }`}
-                >
-                  {EXAM_UI.RETAKE}
-                </button>
-                <button
-                  onClick={() => setMode('review')}
-                  className={`flex-1 sm:flex-none px-6 py-3 sm:py-2 text-sm font-medium rounded-md transition-all min-h-[48px] sm:min-h-0 ${
-                    mode === 'review'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-blue-600 hover:bg-blue-50'
-                  }`}
-                >
-                  {EXAM_UI.REVIEW}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Navigation Dots - Top */}
+      {mode === 'take' && (
+        <NavigationDots
+          total={exam.questions.length}
+          current={currentQuestion}
+          onDotClick={undefined} // No click navigation for simplicity
+        />
       )}
 
-      {/* Main Content - Flex grow to push navigation to bottom */}
-      <div className="flex-1 w-full px-4 py-4 md:py-6 md:max-w-[640px] lg:max-w-[768px] md:mx-auto">
+      {/* Main Content */}
+      <div style={{
+        flex: 1,
+        padding: SPACING.lg,
+        maxWidth: '640px',
+        margin: '0 auto',
+        width: '100%',
+      }}>
         {mode === 'take' ? (
           <>
-            {/* Question Navigation - Hide on mobile, show on tablet+ */}
-            <div className="hidden md:flex flex-wrap gap-2 mb-6">
-              {(exam.questions || []).map((q, index) => (
-                <button
-                  key={q.id}
-                  onClick={() => setCurrentQuestion(index)}
-                  className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-                    index === currentQuestion
-                      ? 'bg-blue-600 text-white'
-                      : answers[q.id]?.trim()
-                      ? 'bg-green-100 text-green-800 border border-green-200'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              ))}
-            </div>
-
-            {/* Current Question - Card Style */}
-            <div className="bg-white rounded-xl shadow-lg p-5 sm:p-6 md:p-8 mb-4">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <span className="flex items-center gap-1.5 text-sm sm:text-base font-medium text-blue-600 bg-blue-100 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full">
-                  {currentQ.question_type === 'multiple_choice' && `${ICONS.CIRCLE} ${EXAM_UI.MC}`}
-                  {currentQ.question_type === 'true_false' && `${ICONS.TRUE_FALSE} ${EXAM_UI.TF}`}
-                  {currentQ.question_type === 'short_answer' && `${ICONS.PENCIL} ${EXAM_UI.TEXT}`}
-                  {currentQ.question_type === 'fill_in_the_blank' && `${ICONS.DOCUMENT} ${EXAM_UI.FILL}`}
-                </span>
-                <span className="flex items-center gap-1 text-sm sm:text-base text-gray-600 font-medium">{ICONS.STAR} {currentQ.max_points} {EXAM_UI.POINTS}</span>
+            {/* Current Question Card */}
+            <div style={{
+              background: COLORS.background.primary,
+              borderRadius: RADIUS.lg,
+              boxShadow: SHADOWS.card,
+              padding: SPACING.xl,
+              marginBottom: SPACING.lg,
+            }}>
+              {/* Question Type Badge */}
+              <div style={{
+                display: 'inline-block',
+                background: COLORS.background.secondary,
+                color: COLORS.primary.medium,
+                padding: `${SPACING.sm} ${SPACING.md}`,
+                borderRadius: RADIUS.sm,
+                fontSize: TYPOGRAPHY.fontSize.sm,
+                fontWeight: TYPOGRAPHY.fontWeight.medium,
+                marginBottom: SPACING.md,
+              }}>
+                {currentQuestion + 1} / {exam.total_questions}
               </div>
 
-              <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 mb-6">{currentQ.question_text}</h2>
+              <h2 style={{
+                fontSize: TYPOGRAPHY.fontSize.xl,
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                color: COLORS.primary.text,
+                marginBottom: SPACING.xl,
+                lineHeight: TYPOGRAPHY.lineHeight.normal,
+              }}>{currentQ.question_text}</h2>
 
               {/* Answer Input */}
               {currentQ.question_type === 'multiple_choice' && currentQ.options ? (
-                <div className="space-y-3">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.md }}>
                   {currentQ.options.map((option, idx) => (
-                    <label key={idx} className="flex items-center space-x-3 sm:space-x-4 p-4 sm:p-3 border-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-all min-h-[56px] active:scale-[0.98] active:bg-blue-50">
+                    <label key={idx} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: SPACING.md,
+                      padding: SPACING.md,
+                      border: `2px solid ${answers[currentQ.id] === option ? COLORS.primary.dark : COLORS.border.light}`,
+                      borderRadius: RADIUS.md,
+                      background: answers[currentQ.id] === option ? COLORS.background.secondary : COLORS.background.primary,
+                      cursor: 'pointer',
+                      minHeight: TOUCH_TARGETS.comfortable,
+                      transition: TRANSITIONS.normal,
+                    }}>
                       <input
                         type="radio"
                         name={`question-${currentQ.id}`}
                         value={option}
                         checked={answers[currentQ.id] === option}
                         onChange={(e) => handleAnswerChange(currentQ.id, e.target.value)}
-                        className="w-5 h-5 sm:w-4 sm:h-4 text-blue-600"
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          accentColor: COLORS.primary.dark,
+                        }}
                       />
-                      <span className="text-base sm:text-base text-gray-900 flex-1">{option}</span>
+                      <span style={{
+                        fontSize: TYPOGRAPHY.fontSize.base,
+                        color: COLORS.primary.text,
+                        flex: 1,
+                      }}>{option}</span>
                     </label>
                   ))}
                 </div>
               ) : currentQ.question_type === 'true_false' ? (
-                <div className="space-y-3">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.md }}>
                   {[EXAM_UI.TRUE, EXAM_UI.FALSE].map((option) => (
-                    <label key={option} className="flex items-center space-x-3 sm:space-x-4 p-4 sm:p-3 border-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-all min-h-[56px] active:scale-[0.98] active:bg-blue-50">
+                    <label key={option} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: SPACING.md,
+                      padding: SPACING.md,
+                      border: `2px solid ${answers[currentQ.id] === (option === EXAM_UI.TRUE ? 'true' : 'false') ? COLORS.primary.dark : COLORS.border.light}`,
+                      borderRadius: RADIUS.md,
+                      background: answers[currentQ.id] === (option === EXAM_UI.TRUE ? 'true' : 'false') ? COLORS.background.secondary : COLORS.background.primary,
+                      cursor: 'pointer',
+                      minHeight: TOUCH_TARGETS.comfortable,
+                      transition: TRANSITIONS.normal,
+                    }}>
                       <input
                         type="radio"
                         name={`question-${currentQ.id}`}
                         value={option === EXAM_UI.TRUE ? 'true' : 'false'}
                         checked={answers[currentQ.id] === (option === EXAM_UI.TRUE ? 'true' : 'false')}
                         onChange={(e) => handleAnswerChange(currentQ.id, e.target.value)}
-                        className="w-5 h-5 sm:w-4 sm:h-4 text-blue-600"
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          accentColor: COLORS.primary.dark,
+                        }}
                       />
-                      <span className="text-base sm:text-base text-gray-900 flex-1">{option}</span>
+                      <span style={{
+                        fontSize: TYPOGRAPHY.fontSize.base,
+                        color: COLORS.primary.text,
+                        flex: 1,
+                      }}>{option}</span>
                     </label>
                   ))}
                 </div>
@@ -321,77 +459,138 @@ export default function ExamPage() {
                   onChange={(e) => handleAnswerChange(currentQ.id, e.target.value)}
                   placeholder={EXAM_UI.YOUR_ANSWER}
                   rows={5}
-                  className="w-full p-4 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base sm:text-base text-gray-900 placeholder-gray-400 min-h-[120px]"
+                  style={{
+                    width: '100%',
+                    padding: SPACING.md,
+                    border: `2px solid ${COLORS.border.medium}`,
+                    borderRadius: RADIUS.md,
+                    fontSize: TYPOGRAPHY.fontSize.base,
+                    color: COLORS.primary.text,
+                    fontFamily: TYPOGRAPHY.fontFamily.sans,
+                    resize: 'vertical',
+                    minHeight: '120px',
+                  }}
                 />
               )}
-            </div>
-
-
-            {/* Progress Summary - Hidden on mobile, visible on tablet+ */}
-            <div className="hidden md:block bg-white rounded-lg shadow-sm p-6 mb-20">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">{EXAM_UI.PROGRESS}</h3>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-blue-600">{Object.keys(answers).filter(id => answers[id]?.trim()).length}</div>
-                  <div className="text-sm text-gray-600">{EXAM_UI.DONE}</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-400">{(exam.questions?.length || 0) - Object.keys(answers).filter(id => answers[id]?.trim()).length}</div>
-                  <div className="text-sm text-gray-600">{EXAM_UI.LEFT}</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">{getProgress()}%</div>
-                  <div className="text-sm text-gray-600"></div>
-                </div>
-              </div>
             </div>
           </>
         ) : (
           /* Review Mode */
-          <div className="space-y-6 mb-6">
+          <div style={{ marginBottom: SPACING.lg }}>
             {exam.latestGrading ? (
-              <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
-                <div className="text-center mb-6">
-                  <div className="text-7xl sm:text-8xl mb-4">
+              <div style={{
+                background: COLORS.background.primary,
+                borderRadius: RADIUS.lg,
+                boxShadow: SHADOWS.card,
+                padding: SPACING.xl,
+              }}>
+                <div style={{ textAlign: 'center', marginBottom: SPACING.xl }}>
+                  <div style={{ fontSize: '64px', marginBottom: SPACING.md }}>
                     {exam.latestGrading.percentage >= 80 ? '🎉' :
                      exam.latestGrading.percentage >= 60 ? '👍' : '📚'}
                   </div>
-                  <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-3">
+                  <h2 style={{
+                    fontSize: '48px',
+                    fontWeight: TYPOGRAPHY.fontWeight.bold,
+                    color: COLORS.primary.text,
+                    marginBottom: SPACING.sm,
+                  }}>
                     {exam.latestGrading.final_grade}
                   </h2>
-                  <p className="text-lg sm:text-xl text-gray-600">
+                  <p style={{
+                    fontSize: TYPOGRAPHY.fontSize.lg,
+                    color: COLORS.primary.medium,
+                  }}>
                     {exam.latestGrading.total_points} / {exam.latestGrading.max_total_points} {EXAM_UI.POINTS}
                     ({exam.latestGrading.percentage}%)
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center border-t pt-6">
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: SPACING.md,
+                  textAlign: 'center',
+                  borderTop: `1px solid ${COLORS.border.light}`,
+                  paddingTop: SPACING.lg,
+                }}>
                   <div>
-                    <div className="text-3xl sm:text-2xl font-bold text-green-600">{exam.latestGrading.questions_correct}</div>
-                    <div className="text-sm text-gray-600">{ICONS.CHECK}</div>
+                    <div style={{
+                      fontSize: TYPOGRAPHY.fontSize['2xl'],
+                      fontWeight: TYPOGRAPHY.fontWeight.bold,
+                      color: COLORS.semantic.success,
+                    }}>{exam.latestGrading.questions_correct}</div>
+                    <div style={{
+                      fontSize: TYPOGRAPHY.fontSize.xs,
+                      color: COLORS.primary.medium,
+                    }}>{ICONS.CHECK}</div>
                   </div>
                   <div>
-                    <div className="text-3xl sm:text-2xl font-bold text-yellow-600">{exam.latestGrading.questions_partial}</div>
-                    <div className="text-sm text-gray-600">~</div>
+                    <div style={{
+                      fontSize: TYPOGRAPHY.fontSize['2xl'],
+                      fontWeight: TYPOGRAPHY.fontWeight.bold,
+                      color: COLORS.semantic.warning,
+                    }}>{exam.latestGrading.questions_partial}</div>
+                    <div style={{
+                      fontSize: TYPOGRAPHY.fontSize.xs,
+                      color: COLORS.primary.medium,
+                    }}>~</div>
                   </div>
                   <div>
-                    <div className="text-3xl sm:text-2xl font-bold text-red-600">{exam.latestGrading.questions_incorrect}</div>
-                    <div className="text-sm text-gray-600">{ICONS.CROSS}</div>
+                    <div style={{
+                      fontSize: TYPOGRAPHY.fontSize['2xl'],
+                      fontWeight: TYPOGRAPHY.fontWeight.bold,
+                      color: COLORS.semantic.error,
+                    }}>{exam.latestGrading.questions_incorrect}</div>
+                    <div style={{
+                      fontSize: TYPOGRAPHY.fontSize.xs,
+                      color: COLORS.primary.medium,
+                    }}>{ICONS.CROSS}</div>
                   </div>
                   <div>
-                    <div className="text-3xl sm:text-2xl font-bold text-gray-900">{exam.latestGrading.questions_count}</div>
-                    <div className="text-sm text-gray-600">{EXAM_UI.TOTAL}</div>
+                    <div style={{
+                      fontSize: TYPOGRAPHY.fontSize['2xl'],
+                      fontWeight: TYPOGRAPHY.fontWeight.bold,
+                      color: COLORS.primary.text,
+                    }}>{exam.latestGrading.questions_count}</div>
+                    <div style={{
+                      fontSize: TYPOGRAPHY.fontSize.xs,
+                      color: COLORS.primary.medium,
+                    }}>{EXAM_UI.TOTAL}</div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-                <div className="text-gray-500 text-4xl mb-4">{ICONS.CHART}</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{EXAM_UI.NO_RESULTS}</h3>
-                <p className="text-gray-600 mb-4">{EXAM_UI.NOT_GRADED_DESC}</p>
+              <div style={{
+                background: COLORS.background.primary,
+                borderRadius: RADIUS.lg,
+                boxShadow: SHADOWS.card,
+                padding: SPACING.xl,
+                textAlign: 'center',
+              }}>
+                <div style={{ fontSize: '48px', marginBottom: SPACING.md }}>{ICONS.CHART}</div>
+                <h3 style={{
+                  fontSize: TYPOGRAPHY.fontSize.xl,
+                  fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                  color: COLORS.primary.text,
+                  marginBottom: SPACING.sm,
+                }}>{EXAM_UI.NO_RESULTS}</h3>
+                <p style={{
+                  color: COLORS.primary.medium,
+                  marginBottom: SPACING.lg,
+                }}>{EXAM_UI.NOT_GRADED_DESC}</p>
                 <button
                   onClick={() => setMode('take')}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                  style={{
+                    background: BUTTONS.primary.background,
+                    color: BUTTONS.primary.text,
+                    padding: BUTTONS.primary.padding,
+                    borderRadius: BUTTONS.primary.radius,
+                    border: 'none',
+                    fontSize: TYPOGRAPHY.fontSize.base,
+                    fontWeight: TYPOGRAPHY.fontWeight.medium,
+                    cursor: 'pointer',
+                  }}
                 >
                   {EXAM_UI.START}
                 </button>
@@ -401,30 +600,75 @@ export default function ExamPage() {
         )}
       </div>
 
-      {/* Confirmation Dialog - Mobile optimized */}
+      {/* Confirmation Dialog */}
       {showConfirmDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-label={EXAM_UI.ARIA.SUBMIT_DIALOG}>
-          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full mx-auto">
-            <div className="text-center mb-6">
-              <div className="text-5xl mb-4">{ICONS.WARNING}</div>
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">{EXAM_UI.CONFIRM_SUBMIT}</h3>
-              <p className="text-base text-gray-600">
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50,
+          padding: SPACING.lg,
+        }}>
+          <div style={{
+            background: COLORS.background.primary,
+            borderRadius: RADIUS.lg,
+            boxShadow: SHADOWS.card,
+            padding: SPACING.xl,
+            maxWidth: '400px',
+            width: '100%',
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: SPACING.lg }}>
+              <div style={{ fontSize: '48px', marginBottom: SPACING.md }}>{ICONS.WARNING}</div>
+              <h3 style={{
+                fontSize: TYPOGRAPHY.fontSize.xl,
+                fontWeight: TYPOGRAPHY.fontWeight.bold,
+                color: COLORS.primary.text,
+                marginBottom: SPACING.md,
+              }}>{EXAM_UI.CONFIRM_SUBMIT}</h3>
+              <p style={{
+                fontSize: TYPOGRAPHY.fontSize.base,
+                color: COLORS.primary.medium,
+              }}>
                 {EXAM_UI.SUBMIT_WARNING}
               </p>
             </div>
-            <div className="flex flex-col-reverse sm:flex-row justify-center gap-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.md }}>
               <button
                 onClick={() => setShowConfirmDialog(false)}
-                className="w-full sm:w-auto px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-medium min-h-[48px] transition-all active:scale-95"
-                aria-label={EXAM_UI.ARIA.CANCEL_SUBMISSION}
+                style={{
+                  width: '100%',
+                  padding: BUTTONS.secondary.padding,
+                  border: `2px solid ${COLORS.border.medium}`,
+                  borderRadius: BUTTONS.secondary.radius,
+                  background: BUTTONS.secondary.background,
+                  color: BUTTONS.secondary.text,
+                  fontSize: TYPOGRAPHY.fontSize.base,
+                  fontWeight: TYPOGRAPHY.fontWeight.medium,
+                  minHeight: TOUCH_TARGETS.comfortable,
+                  cursor: 'pointer',
+                }}
               >
                 {EXAM_UI.CANCEL}
               </button>
               <button
                 onClick={submitAnswers}
                 disabled={isSubmitting}
-                className="w-full sm:w-auto px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 font-medium min-h-[48px] transition-all active:scale-95"
-                aria-label={EXAM_UI.ARIA.SUBMIT_ANSWERS}
+                style={{
+                  width: '100%',
+                  padding: BUTTONS.primary.padding,
+                  border: 'none',
+                  borderRadius: BUTTONS.primary.radius,
+                  background: COLORS.semantic.success,
+                  color: '#FFFFFF',
+                  fontSize: TYPOGRAPHY.fontSize.base,
+                  fontWeight: TYPOGRAPHY.fontWeight.medium,
+                  minHeight: TOUCH_TARGETS.comfortable,
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  opacity: isSubmitting ? 0.5 : 1,
+                }}
               >
                 {isSubmitting ? EXAM_UI.SENDING : EXAM_UI.SUBMIT}
               </button>
@@ -435,47 +679,82 @@ export default function ExamPage() {
 
       {/* Sticky Bottom Navigation - Only in take mode */}
       {mode === 'take' && (
-        <div className="sticky bottom-0 bg-white border-t shadow-lg z-10">
-          <div className="w-full px-4 py-4 md:max-w-[640px] lg:max-w-[768px] md:mx-auto">
-            <div className="flex items-center justify-between gap-3">
-              {/* Previous Button */}
+        <div style={{
+          position: 'sticky',
+          bottom: 0,
+          background: COLORS.background.primary,
+          borderTop: `1px solid ${COLORS.border.light}`,
+          boxShadow: SHADOWS.card,
+          padding: SPACING.lg,
+        }}>
+          <div style={{
+            maxWidth: '640px',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: SPACING.md,
+          }}>
+            {/* Previous Button */}
+            <button
+              onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
+              disabled={currentQuestion === 0}
+              style={{
+                padding: BUTTONS.secondary.padding,
+                border: `2px solid ${COLORS.border.medium}`,
+                borderRadius: BUTTONS.secondary.radius,
+                background: BUTTONS.secondary.background,
+                color: BUTTONS.secondary.text,
+                fontSize: TYPOGRAPHY.fontSize.base,
+                fontWeight: TYPOGRAPHY.fontWeight.medium,
+                minHeight: TOUCH_TARGETS.comfortable,
+                cursor: currentQuestion === 0 ? 'not-allowed' : 'pointer',
+                opacity: currentQuestion === 0 ? 0.5 : 1,
+              }}
+            >
+              {ICONS.ARROW_LEFT}
+            </button>
+
+            {/* Next/Submit Button */}
+            {currentQuestion === (exam.questions?.length || 0) - 1 ? (
               <button
-                onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
-                disabled={currentQuestion === 0}
-                className="flex items-center gap-2 px-4 sm:px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium min-h-[48px] transition-all active:scale-95"
-                aria-label={EXAM_UI.ARIA.PREVIOUS_QUESTION}
+                onClick={() => setShowConfirmDialog(true)}
+                disabled={!isAllAnswered()}
+                style={{
+                  flex: 1,
+                  padding: BUTTONS.primary.padding,
+                  border: 'none',
+                  borderRadius: BUTTONS.primary.radius,
+                  background: COLORS.semantic.success,
+                  color: '#FFFFFF',
+                  fontSize: TYPOGRAPHY.fontSize.base,
+                  fontWeight: TYPOGRAPHY.fontWeight.medium,
+                  minHeight: TOUCH_TARGETS.comfortable,
+                  cursor: !isAllAnswered() ? 'not-allowed' : 'pointer',
+                  opacity: !isAllAnswered() ? 0.5 : 1,
+                }}
               >
-                {ICONS.ARROW_LEFT} <span className="hidden sm:inline">{EXAM_UI.PREV}</span>
+                {EXAM_UI.SUBMIT} {ICONS.CHECK}
               </button>
-
-              {/* Progress Indicator */}
-              <div className="flex flex-col items-center flex-1 min-w-0">
-                <div className="text-sm font-semibold text-gray-700">
-                  {currentQuestion + 1}{EXAM_UI.QUESTION_OF}{exam.total_questions}
-                </div>
-                <div className="text-xs text-gray-500">{getProgress()}%</div>
-              </div>
-
-              {/* Next/Submit Button */}
-              {currentQuestion === (exam.questions?.length || 0) - 1 ? (
-                <button
-                  onClick={() => setShowConfirmDialog(true)}
-                  disabled={!isAllAnswered()}
-                  className="flex items-center gap-2 px-4 sm:px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium min-h-[48px] transition-all active:scale-95"
-                  aria-label={EXAM_UI.ARIA.SUBMIT_ANSWERS}
-                >
-                  <span>{EXAM_UI.SUBMIT}</span> {ICONS.CHECK}
-                </button>
-              ) : (
-                <button
-                  onClick={() => setCurrentQuestion(Math.min((exam.questions?.length || 0) - 1, currentQuestion + 1))}
-                  className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium min-h-[48px] transition-all active:scale-95"
-                  aria-label={EXAM_UI.ARIA.NEXT_QUESTION}
-                >
-                  <span className="hidden sm:inline">{EXAM_UI.NEXT}</span> {ICONS.ARROW_RIGHT}
-                </button>
-              )}
-            </div>
+            ) : (
+              <button
+                onClick={() => setCurrentQuestion(Math.min((exam.questions?.length || 0) - 1, currentQuestion + 1))}
+                style={{
+                  flex: 1,
+                  padding: BUTTONS.primary.padding,
+                  border: 'none',
+                  borderRadius: BUTTONS.primary.radius,
+                  background: BUTTONS.primary.background,
+                  color: BUTTONS.primary.text,
+                  fontSize: TYPOGRAPHY.fontSize.base,
+                  fontWeight: TYPOGRAPHY.fontWeight.medium,
+                  minHeight: TOUCH_TARGETS.comfortable,
+                  cursor: 'pointer',
+                }}
+              >
+                {EXAM_UI.NEXT} {ICONS.ARROW_RIGHT}
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import type { GradingResult } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
 import { ICONS } from '@/constants/exam-icons'
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
 
 export default function GradingPage() {
   const params = useParams()
@@ -25,14 +26,14 @@ export default function GradingPage() {
     try {
       setIsLoading(true)
       const response = await fetch(`/api/exam/${examId}/grade`)
-      
+
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to load results')
       }
 
       const responseData = await response.json()
-      const gradingData = responseData.data || responseData // Handle both old and new API formats
+      const gradingData = responseData.data || responseData
       setGrading(gradingData)
       setError('')
     } catch (err) {
@@ -45,42 +46,92 @@ export default function GradingPage() {
 
   const getGradeColor = (grade: string) => {
     const gradeNum = parseInt(grade)
-    if (gradeNum >= 9) return 'text-green-600'
-    if (gradeNum >= 7) return 'text-blue-600'
-    if (gradeNum >= 5) return 'text-yellow-600'
-    return 'text-red-600'
-  }
-
-  const getGradeBgColor = (grade: string) => {
-    const gradeNum = parseInt(grade)
-    if (gradeNum >= 9) return 'bg-green-100 border-green-200'
-    if (gradeNum >= 7) return 'bg-blue-100 border-blue-200'
-    if (gradeNum >= 5) return 'bg-yellow-100 border-yellow-200'
-    return 'bg-red-100 border-red-200'
+    if (gradeNum >= 9) return COLORS.semantic.success
+    if (gradeNum >= 7) return COLORS.semantic.info
+    if (gradeNum >= 5) return COLORS.semantic.warning
+    return COLORS.semantic.error
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-6 sm:mt-4 text-base sm:text-sm text-gray-600">{EXAM_UI.LOADING}</p>
+      <div style={{
+        minHeight: '100vh',
+        background: COLORS.background.primary,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: SPACING.lg,
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: `3px solid ${COLORS.border.light}`,
+            borderTop: `3px solid ${COLORS.primary.dark}`,
+            borderRadius: RADIUS.full,
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto'
+          }}></div>
+          <p style={{
+            marginTop: SPACING.lg,
+            fontSize: TYPOGRAPHY.fontSize.sm,
+            color: COLORS.primary.medium,
+          }}>{EXAM_UI.LOADING}</p>
         </div>
+        <style jsx>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     )
   }
 
   if (error || !grading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 max-w-md mx-auto w-full">
-          <div className="text-center">
-            <div className="text-red-500 text-6xl sm:text-5xl mb-6 sm:mb-4">{ICONS.WARNING}</div>
-            <h1 className="text-2xl sm:text-xl font-bold text-gray-900 mb-3 sm:mb-2">{EXAM_UI.ERROR}</h1>
-            <p className="text-base sm:text-sm text-gray-600 mb-6 sm:mb-4">{error || EXAM_UI.NO_RESULTS}</p>
+      <div style={{
+        minHeight: '100vh',
+        background: COLORS.background.primary,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: SPACING.lg,
+      }}>
+        <div style={{
+          background: COLORS.background.primary,
+          borderRadius: RADIUS.lg,
+          boxShadow: SHADOWS.card,
+          padding: SPACING.xl,
+          maxWidth: '400px',
+          width: '100%',
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: SPACING.lg }}>{ICONS.WARNING}</div>
+            <h1 style={{
+              fontSize: TYPOGRAPHY.fontSize.xl,
+              fontWeight: TYPOGRAPHY.fontWeight.bold,
+              color: COLORS.primary.text,
+              marginBottom: SPACING.md,
+            }}>{EXAM_UI.ERROR}</h1>
+            <p style={{
+              fontSize: TYPOGRAPHY.fontSize.base,
+              color: COLORS.primary.medium,
+              marginBottom: SPACING.lg,
+            }}>{error || EXAM_UI.NO_RESULTS}</p>
             <button
               onClick={() => window.location.reload()}
-              className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-medium min-h-[48px] transition-all active:scale-95"
+              style={{
+                width: '100%',
+                background: BUTTONS.primary.background,
+                color: BUTTONS.primary.text,
+                padding: BUTTONS.primary.padding,
+                borderRadius: BUTTONS.primary.radius,
+                border: 'none',
+                fontSize: TYPOGRAPHY.fontSize.base,
+                fontWeight: TYPOGRAPHY.fontWeight.medium,
+                minHeight: TOUCH_TARGETS.comfortable,
+                cursor: 'pointer',
+              }}
             >
               {EXAM_UI.RETRY}
             </button>
@@ -91,83 +142,259 @@ export default function GradingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 sm:py-6 md:py-8">
-      <div className="w-full px-4 md:max-w-[640px] lg:max-w-[768px] md:mx-auto">
-        
-        {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{EXAM_UI.RESULTS_TITLE}</h1>
-          <p className="text-sm sm:text-base text-gray-600">{grading.subject} - {grading.grade}</p>
+    <div style={{
+      minHeight: '100vh',
+      background: COLORS.background.primary,
+      padding: SPACING.lg,
+    }}>
+      <div style={{
+        maxWidth: '640px',
+        margin: '0 auto',
+        width: '100%',
+      }}>
+
+        {/* ExamGenie Branding */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: SPACING.md,
+          marginBottom: SPACING.lg,
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: COLORS.primary.dark,
+            borderRadius: RADIUS.md,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '24px',
+          }}>
+            🎓
+          </div>
+          <h1 style={{
+            fontSize: TYPOGRAPHY.fontSize.xl,
+            fontWeight: TYPOGRAPHY.fontWeight.semibold,
+            color: COLORS.primary.text,
+            margin: 0,
+          }}>
+            ExamGenie
+          </h1>
         </div>
 
         {/* Grade Summary */}
-        <div className={`bg-white rounded-xl shadow-lg border-2 p-6 sm:p-8 mb-6 sm:mb-8 ${getGradeBgColor(grading.final_grade)}`}>
-          <div className="text-center">
-            <div className={`text-7xl sm:text-8xl md:text-9xl font-bold mb-4 ${getGradeColor(grading.final_grade)}`}>
+        <div style={{
+          background: COLORS.background.primary,
+          borderRadius: RADIUS.lg,
+          boxShadow: SHADOWS.card,
+          padding: SPACING.xl,
+          marginBottom: SPACING.lg,
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '64px', marginBottom: SPACING.md }}>
+              {parseInt(grading.final_grade) >= 9 ? '🎉' :
+               parseInt(grading.final_grade) >= 7 ? '👍' :
+               parseInt(grading.final_grade) >= 5 ? '📚' : '💪'}
+            </div>
+            <div style={{
+              fontSize: '72px',
+              fontWeight: TYPOGRAPHY.fontWeight.bold,
+              color: getGradeColor(grading.final_grade),
+              marginBottom: SPACING.sm,
+            }}>
               {grading.final_grade}
             </div>
-            <p className="text-lg sm:text-xl text-gray-700 mb-2">{EXAM_UI.GRADE_SCALE} {grading.grade_scale}</p>
-            <p className="text-base sm:text-lg text-gray-600">
-              {grading.total_points} / {grading.max_total_points} {EXAM_UI.POINTS} ({grading.percentage}%)
+            <p style={{
+              fontSize: TYPOGRAPHY.fontSize.lg,
+              color: COLORS.primary.medium,
+              marginBottom: SPACING.xs,
+            }}>
+              {grading.total_points} / {grading.max_total_points} {EXAM_UI.POINTS}
+            </p>
+            <p style={{
+              fontSize: TYPOGRAPHY.fontSize.base,
+              color: COLORS.primary.medium,
+            }}>
+              ({grading.percentage}%)
             </p>
           </div>
         </div>
 
         {/* Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-5 sm:p-6 text-center">
-            <div className="text-4xl sm:text-3xl font-bold text-green-600 mb-2">{grading.questions_correct}</div>
-            <p className="text-sm sm:text-base text-gray-600">{ICONS.CHECK} {EXAM_UI.CORRECT}</p>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: SPACING.md,
+          marginBottom: SPACING.lg,
+        }}>
+          <div style={{
+            background: COLORS.background.primary,
+            borderRadius: RADIUS.md,
+            boxShadow: SHADOWS.card,
+            padding: SPACING.md,
+            textAlign: 'center',
+          }}>
+            <div style={{
+              fontSize: TYPOGRAPHY.fontSize['2xl'],
+              fontWeight: TYPOGRAPHY.fontWeight.bold,
+              color: COLORS.semantic.success,
+            }}>{grading.questions_correct}</div>
+            <div style={{
+              fontSize: TYPOGRAPHY.fontSize.xs,
+              color: COLORS.primary.medium,
+              marginTop: SPACING.xs,
+            }}>{ICONS.CHECK}</div>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-5 sm:p-6 text-center">
-            <div className="text-4xl sm:text-3xl font-bold text-yellow-600 mb-2">{grading.questions_partial}</div>
-            <p className="text-sm sm:text-base text-gray-600">~ {EXAM_UI.PARTIAL}</p>
+          <div style={{
+            background: COLORS.background.primary,
+            borderRadius: RADIUS.md,
+            boxShadow: SHADOWS.card,
+            padding: SPACING.md,
+            textAlign: 'center',
+          }}>
+            <div style={{
+              fontSize: TYPOGRAPHY.fontSize['2xl'],
+              fontWeight: TYPOGRAPHY.fontWeight.bold,
+              color: COLORS.semantic.warning,
+            }}>{grading.questions_partial}</div>
+            <div style={{
+              fontSize: TYPOGRAPHY.fontSize.xs,
+              color: COLORS.primary.medium,
+              marginTop: SPACING.xs,
+            }}>~</div>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-5 sm:p-6 text-center col-span-2 md:col-span-1">
-            <div className="text-4xl sm:text-3xl font-bold text-red-600 mb-2">{grading.questions_incorrect}</div>
-            <p className="text-sm sm:text-base text-gray-600">{ICONS.CROSS} {EXAM_UI.INCORRECT}</p>
+          <div style={{
+            background: COLORS.background.primary,
+            borderRadius: RADIUS.md,
+            boxShadow: SHADOWS.card,
+            padding: SPACING.md,
+            textAlign: 'center',
+          }}>
+            <div style={{
+              fontSize: TYPOGRAPHY.fontSize['2xl'],
+              fontWeight: TYPOGRAPHY.fontWeight.bold,
+              color: COLORS.semantic.error,
+            }}>{grading.questions_incorrect}</div>
+            <div style={{
+              fontSize: TYPOGRAPHY.fontSize.xs,
+              color: COLORS.primary.medium,
+              marginTop: SPACING.xs,
+            }}>{ICONS.CROSS}</div>
+          </div>
+          <div style={{
+            background: COLORS.background.primary,
+            borderRadius: RADIUS.md,
+            boxShadow: SHADOWS.card,
+            padding: SPACING.md,
+            textAlign: 'center',
+          }}>
+            <div style={{
+              fontSize: TYPOGRAPHY.fontSize['2xl'],
+              fontWeight: TYPOGRAPHY.fontWeight.bold,
+              color: COLORS.primary.text,
+            }}>{grading.questions_count}</div>
+            <div style={{
+              fontSize: TYPOGRAPHY.fontSize.xs,
+              color: COLORS.primary.medium,
+              marginTop: SPACING.xs,
+            }}>{EXAM_UI.TOTAL}</div>
           </div>
         </div>
 
         {/* Questions Toggle */}
-        <div className="bg-white rounded-xl shadow-lg p-5 sm:p-6 mb-6 sm:mb-8">
+        <div style={{
+          background: COLORS.background.primary,
+          borderRadius: RADIUS.lg,
+          boxShadow: SHADOWS.card,
+          padding: SPACING.lg,
+          marginBottom: SPACING.lg,
+        }}>
           <button
             onClick={() => setShowAllQuestions(!showAllQuestions)}
-            className="flex items-center justify-between w-full text-left min-h-[48px]"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              minHeight: TOUCH_TARGETS.comfortable,
+              padding: 0,
+            }}
           >
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+            <h2 style={{
+              fontSize: TYPOGRAPHY.fontSize.lg,
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              color: COLORS.primary.text,
+            }}>
               {EXAM_UI.ANSWERS_BY_QUESTION} ({grading.questions_count})
             </h2>
-            <span className={`transform transition-transform text-xl ${showAllQuestions ? 'rotate-180' : ''}`}>
+            <span style={{
+              transform: showAllQuestions ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: TRANSITIONS.normal,
+              fontSize: TYPOGRAPHY.fontSize.xl,
+            }}>
               ▼
             </span>
           </button>
 
           {showAllQuestions && (
-            <div className="mt-6 space-y-4 sm:space-y-6">
+            <div style={{ marginTop: SPACING.lg, display: 'flex', flexDirection: 'column', gap: SPACING.lg }}>
               {(grading.questions || []).map((question, index) => (
-                <div key={question.id} className="border-2 rounded-xl p-5 sm:p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-3">
-                    <h3 className="font-semibold text-base sm:text-lg text-gray-900 flex-1">
+                <div key={question.id} style={{
+                  border: `2px solid ${COLORS.border.light}`,
+                  borderRadius: RADIUS.md,
+                  padding: SPACING.md,
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: SPACING.md,
+                    gap: SPACING.md,
+                  }}>
+                    <h3 style={{
+                      fontSize: TYPOGRAPHY.fontSize.base,
+                      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                      color: COLORS.primary.text,
+                      flex: 1,
+                    }}>
                       {index + 1}. {question.question_text}
                     </h3>
-                    <div className="text-left sm:text-right sm:ml-4">
-                      <span className={`font-bold text-lg ${
-                        question.percentage === 100 ? 'text-green-600' :
-                        question.percentage > 0 ? 'text-yellow-600' : 'text-red-600'
-                      }`}>
-                        {question.points_awarded}/{question.max_points} {EXAM_UI.POINTS}
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{
+                        fontSize: TYPOGRAPHY.fontSize.lg,
+                        fontWeight: TYPOGRAPHY.fontWeight.bold,
+                        color: question.percentage === 100 ? COLORS.semantic.success :
+                          question.percentage > 0 ? COLORS.semantic.warning : COLORS.semantic.error
+                      }}>
+                        {question.points_awarded}/{question.max_points}
                       </span>
-                      <p className="text-sm text-gray-500">{question.percentage}%</p>
+                      <p style={{
+                        fontSize: TYPOGRAPHY.fontSize.xs,
+                        color: COLORS.primary.medium,
+                      }}>{question.percentage}%</p>
                     </div>
                   </div>
 
                   {question.options && (
-                    <div className="mb-4">
-                      <p className="text-sm sm:text-base font-medium text-gray-700 mb-2">{EXAM_UI.OPTIONS}</p>
-                      <div className="flex flex-wrap gap-2">
+                    <div style={{ marginBottom: SPACING.md }}>
+                      <p style={{
+                        fontSize: TYPOGRAPHY.fontSize.sm,
+                        fontWeight: TYPOGRAPHY.fontWeight.medium,
+                        color: COLORS.primary.medium,
+                        marginBottom: SPACING.xs,
+                      }}>{EXAM_UI.OPTIONS}</p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: SPACING.xs }}>
                         {question.options.map((option, idx) => (
-                          <span key={idx} className="text-sm sm:text-base bg-gray-100 px-3 py-1.5 rounded-lg">
+                          <span key={idx} style={{
+                            fontSize: TYPOGRAPHY.fontSize.sm,
+                            background: COLORS.background.secondary,
+                            padding: `${SPACING.xs} ${SPACING.sm}`,
+                            borderRadius: RADIUS.sm,
+                            color: COLORS.primary.text,
+                          }}>
                             {option}
                           </span>
                         ))}
@@ -175,28 +402,64 @@ export default function GradingPage() {
                     </div>
                   )}
 
-                  <div className="space-y-4 mb-4">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.md, marginBottom: SPACING.md }}>
                     <div>
-                      <p className="text-sm sm:text-base font-medium text-gray-700 mb-2">{EXAM_UI.YOUR_ANSWER_LABEL}</p>
-                      <p className="text-sm sm:text-base text-gray-900 bg-blue-50 p-3 sm:p-4 rounded-lg">
+                      <p style={{
+                        fontSize: TYPOGRAPHY.fontSize.sm,
+                        fontWeight: TYPOGRAPHY.fontWeight.medium,
+                        color: COLORS.primary.medium,
+                        marginBottom: SPACING.xs,
+                      }}>{EXAM_UI.YOUR_ANSWER_LABEL}</p>
+                      <p style={{
+                        fontSize: TYPOGRAPHY.fontSize.base,
+                        color: COLORS.primary.text,
+                        background: '#EBF5FF',
+                        padding: SPACING.md,
+                        borderRadius: RADIUS.sm,
+                      }}>
                         {question.student_answer || EXAM_UI.YOUR_ANSWER}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm sm:text-base font-medium text-gray-700 mb-2">{EXAM_UI.CORRECT_ANSWER_LABEL}</p>
-                      <p className="text-sm sm:text-base text-gray-900 bg-green-50 p-3 sm:p-4 rounded-lg">
+                      <p style={{
+                        fontSize: TYPOGRAPHY.fontSize.sm,
+                        fontWeight: TYPOGRAPHY.fontWeight.medium,
+                        color: COLORS.primary.medium,
+                        marginBottom: SPACING.xs,
+                      }}>{EXAM_UI.CORRECT_ANSWER_LABEL}</p>
+                      <p style={{
+                        fontSize: TYPOGRAPHY.fontSize.base,
+                        color: COLORS.primary.text,
+                        background: '#E8F5E9',
+                        padding: SPACING.md,
+                        borderRadius: RADIUS.sm,
+                      }}>
                         {question.expected_answer}
                       </p>
                     </div>
                   </div>
 
-                  <div className={`p-4 rounded-lg ${
-                    question.percentage === 100 ? 'bg-green-50 border-l-4 border-green-400' :
-                    question.percentage > 0 ? 'bg-yellow-50 border-l-4 border-yellow-400' :
-                    'bg-red-50 border-l-4 border-red-400'
-                  }`}>
-                    <p className="text-sm sm:text-base text-gray-700 mb-3">{question.feedback}</p>
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs sm:text-sm text-gray-500">
+                  <div style={{
+                    padding: SPACING.md,
+                    borderRadius: RADIUS.sm,
+                    background: question.percentage === 100 ? '#E8F5E9' :
+                      question.percentage > 0 ? '#FFF9C4' : '#FFEBEE',
+                    borderLeft: `4px solid ${question.percentage === 100 ? COLORS.semantic.success :
+                      question.percentage > 0 ? COLORS.semantic.warning : COLORS.semantic.error}`,
+                  }}>
+                    <p style={{
+                      fontSize: TYPOGRAPHY.fontSize.sm,
+                      color: COLORS.primary.text,
+                      marginBottom: SPACING.sm,
+                    }}>{question.feedback}</p>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: SPACING.xs,
+                      fontSize: TYPOGRAPHY.fontSize.xs,
+                      color: COLORS.primary.medium,
+                    }}>
                       <span>{EXAM_UI.GRADING_METHOD} {question.grading_method === 'gemini' ? `🤖 ${EXAM_UI.AI_GRADING}` : `📏 ${EXAM_UI.RULE_BASED}`}</span>
                       <span>{EXAM_UI.QUESTION}: {question.question_type}</span>
                     </div>
@@ -207,64 +470,39 @@ export default function GradingPage() {
           )}
         </div>
 
-
-        {/* Metadata */}
-        <div className="bg-white rounded-xl shadow-lg p-5 sm:p-6 mb-6 sm:mb-8">
-          <h3 className="font-semibold text-base sm:text-lg text-gray-900 mb-4">{EXAM_UI.EXAM_INFO}</h3>
-          <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 text-sm sm:text-base text-gray-600 mb-4">
-            <div className="space-y-2">
-              <p><span className="font-medium">{EXAM_UI.CREATED}</span> {new Date(grading.created_at).toLocaleString('fi-FI')}</p>
-              <p><span className="font-medium">{EXAM_UI.SUBMITTED}</span> {new Date(grading.submitted_at).toLocaleString('fi-FI')}</p>
-            </div>
-            <div className="space-y-2">
-              <p><span className="font-medium">{EXAM_UI.GRADED}</span> {new Date(grading.graded_at).toLocaleString('fi-FI')}</p>
-              <p><span className="font-medium">{EXAM_UI.EXAM_ID}</span> {grading.exam_id ? grading.exam_id.slice(0, 8) + '...' : EXAM_UI.NOT_AVAILABLE}</p>
-            </div>
-          </div>
-          
-          {grading.grading_metadata && (
-            <div className="border-t pt-4">
-              <h4 className="font-medium text-sm sm:text-base text-gray-800 mb-3">{EXAM_UI.GRADING_INFO}</h4>
-              <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 text-sm sm:text-base text-gray-600">
-                <div className="space-y-2">
-                  <p><span className="font-medium">{EXAM_UI.GRADING_METHOD}</span> {grading.grading_metadata.primary_method === 'gemini' ? `🤖 ${EXAM_UI.AI_GRADING}` : `📏 ${EXAM_UI.RULE_BASED}`}</p>
-                  <p><span className="font-medium">{EXAM_UI.AI_GRADED}</span> {grading.grading_metadata.gemini_graded || 0} {EXAM_UI.QUESTIONS_COUNT}</p>
-                </div>
-                <div className="space-y-2">
-                  <p><span className="font-medium">{EXAM_UI.RULE_BASED_GRADED}</span> {grading.grading_metadata.rule_based_graded || 0} {EXAM_UI.QUESTIONS_COUNT}</p>
-                  <p><span className="font-medium">{EXAM_UI.AI_AVAILABLE}</span> {grading.grading_metadata.gemini_available ? `✅ ${EXAM_UI.YES}` : `❌ ${EXAM_UI.NO}`}</p>
-                </div>
-              </div>
-
-              {grading.grading_metadata.total_gemini_usage && grading.grading_metadata.total_gemini_usage.totalTokenCount > 0 && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs sm:text-sm text-gray-600">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium">{EXAM_UI.AI_USAGE}</span>
-                    <span className="font-mono">{grading.grading_metadata.total_gemini_usage.totalTokenCount} {EXAM_UI.TOKENS}</span>
-                  </div>
-                  {grading.grading_metadata.total_gemini_usage.estimatedCost > 0 && (
-                    <div className="flex justify-between items-center border-t border-gray-200 pt-2">
-                      <span className="font-medium">{EXAM_UI.ESTIMATED_COST}</span>
-                      <span className="font-mono">${grading.grading_metadata.total_gemini_usage.estimatedCost.toFixed(6)}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-center">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.md }}>
           <button
             onClick={() => window.print()}
-            className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-medium min-h-[48px] transition-all active:scale-95"
+            style={{
+              width: '100%',
+              background: BUTTONS.primary.background,
+              color: BUTTONS.primary.text,
+              padding: BUTTONS.primary.padding,
+              borderRadius: BUTTONS.primary.radius,
+              border: 'none',
+              fontSize: TYPOGRAPHY.fontSize.base,
+              fontWeight: TYPOGRAPHY.fontWeight.medium,
+              minHeight: TOUCH_TARGETS.comfortable,
+              cursor: 'pointer',
+            }}
           >
             🖨️ {EXAM_UI.PRINT_RESULTS}
           </button>
           <button
             onClick={() => window.location.href = '/'}
-            className="w-full sm:w-auto bg-gray-600 text-white px-8 py-3 rounded-xl hover:bg-gray-700 font-medium min-h-[48px] transition-all active:scale-95"
+            style={{
+              width: '100%',
+              background: BUTTONS.secondary.background,
+              color: BUTTONS.secondary.text,
+              padding: BUTTONS.secondary.padding,
+              borderRadius: BUTTONS.secondary.radius,
+              border: `2px solid ${COLORS.border.medium}`,
+              fontSize: TYPOGRAPHY.fontSize.base,
+              fontWeight: TYPOGRAPHY.fontWeight.medium,
+              minHeight: TOUCH_TARGETS.comfortable,
+              cursor: 'pointer',
+            }}
           >
             📝 {EXAM_UI.NEW_EXAM}
           </button>
