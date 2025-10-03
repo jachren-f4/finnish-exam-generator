@@ -46,6 +46,17 @@ export const FILE_CONFIG = {
   DEFAULT_MIME_TYPE: 'image/jpeg',
 } as const
 
+// Exam Generation Configuration
+export const EXAM_CONFIG = {
+  DEFAULT_QUESTION_COUNT: 15,
+  QUESTION_TYPE_DISTRIBUTION: (count: number) => ({
+    multiple_choice: Math.floor(count * 0.6),      // 60% - 9 questions
+    short_answer: Math.floor(count * 0.2),         // 20% - 3 questions
+    true_false: Math.ceil(count * 0.133),          // ~13% - 2 questions
+    fill_in_blank: Math.floor(count * 0.067),      // ~7% - 1 question
+  })
+} as const
+
 // Grading Configuration
 export const GRADING_CONFIG = {
   SCALE: '4-10' as const,
@@ -110,7 +121,7 @@ Return your response as a JSON object with this exact structure:
   "difficulty": "elementary"
 }
 
-Important: Return only the JSON object. Generate exactly 10 questions based on the image content.`,
+Important: Return only the JSON object. Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions based on the image content.`,
 
   OCR_EXTRACTION: `STEP 1: Extract text from each image separately
 - Process each image individually (numbered 0, 1, 2, etc.)
@@ -145,7 +156,8 @@ Important: Only return the JSON object with the extracted text. Do not include a
 
   // ITERATION 2: Simplified Natural Language Prompt (75% size reduction)
   getSimplifiedCategoryPrompt: (category: string, grade?: number, language: string = 'en') => {
-    return `Read the educational content and create 10 exam questions.
+    const distribution = EXAM_CONFIG.QUESTION_TYPE_DISTRIBUTION(EXAM_CONFIG.DEFAULT_QUESTION_COUNT)
+    return `Read the educational content and create ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} exam questions.
 
 Use the same language as the source material for all questions and explanations.
 
@@ -153,10 +165,10 @@ Target: Grade ${grade || '5'} students
 Subject: ${category}
 
 Generate varied question types:
-- 6 multiple choice
-- 2 short answer
-- 1 true/false
-- 1 fill-in-blank
+- ${distribution.multiple_choice} multiple choice
+- ${distribution.short_answer} short answer
+- ${distribution.true_false} true/false
+- ${distribution.fill_in_blank} fill-in-blank
 
 Requirements:
 - Questions must sound natural
@@ -198,7 +210,7 @@ CRITICAL CONSTRAINT: Questions must test actual knowledge, not document referenc
 
 TARGET: Use the same language as the source material. Subject area: ${categoryDescriptions[category as keyof typeof categoryDescriptions] || category}.
 
-TASK: Generate exactly 10 questions that test understanding of the educational concepts.
+TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts.
 
 REQUIRED FORMAT:
 {

@@ -18,7 +18,7 @@ export default function Home() {
         <h3 className="text-lg font-semibold mb-4">How it works:</h3>
         <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
           <li>• Upload textbook pages (JPEG, PNG, WebP, HEIC)</li>
-          <li>• AI extracts text and generates 10 Finnish exam questions</li>
+          <li>• AI extracts text and generates 15 Finnish exam questions</li>
           <li>• Questions include multiple choice and open-ended formats</li>
           <li>• Correct answers provided for each question</li>
           <li>• Customizable prompts for different question types</li>

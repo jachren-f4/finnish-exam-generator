@@ -211,7 +211,7 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 ### 1. AI Question Generation
 - **Powered by:** Gemini 2.5 Flash-Lite
 - **Prompt System:** Category-aware prompts (mathematics, core_academics, language_studies)
-- **Output:** 10 questions per exam with explanations
+- **Output:** 15 questions per exam with explanations
 - **Cost:** ~$0.001 per exam generation
 
 **Prompt Optimization:**

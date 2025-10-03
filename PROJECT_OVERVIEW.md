@@ -129,7 +129,7 @@ Receive JSON with questions
 
 ### 3. Question Generation
 - Gemini analyzes educational content
-- Generates 10 multiple-choice questions
+- Generates 15 exam questions (multiple choice, short answer, true/false, fill-in-blank)
 - Includes Finnish translations
 - Provides explanations and correct answers
 - **Answer Shuffling**: Multiple-choice options are automatically shuffled using Fisher-Yates algorithm to randomize correct answer positions
