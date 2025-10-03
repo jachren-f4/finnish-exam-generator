@@ -32,14 +32,14 @@ npm run dev
 
 ## Overview
 
-**What it does:**
-- Processes educational content from textbook images
-- Generates grade-appropriate exam questions (multiple choice, true/false, short answer, fill-in-blank)
-- Provides AI-powered grading with detailed feedback
-- Supports multi-language content (12+ languages including Finnish, Swedish, English)
-- Serves both web and mobile (Flutter) applications
+An AI-powered educational platform that transforms textbook images into exam questions for Finnish elementary/middle school education (grades 1-9).
 
-**Primary Use Case:** Finnish exam generation for elementary/middle school education (grades 1-9)
+**Core Capabilities:**
+- Processes educational content from textbook images via Gemini AI
+- Generates 15 grade-appropriate exam questions per image set
+- Provides AI-powered grading with detailed feedback
+- Supports 12+ languages (Finnish, Swedish, English, Spanish, German, French, etc.)
+- Serves both web and mobile (Flutter) applications
 
 **Production URL:** https://exam-generator.vercel.app
 
@@ -53,15 +53,12 @@ npm run dev
 
 ### Backend
 - **Runtime:** Node.js with Next.js API Routes
-- **AI:** Google Gemini 2.5 Flash-Lite (`gemini-2.0-flash-exp`)
+- **AI:** Google Gemini 2.5 Flash-Lite
 - **Database:** Supabase (PostgreSQL)
 - **Authentication:** Supabase Auth with JWT (optional)
 - **File Handling:** Formidable for multipart uploads
-
-### Deployment
-- **Platform:** Vercel
-- **CI/CD:** Automatic deployment on push to main
-- **Storage:** Temporary file storage in `/tmp`
+- **Deployment:** Vercel with automatic CI/CD
+- **Storage:** Temporary file storage (`/tmp` on Vercel, `uploads/` locally)
 
 ## Environment Setup
 
@@ -199,11 +196,6 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 **POST `/api/exam/{id}/submit`** - Submit answers for grading
 **GET `/api/exam/{id}/grade`** - Get grading results
 
-### Supporting Endpoints
-
-**POST `/api/files/upload`** - Handle file uploads
-**GET `/api/health`** - System health check
-
 **📚 Full API Documentation:** See `/docs/api/` directory
 
 ## Key Features
@@ -239,74 +231,39 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 - **Output Language:** Matches source material language
 
 ### 5. Mobile-First Design
-- **Design System:** Extracted from mobile app (ExamGenie Flutter app)
-- **Design Tokens:** Centralized colors, typography, spacing
-- **Touch Targets:** Minimum 48px for mobile browser compatibility
-- **No Header Bars:** Maximizes screen space on mobile
-
-## Design System
-
-### Design Tokens (`/src/constants/design-tokens.ts`)
-
-The web interface uses design tokens extracted from the mobile app for visual consistency:
-
-```typescript
-COLORS.primary.dark     // #2D2D2D - Primary UI elements
-COLORS.background.primary  // #FFFFFF - Main background
-COLORS.semantic.success    // #4CAF50 - Success states
-TYPOGRAPHY.fontSize.xl     // 20px - Page titles
-SPACING.lg                // 24px - Large spacing
-RADIUS.lg                 // 16px - Large border radius
-TOUCH_TARGETS.comfortable // 48px - Minimum touch size
-```
-
-### Components
-
-**NavigationDots** (`/src/components/exam/NavigationDots.tsx`)
-- Progress indicator matching mobile app
-- Active, past, and future states
-- Optional click navigation
+- **Design System:** Extracted from ExamGenie Flutter app for visual consistency
+- **Design Tokens:** Centralized in `/src/constants/design-tokens.ts`
+- **Touch Targets:** Minimum 48px for mobile compatibility
+- **NavigationDots Component:** Dynamic progress indicator (adapts to question count)
 
 ## Common Tasks
 
 ### Generate Exam Locally
 
 ```bash
-# Using curl
 curl -X POST http://localhost:3001/api/mobile/exam-questions \
   -F "images=@assets/images/test-image.jpg" \
   -F "category=core_academics" \
   -F "grade=5"
-
-# Response includes:
-# - exam_id
-# - take_exam_url (web interface)
-# - grading_url
-# - questions array
 ```
 
 ### Test Prompt Variants
 
 ```bash
-# Run prompt testing script
 npx tsx test-prompt-variants.ts assets/images/test-image.jpg
 ```
 
 ### Database Migrations
 
 ```bash
-# Supabase migrations in /supabase/migrations/
-supabase db push
+supabase db push  # Migrations in /supabase/migrations/
 ```
 
 ### View Logs
 
 ```bash
-# Production logs
-vercel logs
-
-# Local development
-# Check console output and /prompttests/ directory
+vercel logs       # Production logs
+# Local: Check console output and /prompttests/
 ```
 
 ## Troubleshooting
@@ -333,60 +290,46 @@ vercel logs
 - Confirm `share_id` is correct
 
 ### "Mobile app can't connect"
-**Solution:**
-- CORS is enabled for all origins
-- Verify endpoint URL is correct
-- Check if using HTTPS in production
-
-### "Character encoding issues (Cyrillic)"
-**Solution:** Prompt Variant 4 fixes this
-- Removed bilingual mixing in prompts
-- Simplified constraint structure
-- See `/PROMPT_VARIANTS_DOCUMENTATION.md`
+**Solution:** CORS is enabled for all origins. Verify endpoint URL and ensure HTTPS in production.
 
 ## Important Notes
 
-### 1. No Traditional OCR
-- All text extraction happens via Gemini AI
+### Text Extraction
+- All text extraction via Gemini AI (no traditional OCR libraries)
 - "OCR" naming in code is legacy/misleading
-- Never implement traditional OCR libraries
 
-### 2. Exam Generation Constraints
-- Maximum 20 images per web request
-- Maximum 5 images per mobile request
-- Maximum 10MB per image
-- Supported formats: JPEG, PNG, WebP, HEIC
+### Constraints
+- **Images:** Max 20 per web request, 5 per mobile request
+- **File Size:** Max 10MB per image
+- **Formats:** JPEG, PNG, WebP, HEIC
 
-### 3. Authentication
+### Authentication
 - Mobile API supports optional authentication
 - Creates system user for anonymous requests
-- Full auth required for exam management
 
-### 4. File Storage
-- Temporary storage in `/tmp` (Vercel) or `uploads/` (local)
+### Storage
+- Temporary file storage only (`/tmp` on Vercel, `uploads/` locally)
 - Auto-cleanup after processing
-- No persistent file storage
 
-### 5. Finnish Education Context
+### Finnish Education Context
 - Grades 1-9 (peruskoulu)
-- 24 supported subjects
 - Curriculum-aligned question difficulty
 
 ## Documentation
 
-### For Developers
-- **Project Context:** `/PROJECT_OVERVIEW.md` - Complete architecture overview
-- **Development Guide:** `/CLAUDE.md` - Instructions for AI assistants
-- **Prompt Documentation:** `/PROMPT_VARIANTS_DOCUMENTATION.md` - Prompt optimization journey
+### Developer Guides
+- `/PROJECT_OVERVIEW.md` - Complete architecture overview
+- `/CLAUDE.md` - Instructions for AI assistants
+- `/PROMPT_VARIANTS_DOCUMENTATION.md` - Prompt optimization journey
 
 ### API Documentation
-- **Mobile Endpoints:** `/docs/api/mobile-exam-questions-endpoint.md`
-- **Exam Retrieval:** `/docs/api/mobile-exam-retrieval-endpoints.md`
+- `/docs/api/mobile-exam-questions-endpoint.md` - Mobile exam generation API
+- `/docs/api/mobile-exam-retrieval-endpoints.md` - Exam retrieval endpoints
 
-### Reference
-- **Test Images:** `/assets/images/`
-- **Sample Prompts:** `/prompttests/`
-- **Mobile App Reference:** `/assets/references/mobile2.PNG`
+### Reference Materials
+- `/assets/images/` - Test images
+- `/prompttests/` - Sample prompts and logs
+- `/assets/references/mobile2.PNG` - Mobile app UI reference
 
 ## For Claude Code / AI Assistants
 
@@ -418,14 +361,14 @@ When working on this project:
 
 ## Current Status (October 2025)
 
-- ✅ **Production Active** - Deployed at https://exam-generator.vercel.app
-- ✅ **Mobile API Complete** - Full exam generation and retrieval
-- ✅ **Multi-User Support** - Authentication and exam management
-- ✅ **AI Grading** - Automated grading with detailed feedback
-- ✅ **Answer Shuffling** - Fisher-Yates randomization implemented
-- ✅ **Design System** - Mobile app visual consistency
-- ✅ **Prompt Optimization** - Variant 4 (100% quality, 35% smaller)
-- ⚠️ **Legacy Code** - OCR endpoints exist but unused
+✅ **Production Active:** https://exam-generator.vercel.app
+✅ **15 Questions Per Exam:** Configurable via `EXAM_CONFIG.DEFAULT_QUESTION_COUNT`
+✅ **completed_at Fix:** Tracks exam completion status correctly
+✅ **Mobile API Complete:** Full exam generation, retrieval, and statistics
+✅ **AI Grading:** Automated grading with detailed feedback
+✅ **Answer Shuffling:** Fisher-Yates randomization (even distribution)
+✅ **Prompt Optimization:** Variant 4 (100% quality, 35% size reduction)
+⚠️ **Legacy Code:** OCR endpoints exist but are unused
 
 ## License
 
