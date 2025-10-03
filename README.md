@@ -75,6 +75,34 @@ npm run dev
 
 Visit `http://localhost:3000` to access the web interface.
 
+### ⚠️ IMPORTANT: Build Validation Before Production
+
+**Always run a production build locally before pushing to production:**
+
+```bash
+npm run build
+```
+
+**Why this matters:**
+- Dev mode (`npm run dev`) uses relaxed TypeScript checking and may miss type errors
+- Production builds enforce strict type checking and will fail on errors that dev mode ignores
+- Vercel deployment will fail if the build doesn't pass, potentially breaking production
+- Running `npm run build` locally catches these errors before they reach production
+
+**Development Workflow:**
+1. Make changes and test in dev mode (`npm run dev`)
+2. **Before committing:** Run `npm run build` to verify production compatibility
+3. Fix any TypeScript errors or build issues
+4. Commit and push only after successful build
+5. Vercel will deploy automatically after push
+
+**Common build errors caught by `npm run build`:**
+- Missing TypeScript type definitions
+- Unused variables/imports (ESLint warnings)
+- Interface mismatches
+- Import path errors
+- Environment variable issues
+
 ## API Endpoints
 
 ### Mobile API (Primary)
