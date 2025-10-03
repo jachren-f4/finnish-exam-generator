@@ -1,83 +1,99 @@
-# Finnish Exam Question Generator (ExamGenie)
+# Finnish Exam Generator (ExamGenie)
 
-A full-stack educational platform that processes textbook images using Google's Gemini 2.5 Flash-Lite API to generate exam questions for elementary/middle school education. Supports both web and mobile (Flutter) clients with comprehensive exam management and grading.
+An AI-powered educational platform that transforms textbook images into structured exam questions using Google's Gemini 2.5 Flash-Lite API. Supports both web and mobile (Flutter) clients with comprehensive exam management and AI-powered grading.
+
+## 🚀 Quick Start
+
+```bash
+# Install dependencies
+npm install
+
+# Set up environment (see Environment Setup below)
+cp .env.example .env.local
+
+# Start development server
+npm run dev
+
+# Visit http://localhost:3001
+```
+
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Environment Setup](#environment-setup)
+- [Development Workflow](#development-workflow)
+- [Project Structure](#project-structure)
+- [API Endpoints](#api-endpoints)
+- [Key Features](#key-features)
+- [Design System](#design-system)
+- [Common Tasks](#common-tasks)
+- [Troubleshooting](#troubleshooting)
 
 ## Overview
 
-This app transforms educational content from images into structured exam questions with multiple question types (multiple choice, true/false, short answer, fill-in-the-blank). Originally built for OCR compression, it has evolved into a complete educational technology platform with multi-user support and AI-powered grading.
+**What it does:**
+- Processes educational content from textbook images
+- Generates grade-appropriate exam questions (multiple choice, true/false, short answer, fill-in-blank)
+- Provides AI-powered grading with detailed feedback
+- Supports multi-language content (12+ languages including Finnish, Swedish, English)
+- Serves both web and mobile (Flutter) applications
+
+**Primary Use Case:** Finnish exam generation for elementary/middle school education (grades 1-9)
+
+**Production URL:** https://exam-generator.vercel.app
 
 ## Tech Stack
 
-- **Frontend:** Next.js 15, TypeScript, Tailwind CSS
-- **Backend:** Next.js API Routes with service layer architecture
-- **AI Processing:** Google Gemini 2.5 Flash-Lite API
+### Frontend
+- **Framework:** Next.js 15.0.3 (App Router)
+- **Language:** TypeScript 5
+- **Styling:** Inline styles with design tokens (mobile app design system)
+- **UI Components:** Custom React components
+
+### Backend
+- **Runtime:** Node.js with Next.js API Routes
+- **AI:** Google Gemini 2.5 Flash-Lite (`gemini-2.0-flash-exp`)
 - **Database:** Supabase (PostgreSQL)
-- **Authentication:** Supabase Auth with JWT
-- **File Handling:** Formidable for uploads
-- **Deployment:** Vercel (Production: https://exam-generator.vercel.app)
+- **Authentication:** Supabase Auth with JWT (optional)
+- **File Handling:** Formidable for multipart uploads
 
-## Key Features
-
-- 📚 **Image Processing** - Upload and process educational content (up to 20 images per request)
-- 🧠 **AI Question Generation** - Generate grade-appropriate exam questions using Gemini AI
-- 🎲 **Answer Shuffling** - Fisher-Yates algorithm randomizes multiple-choice options
-- 👥 **Multi-User Support** - User authentication and exam management
-- 📱 **Mobile API** - RESTful endpoints for Flutter app integration
-- 📊 **Exam History** - Retrieve past exams with statistics and metadata
-- ✅ **AI Grading** - Automated exam grading with detailed feedback
-- 💰 **Cost Tracking** - Real-time Gemini API usage and cost monitoring
-- 🌍 **Multi-Language** - Support for 12+ languages (Finnish, English, Swedish, etc.)
-- 🔐 **Authentication** - Optional JWT-based authentication via Supabase
-- 📄 **Export Options** - JSONL format for data portability
-- ⚡ **Async Processing** - Background job processing with status tracking
-
-## Project Structure
-
-```
-src/
-├── app/
-│   ├── api/
-│   │   ├── ocr/jobs/          # Web job management
-│   │   └── mobile/            # Mobile API endpoint
-│   ├── results/[id]/          # Results display page
-│   └── page.tsx               # Main upload interface
-├── lib/
-│   ├── gemini.ts              # Gemini API integration
-│   └── jobs.ts                # Job management utilities
-├── components/
-│   └── FileUpload.tsx         # Main upload component
-└── types/
-    └── index.ts               # TypeScript interfaces
-```
+### Deployment
+- **Platform:** Vercel
+- **CI/CD:** Automatic deployment on push to main
+- **Storage:** Temporary file storage in `/tmp`
 
 ## Environment Setup
 
-Create `.env.local`:
+Create `.env.local` in project root:
+
 ```bash
-# Required
+# Required - Gemini API
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# Supabase Configuration
+# Required - Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_key
 
-# Application URL (important for exam sharing)
-NEXT_PUBLIC_APP_URL=https://exam-generator.vercel.app
+# Required - Application URL
+NEXT_PUBLIC_APP_URL=https://exam-generator.vercel.app  # Production
+# NEXT_PUBLIC_APP_URL=http://localhost:3001  # Local development
+
+# Optional - Development
+ENABLE_PROMPT_LOGGING=true  # Logs prompts to /prompttests/
 ```
 
-## Installation & Development
+**Important:**
+- `NEXT_PUBLIC_APP_URL` determines exam sharing URLs - set correctly for your environment
+- Get Gemini API key from: https://aistudio.google.com/app/apikey
+- Supabase credentials from: https://app.supabase.com/project/_/settings/api
 
-```bash
-npm install
-npm run dev
-```
+## Development Workflow
 
-Visit `http://localhost:3000` to access the web interface.
+### ⚠️ CRITICAL: Build Validation Before Production
 
-### ⚠️ IMPORTANT: Build Validation Before Production
-
-**Always run a production build locally before pushing to production:**
+**Always run a production build locally before pushing:**
 
 ```bash
 npm run build
@@ -85,163 +101,338 @@ npm run build
 
 **Why this matters:**
 - Dev mode (`npm run dev`) uses relaxed TypeScript checking and may miss type errors
-- Production builds enforce strict type checking and will fail on errors that dev mode ignores
-- Vercel deployment will fail if the build doesn't pass, potentially breaking production
+- Production builds enforce strict type checking and will fail on errors dev mode ignores
+- Vercel deployment will fail if build doesn't pass, potentially breaking production
 - Running `npm run build` locally catches these errors before they reach production
 
-**Development Workflow:**
+**Recommended Workflow:**
 1. Make changes and test in dev mode (`npm run dev`)
 2. **Before committing:** Run `npm run build` to verify production compatibility
 3. Fix any TypeScript errors or build issues
-4. Commit and push only after successful build
-5. Vercel will deploy automatically after push
+4. Only commit and push after successful build
+5. Vercel deploys automatically after push
 
-**Common build errors caught by `npm run build`:**
+**Common build errors caught by production build:**
 - Missing TypeScript type definitions
 - Unused variables/imports (ESLint warnings)
 - Interface mismatches
 - Import path errors
 - Environment variable issues
 
+### Development Commands
+
+```bash
+# Development
+npm run dev              # Start dev server (port 3001)
+npm run build           # Build for production (ALWAYS RUN BEFORE PUSH)
+npm run start           # Start production server
+npm run lint            # Run ESLint
+npm run type-check      # TypeScript validation
+
+# Testing
+npm run test            # Run tests (if configured)
+```
+
+## Project Structure
+
+```
+src/
+├── app/                          # Next.js App Router
+│   ├── api/                      # API Routes
+│   │   ├── mobile/              # Mobile API (PRIMARY)
+│   │   │   ├── exam-questions/  # Generate exam from images
+│   │   │   ├── exams/          # List/retrieve exams
+│   │   │   └── stats/          # Student statistics
+│   │   ├── exam/[id]/          # Exam taking & grading
+│   │   ├── files/upload/       # File upload handler
+│   │   └── ocr/                # Legacy OCR (unused)
+│   ├── exam/[id]/              # Exam taking page
+│   ├── grading/[id]/           # Grading results page
+│   ├── shared/exam/[share_id]/ # Shared exam view
+│   └── page.tsx                # Home page
+├── components/                  # React components
+│   └── exam/
+│       └── NavigationDots.tsx  # Progress indicator
+├── constants/                   # Design system
+│   ├── design-tokens.ts        # Colors, typography, spacing
+│   ├── exam-ui.ts             # UI text constants
+│   └── exam-icons.ts          # Icon constants
+├── lib/                        # Core business logic
+│   ├── services/              # Service layer
+│   │   ├── mobile-api-service.ts
+│   │   ├── question-generator-service.ts
+│   │   └── grading-service.ts
+│   ├── utils/                 # Utilities
+│   │   ├── question-shuffler.ts  # Fisher-Yates shuffling
+│   │   └── database-manager.ts
+│   ├── gemini.ts             # Gemini API integration
+│   ├── supabase.ts           # Database client
+│   └── config.ts             # Exam generation prompts
+└── types/
+    └── index.ts              # TypeScript definitions
+```
+
 ## API Endpoints
 
-### Mobile API (Primary)
-- `POST /api/mobile/exam-questions` - Generate exam from images
-- `GET /api/mobile/exams?user_id={id}` - List all exams for a user
-- `GET /api/mobile/exams/{examId}` - Get single exam with questions
-- `GET /api/mobile/stats?user_id={id}` - Get exam statistics
+### Primary Mobile API
 
-### Exam Management (Web)
-- `GET /api/exam/{id}` - Get exam for taking
-- `POST /api/exam/{id}/submit` - Submit answers and get grading
-- `GET /api/exam/{id}/grade` - Get grading results
+**POST `/api/mobile/exam-questions`** - Generate exam from images
+- **Input:** Multipart form data with images + optional metadata
+- **Output:** Exam questions + web URLs for taking/grading
+- **Used by:** Flutter mobile app
 
-### Legacy Endpoints
-- `POST /api/ocr/jobs` - Create processing job (legacy)
-- `GET /api/ocr/jobs/[id]/status` - Check job status (legacy)
-- `GET /api/ocr/jobs/[id]/results` - Get completed results (legacy)
+```bash
+curl -X POST http://localhost:3001/api/mobile/exam-questions \
+  -F "images=@textbook-page.jpg" \
+  -F "category=mathematics" \
+  -F "grade=5" \
+  -F "language=fi"
+```
 
-**See `/docs/api/` for detailed API documentation.**
+**GET `/api/mobile/exams?user_id={id}`** - List user's exams
+**GET `/api/mobile/exams/{examId}`** - Get single exam with questions
+**GET `/api/mobile/stats?user_id={id}`** - Get exam statistics
 
-## Default Exam Prompt
+### Web Exam Management
 
-The app uses a predefined Finnish exam question template that generates:
-- 10 questions per image set
-- Mixed question types (multiple choice, true/false, short answer)
-- Finnish language output with explanations
-- Appropriate elementary/middle school difficulty
+**GET `/api/exam/{id}`** - Retrieve exam for taking
+**POST `/api/exam/{id}/submit`** - Submit answers for grading
+**GET `/api/exam/{id}/grade`** - Get grading results
 
-## Mobile Integration
+### Supporting Endpoints
 
-The `/api/mobile/exam-questions` endpoint accepts:
-- **Images:** 1-5 textbook images (multipart form data)
-- **Prompt:** Optional custom prompt (falls back to default)
+**POST `/api/files/upload`** - Handle file uploads
+**GET `/api/health`** - System health check
 
-Returns structured JSON with exam questions and processing metadata.
+**📚 Full API Documentation:** See `/docs/api/` directory
 
-## Key Components
+## Key Features
 
-### Core Processing (`src/lib/gemini.ts`)
-- Gemini 2.5 Flash-Lite API integration
-- Image processing and prompt handling
-- Token usage tracking and cost calculation
-- JSON response parsing with fallbacks
+### 1. AI Question Generation
+- **Powered by:** Gemini 2.5 Flash-Lite
+- **Prompt System:** Category-aware prompts (mathematics, core_academics, language_studies)
+- **Output:** 10 questions per exam with explanations
+- **Cost:** ~$0.001 per exam generation
 
-### Job Management (`src/lib/jobs.ts`)
-- In-memory job storage using globalThis
-- Status tracking (pending → processing → completed/failed)
-- UUID-based job identification
+**Prompt Optimization:**
+- Variant 4 implementation (100% quality, 35% size reduction)
+- Few-shot learning with Finnish examples
+- Answer format validation (text vs letter format)
+- No image references (knowledge-based questions only)
 
-### File Upload (`src/components/FileUpload.tsx`)
-- Drag & drop interface with image previews
-- Custom prompt editing
-- Real-time upload progress
-- Job status polling
+### 2. Answer Shuffling
+- **Algorithm:** Fisher-Yates shuffle
+- **When:** After Gemini generates questions, before database storage
+- **Why:** Prevents correct answers always appearing in position A
+- **Implementation:** `/src/lib/utils/question-shuffler.ts`
+- **Distribution:** Correct answers evenly distributed across A/B/C/D positions
 
-### Results Display (`src/app/results/[id]/page.tsx`)
-- Question visualization with type-specific formatting
-- Gemini API usage statistics
-- JSONL export functionality
-- Custom prompt display
+### 3. AI-Powered Grading
+- **Gemini Integration:** Evaluates student answers against correct answers
+- **Feedback:** Detailed explanations for each question
+- **Grading Methods:** AI grading for open-ended, rule-based for multiple choice
+- **Output:** Final grade (0-10), percentage, question-by-question breakdown
 
-## Data Flow
+### 4. Multi-Language Support
+- **12+ Languages:** Finnish, English, Swedish, Spanish, German, French, etc.
+- **Auto-Detection:** Identifies source language from images
+- **Output Language:** Matches source material language
 
-1. **Upload:** User selects images and optional custom prompt
-2. **Job Creation:** Server creates job and returns job ID
-3. **Processing:** Async processing with Gemini API
-4. **Results:** Structured questions with metadata and costs
+### 5. Mobile-First Design
+- **Design System:** Extracted from mobile app (ExamGenie Flutter app)
+- **Design Tokens:** Centralized colors, typography, spacing
+- **Touch Targets:** Minimum 48px for mobile browser compatibility
+- **No Header Bars:** Maximizes screen space on mobile
 
-## Error Handling
+## Design System
 
-- JSON parsing fallbacks for malformed Gemini responses
-- File cleanup after processing
-- Comprehensive error logging
-- User-friendly error messages
+### Design Tokens (`/src/constants/design-tokens.ts`)
 
-## Mobile Integration Files
+The web interface uses design tokens extracted from the mobile app for visual consistency:
 
-- `flutter-integration-guide.md` - Complete Flutter implementation guide
-- `mobile-architecture-analysis.md` - Cost analysis for mobile architecture
+```typescript
+COLORS.primary.dark     // #2D2D2D - Primary UI elements
+COLORS.background.primary  // #FFFFFF - Main background
+COLORS.semantic.success    // #4CAF50 - Success states
+TYPOGRAPHY.fontSize.xl     // 20px - Page titles
+SPACING.lg                // 24px - Large spacing
+RADIUS.lg                 // 16px - Large border radius
+TOUCH_TARGETS.comfortable // 48px - Minimum touch size
+```
 
-## Cost Optimization
+### Components
 
-- Image compression before Gemini processing
-- Token usage estimation when API metadata unavailable
-- Processing time tracking
-- Real-time cost calculation display
+**NavigationDots** (`/src/components/exam/NavigationDots.tsx`)
+- Progress indicator matching mobile app
+- Active, past, and future states
+- Optional click navigation
 
-## Development Notes
+## Common Tasks
 
-- Uses `globalThis` for job persistence during hot reloads
-- Supports up to 20 files per web job, 5 files per mobile request
-- Automatic file cleanup in uploads directory
-- CORS configured for mobile app integration
+### Generate Exam Locally
 
-## Getting Started as New Developer
+```bash
+# Using curl
+curl -X POST http://localhost:3001/api/mobile/exam-questions \
+  -F "images=@assets/images/test-image.jpg" \
+  -F "category=core_academics" \
+  -F "grade=5"
 
-1. **Read Documentation:**
-   - `/PROJECT_OVERVIEW.md` - Complete project context and architecture
-   - `/CLAUDE.md` - Development guidelines and instructions
-   - `/docs/api/` - API endpoint documentation
+# Response includes:
+# - exam_id
+# - take_exam_url (web interface)
+# - grading_url
+# - questions array
+```
 
-2. **Setup Environment:**
-   - Configure Gemini API key
-   - Set up Supabase project (or use existing)
-   - Configure environment variables in `.env.local`
+### Test Prompt Variants
 
-3. **Review Key Files:**
-   - `/src/lib/services/mobile-api-service.ts` - Mobile API business logic
-   - `/src/lib/services/question-generator-service.ts` - AI question generation
-   - `/src/app/api/mobile/` - Mobile API endpoints
-   - `/src/lib/supabase.ts` - Database types and client
+```bash
+# Run prompt testing script
+npx tsx test-prompt-variants.ts assets/images/test-image.jpg
+```
 
-4. **Test:**
-   - Use sample textbook images from `/assets/images/`
-   - Test mobile API with curl or Postman
-   - Monitor console logs for detailed processing information
+### Database Migrations
 
-## Current Status (January 2025)
+```bash
+# Supabase migrations in /supabase/migrations/
+supabase db push
+```
 
-- ✅ **Production Active** - Deployed at https://exam-generator.vercel.app
-- ✅ **Mobile API Complete** - Full exam generation and retrieval endpoints
-- ✅ **Multi-User Support** - User authentication and exam management
-- ✅ **AI Grading** - Automated exam grading with Gemini
-- ✅ **Answer Shuffling** - Prevents predictable correct answer positions
-- ✅ **Multi-Language** - 12+ supported languages for exam generation
-- ⚠️ **No Answer Tracking** - `examgenie_exams` status doesn't track answered/unanswered state
-- ⚠️ **Legacy Code Present** - Old OCR endpoints exist but unused
+### View Logs
+
+```bash
+# Production logs
+vercel logs
+
+# Local development
+# Check console output and /prompttests/ directory
+```
+
+## Troubleshooting
+
+### "Exam URLs point to wrong domain"
+**Solution:** Check `NEXT_PUBLIC_APP_URL` in `.env.local`
+- Production: `https://exam-generator.vercel.app`
+- Local: `http://localhost:3001`
+
+### "Gemini API errors (503)"
+**Solution:** API overload - automatic retry logic will handle it
+- Check `GEMINI_API_KEY` is set correctly
+- Review `/prompttests/` for logged prompts
+
+### "TypeScript build errors in Vercel"
+**Solution:** Always run `npm run build` locally before pushing
+- Dev mode doesn't catch all type errors
+- Production build enforces strict checking
+
+### "Can't find exam in database"
+**Solution:**
+- Verify Supabase configuration
+- Check if exam created with system user (for anonymous requests)
+- Confirm `share_id` is correct
+
+### "Mobile app can't connect"
+**Solution:**
+- CORS is enabled for all origins
+- Verify endpoint URL is correct
+- Check if using HTTPS in production
+
+### "Character encoding issues (Cyrillic)"
+**Solution:** Prompt Variant 4 fixes this
+- Removed bilingual mixing in prompts
+- Simplified constraint structure
+- See `/PROMPT_VARIANTS_DOCUMENTATION.md`
+
+## Important Notes
+
+### 1. No Traditional OCR
+- All text extraction happens via Gemini AI
+- "OCR" naming in code is legacy/misleading
+- Never implement traditional OCR libraries
+
+### 2. Exam Generation Constraints
+- Maximum 20 images per web request
+- Maximum 5 images per mobile request
+- Maximum 10MB per image
+- Supported formats: JPEG, PNG, WebP, HEIC
+
+### 3. Authentication
+- Mobile API supports optional authentication
+- Creates system user for anonymous requests
+- Full auth required for exam management
+
+### 4. File Storage
+- Temporary storage in `/tmp` (Vercel) or `uploads/` (local)
+- Auto-cleanup after processing
+- No persistent file storage
+
+### 5. Finnish Education Context
+- Grades 1-9 (peruskoulu)
+- 24 supported subjects
+- Curriculum-aligned question difficulty
 
 ## Documentation
 
-- **API Docs:** `/docs/api/mobile-exam-retrieval-endpoints.md`
-- **Flutter Integration:** `/FLUTTER_INTEGRATION_RESPONSE.md`
-- **Project Overview:** `/PROJECT_OVERVIEW.md`
-- **Development Guide:** `/CLAUDE.md`
+### For Developers
+- **Project Context:** `/PROJECT_OVERVIEW.md` - Complete architecture overview
+- **Development Guide:** `/CLAUDE.md` - Instructions for AI assistants
+- **Prompt Documentation:** `/PROMPT_VARIANTS_DOCUMENTATION.md` - Prompt optimization journey
 
-## Contributing
+### API Documentation
+- **Mobile Endpoints:** `/docs/api/mobile-exam-questions-endpoint.md`
+- **Exam Retrieval:** `/docs/api/mobile-exam-retrieval-endpoints.md`
 
-This project is actively maintained. For issues or feature requests, please create an issue in the repository.
+### Reference
+- **Test Images:** `/assets/images/`
+- **Sample Prompts:** `/prompttests/`
+- **Mobile App Reference:** `/assets/references/mobile2.PNG`
+
+## For Claude Code / AI Assistants
+
+When working on this project:
+
+1. **Read First:**
+   - This README for overview
+   - `/PROJECT_OVERVIEW.md` for detailed context
+   - `/CLAUDE.md` for specific instructions
+
+2. **Development Rules:**
+   - ✅ Always run `npm run build` before committing
+   - ✅ Use Gemini for text extraction (no OCR libraries)
+   - ✅ Test with Finnish content when possible
+   - ✅ Maintain mobile API backward compatibility
+   - ❌ Never modify API keys in `.env.local`
+   - ❌ Never create traditional OCR implementations
+
+3. **Code Standards:**
+   - TypeScript strict mode
+   - Inline styles with design tokens (no Tailwind in new components)
+   - Service layer architecture for business logic
+   - Comprehensive error handling
+
+4. **Testing:**
+   - Use sample images from `/assets/images/`
+   - Test mobile API with curl or Postman
+   - Verify production build succeeds
+
+## Current Status (October 2025)
+
+- ✅ **Production Active** - Deployed at https://exam-generator.vercel.app
+- ✅ **Mobile API Complete** - Full exam generation and retrieval
+- ✅ **Multi-User Support** - Authentication and exam management
+- ✅ **AI Grading** - Automated grading with detailed feedback
+- ✅ **Answer Shuffling** - Fisher-Yates randomization implemented
+- ✅ **Design System** - Mobile app visual consistency
+- ✅ **Prompt Optimization** - Variant 4 (100% quality, 35% smaller)
+- ⚠️ **Legacy Code** - OCR endpoints exist but unused
 
 ## License
 
 Proprietary - All rights reserved
+
+---
+
+**Last Updated:** October 2025
+**Repository:** https://github.com/jachren-f4/finnish-exam-generator.git
+**Production:** https://exam-generator.vercel.app
