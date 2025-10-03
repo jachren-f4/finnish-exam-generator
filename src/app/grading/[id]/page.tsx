@@ -160,18 +160,15 @@ export default function GradingPage() {
           gap: SPACING.md,
           marginBottom: SPACING.lg,
         }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            background: COLORS.primary.dark,
-            borderRadius: RADIUS.md,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '24px',
-          }}>
-            🎓
-          </div>
+          <img
+            src="/assets/logo.png"
+            alt="ExamGenie Logo"
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: RADIUS.md,
+            }}
+          />
           <h1 style={{
             fontSize: TYPOGRAPHY.fontSize.xl,
             fontWeight: TYPOGRAPHY.fontWeight.semibold,
