@@ -162,7 +162,8 @@ async function testPromptVariant(
     id: 'test-image',
     filename: path.basename(imagePath),
     mimeType: 'image/jpeg',
-    size: imageBuffer.length
+    size: imageBuffer.length,
+    uploadedAt: new Date()
   }
 
   const results = await processImagesWithGemini([fileMetadata], prompt)
