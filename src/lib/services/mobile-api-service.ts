@@ -511,8 +511,8 @@ PROMPT SIZE:
         status: 'READY',
         processed_text: geminiData.rawText,
         share_id: shareId,
-        created_at: new Date().toISOString(),
-        completed_at: new Date().toISOString()
+        created_at: new Date().toISOString()
+        // completed_at is NULL by default - will be set when student completes the exam
       }
 
       // Note: user_id is already set in examData above

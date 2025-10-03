@@ -245,14 +245,35 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
         grading_prompt: getGradingPrompt()
       }),
       // Update exam status to graded
-      () => DatabaseManager.update('exams', 
-        { status: 'graded' }, 
+      () => DatabaseManager.update('exams',
+        { status: 'graded' },
         { exam_id: examId }
       )
     ], 'Submit Answers Transaction')
 
     if (transactionResult.error) {
       return null
+    }
+
+    // Update completed_at timestamp for ExamGenie exams
+    if (isExamGenieExam && supabaseAdmin) {
+      console.log('Updating completed_at for ExamGenie exam:', examId)
+      const updateResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabaseAdmin!
+            .from('examgenie_exams')
+            .update({ completed_at: new Date().toISOString() })
+            .eq('id', examId)
+        },
+        'Update ExamGenie Exam Completion Timestamp'
+      )
+
+      if (updateResult.error) {
+        console.error('Failed to update completed_at:', updateResult.error)
+        // Don't fail the entire operation - grading was successful
+      } else {
+        console.log('Successfully updated completed_at for exam:', examId)
+      }
     }
 
     return gradingResult
