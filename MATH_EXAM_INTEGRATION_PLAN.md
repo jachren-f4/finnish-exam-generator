@@ -242,17 +242,17 @@ Flutter App → POST /api/mobile/exam-questions
 
 | Endpoint | Method | Purpose | Math Support |
 |----------|--------|---------|--------------|
-| `/api/exams/create` | POST | Create exam (unified endpoint) | ✅ Exam type determined by subject/grade fields |
-| `/api/exams/[id]/process` | POST | Start question generation | ✅ Routes to math or general prompt logic |
-| `/api/exams/[id]/progress` | GET | Poll generation status | ✅ Works with all exam types |
+| `/api/mobile/exam-questions` | POST | Create exam (unified synchronous endpoint) | ✅ Exam type determined by subject field |
 | `/api/exams` | GET | List all user exams | ✅ Returns metadata for math exams |
 | `/api/exams/[id]` | GET | Fetch exam for taking | ✅ Returns JSONB questions (all types) |
 | `/api/exam/[id]/submit` | POST | Submit answers for grading | 🆕 Needs math grading (Phase 2) |
 
 **Unified Endpoint Strategy:**
-- **General Exams**: `subject` + `grade` provided → Use grade/subject-specific prompt
-- **Math Exams**: `subject` + `grade` omitted/null → Use math prompt with topic auto-detection
+- **Endpoint**: `POST /api/mobile/exam-questions` (synchronous, 120-second timeout)
+- **Math Exam Detection**: `subject === "Mathematics"` OR `subject === "Math"` → Use math prompt with topic auto-detection
+- **General Exam**: Any other subject value → Use grade/subject-specific prompt
 - **Question Count**: Optional parameter (range: 8-15, default: 15) - same for both exam types
+- **No polling needed**: Single synchronous API call returns complete exam
 
 ---
 
@@ -279,7 +279,7 @@ Flutter App → POST /api/mobile/exam-questions
 ```
 Mobile Client Request
   ↓
-category = 'mathematics'?
+subject === 'Mathematics' OR subject === 'Math'?
   ↓ YES
 Use MathPromptService
   ↓
@@ -301,14 +301,14 @@ Return standard { examUrl, examId, gradingUrl }
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      Mobile Client (Flutter)                 │
-│  - Sends: images, category='mathematics', grade=8           │
+│  - Sends: images, subject='Mathematics', grade=8            │
 │  - Receives: examUrl, examId, gradingUrl                    │
 └─────────────────────────────────────────────────────────────┘
                            ↓ POST /api/mobile/exam-questions
 ┌─────────────────────────────────────────────────────────────┐
 │              MobileApiService (Request Handler)              │
-│  ✅ Extract category from FormData                          │
-│  ✅ Detect if category === 'mathematics'                    │
+│  ✅ Extract subject from FormData                           │
+│  ✅ Detect if subject === 'Mathematics' OR 'Math'           │
 └─────────────────────────────────────────────────────────────┘
                            ↓
               ┌────────────┴────────────┐
@@ -824,13 +824,13 @@ if (question.answerFormat != null) {
 
 #### 7.1.7 Mobile API Integration
 - [ ] **Task 1.9:** Update MobileApiService for math detection
-  - [ ] Add math exam detection: `category === 'mathematics'`
+  - [ ] Add math exam detection: `subject === 'Mathematics'` OR `subject === 'Math'`
   - [ ] Call `MathPromptService` when math exam detected
   - [ ] Call `MathExamCreator` when math exam detected
   - [ ] Maintain backward compatibility for general exams
   - [ ] Add logging for math exam requests
   - [ ] Update error messages
-  - **Files:** `src/lib/services/mobile-api-service.ts`
+  - **Files:** `src/app/api/mobile/exam-questions/route.ts`
   - **Dependencies:** Tasks 1.5, 1.8
   - **Time Estimate:** 2 hours
 
@@ -1129,13 +1129,18 @@ src/app/api/exam/[id]/submit/route.ts                   ← Routes to grading se
 
 ```typescript
 FormData {
-  images: File[]           // Textbook images
-  category: 'mathematics'  // EXISTING FIELD - triggers math mode
-  grade: 8                 // EXISTING FIELD - used for prompt selection
-  user_id: 'uuid-xxx'      // EXISTING FIELD - for exam ownership
-  language: 'fi'           // EXISTING FIELD - defaults to 'fi'
+  images: File[]              // Textbook images
+  subject: 'Mathematics'      // EXISTING FIELD - triggers math mode if 'Mathematics' or 'Math'
+  grade: 8                    // EXISTING FIELD - optional for math exams (ignored)
+  user_id: 'uuid-xxx'         // EXISTING FIELD - for exam ownership
+  language: 'fi'              // EXISTING FIELD - defaults to 'fi'
+  question_count: 15          // OPTIONAL - defaults to 15
 }
 ```
+
+**Detection Logic:**
+- If `subject === "Mathematics"` OR `subject === "Math"` → Math exam mode (use math prompt with topic auto-detection)
+- Otherwise → General exam mode (use grade/subject-specific prompt)
 
 **No mobile client changes required.**
 
