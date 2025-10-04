@@ -242,10 +242,17 @@ Flutter App → POST /api/mobile/exam-questions
 
 | Endpoint | Method | Purpose | Math Support |
 |----------|--------|---------|--------------|
-| `/api/mobile/exam-questions` | POST | Generate exam from images | ✅ Already supports `category` param |
-| `/api/mobile/exams` | GET | List all user exams | ✅ Works with unified table |
-| `/api/exam/[id]` | GET | Fetch exam for taking | ✅ Returns JSONB questions |
+| `/api/exams/create` | POST | Create exam (unified endpoint) | ✅ Exam type determined by subject/grade fields |
+| `/api/exams/[id]/process` | POST | Start question generation | ✅ Routes to math or general prompt logic |
+| `/api/exams/[id]/progress` | GET | Poll generation status | ✅ Works with all exam types |
+| `/api/exams` | GET | List all user exams | ✅ Returns metadata for math exams |
+| `/api/exams/[id]` | GET | Fetch exam for taking | ✅ Returns JSONB questions (all types) |
 | `/api/exam/[id]/submit` | POST | Submit answers for grading | 🆕 Needs math grading (Phase 2) |
+
+**Unified Endpoint Strategy:**
+- **General Exams**: `subject` + `grade` provided → Use grade/subject-specific prompt
+- **Math Exams**: `subject` + `grade` omitted/null → Use math prompt with topic auto-detection
+- **Question Count**: Optional parameter (range: 8-15, default: 15) - same for both exam types
 
 ---
 
