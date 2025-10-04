@@ -99,7 +99,7 @@ Else:
 
 ### 1.2 Response (Success - 200 OK)
 
-**IMPORTANT:** Backend returns minimal information at exam creation time. Full question details are fetched separately via the "Get Exam by ID" endpoint.
+**IMPORTANT:** Backend returns minimal information at exam creation time (no full question objects). Full question details are fetched separately via the "Get Exam by ID" endpoint when needed.
 
 **Math Exam Creation Response:**
 ```json
@@ -108,7 +108,8 @@ Else:
   "data": {
     "examId": "550e8400-e29b-41d4-a716-446655440000",
     "examUrl": "https://exam-generator.vercel.app/exam/abc12345",
-    "shareId": "abc12345"
+    "shareId": "abc12345",
+    "questionCount": 15
   },
   "message": "Exam generated successfully"
 }
@@ -121,7 +122,8 @@ Else:
   "data": {
     "examId": "550e8400-e29b-41d4-a716-446655440000",
     "examUrl": "https://exam-generator.vercel.app/exam/xyz67890",
-    "shareId": "xyz67890"
+    "shareId": "xyz67890",
+    "questionCount": 10
   },
   "message": "Exam generated successfully"
 }
@@ -132,9 +134,10 @@ Else:
 - `data.examId` (string, UUID) - Unique exam identifier
 - `data.examUrl` (string) - Full URL for sharing (used for WhatsApp, clipboard, browser)
 - `data.shareId` (string) - Short ID used in the URL (extracted from examUrl)
+- `data.questionCount` (number) - **CRITICAL:** Number of questions generated (required by mobile app for sharing screen)
 - `message` (string) - Success message
 
-**Note:** Questions are NOT included in the creation response. Frontend fetches them separately using `GET /api/mobile/exams/{examId}`.
+**Note:** Full question objects are NOT included in the creation response. Frontend fetches them separately using `GET /api/mobile/exams/{examId}` when displaying the exam.
 
 ---
 
