@@ -1,10 +1,11 @@
 # Math Exam Integration Plan
 **ExamGenie - Mathematics Support Implementation**
 
-**Document Version:** 1.0
+**Document Version:** 1.1
 **Date:** 2025-10-04
-**Status:** 📋 Planning Phase
+**Status:** 📋 Planning Phase - Aligned with Frontend Requirements
 **Implementation Target:** Week 1-3
+**Last Updated:** 2025-10-04 (Added Frontend-Backend Alignment)
 
 ---
 
@@ -38,13 +39,19 @@ Integrate mathematical exam generation and grading capabilities into the existin
 - ✅ **Phased rollout** - Generation first, grading second, web rendering third
 - ✅ **Backward compatibility** - All existing exams continue to work
 
-### Success Criteria
-- [ ] Mobile client can generate math exams without code changes
+### Success Criteria (Updated with Frontend Alignment)
+- [ ] Mobile client can generate math exams without code changes (✅ Confirmed via BACKEND_ALIGNMENT_RESPONSE.md)
 - [ ] Math exams appear in same exam list as general exams
 - [ ] Math questions display as readable text on mobile (Unicode symbols)
 - [ ] Same exam URL system works for math and general exams
 - [ ] Database supports 9 mathematical answer types
 - [ ] Gemini generates valid math exam JSON (88%+ quality score)
+- [ ] **NEW:** All API responses use camelCase field names (examId, createdAt, completedAt, questionCount, examMetadata, questionText, answerType)
+- [ ] **NEW:** Creation response includes `questionCount` field (required by mobile app for sharing screen)
+- [ ] **NEW:** List exams response includes `examMetadata` object for math exams, `null` for general exams
+- [ ] **NEW:** Get exam response includes `questionLatex` field (string | null)
+- [ ] **NEW:** `completedAt` field correctly tracks grading status (null = ungraded, timestamp = graded)
+- [ ] **NEW:** `student_id` filtering enforced on all endpoints (privacy requirement)
 
 ---
 
@@ -728,6 +735,22 @@ if (question.answerFormat != null) {
 
 ## 8. Detailed Task List
 
+**UPDATED (2025-10-04):** Task list enhanced with frontend-backend alignment requirements from `BACKEND_ALIGNMENT_RESPONSE.md` and `FRONTEND_MATH_EXAM_REQUIREMENTS.md`.
+
+### Key Alignment Requirements Added:
+1. **camelCase Field Naming (Task 1.3A):** All API responses must use camelCase (examId, questionText, answerType, etc.) - NOT snake_case
+2. **questionCount Field (Task 1.3B):** Creation response must include `questionCount` - required by mobile app for sharing screen
+3. **examMetadata Field (Task 1.3C):** Math exams include `examMetadata` object (topic, difficulty, estimatedTimeMinutes), general exams return `null`
+4. **completedAt Tracking (Task 1.3D):** Track grading status (null = ungraded "Valmis", timestamp = graded "Arvosteltu")
+5. **student_id Filtering (Task 1.3E):** Privacy requirement - all endpoints must filter by student_id
+
+### Phase 1 Changes:
+- Added 5 new frontend alignment tasks (1.3A-1.3E) - **9 hours**
+- Updated existing tasks to ensure camelCase compliance
+- Updated time estimate from ~30 hours to **~41 hours** (~1.5 weeks)
+
+---
+
 ### 7.1 Phase 1: Math Exam Generation
 
 #### 7.1.1 Database Setup
@@ -750,52 +773,113 @@ if (question.answerFormat != null) {
   - **Dependencies:** Task 1.1
   - **Time Estimate:** 30 minutes
 
-#### 7.1.2 TypeScript Types and Interfaces
-- [ ] **Task 1.3:** Create math exam type definitions
-  - [ ] Define `MathExamMetadata` interface
-  - [ ] Define `MathQuestion` interface (9 answer types)
+#### 7.1.2 Frontend Alignment - Response Format Updates
+- [ ] **Task 1.3A:** Ensure camelCase field naming in all API responses
+  - [ ] Review all existing API responses for snake_case fields
+  - [ ] Create utility function `toCamelCase()` for database-to-API transformation
+  - [ ] Update exam creation response to use camelCase (examId, examUrl, shareId, questionCount)
+  - [ ] Update list exams response to use camelCase (examId, createdAt, completedAt, questionCount, examMetadata)
+  - [ ] Update get exam response to use camelCase (questionText, questionLatex, answerType)
+  - [ ] Test all responses with mobile app models
+  - **Files:** `src/lib/utils/case-converter.ts`, API route files
+  - **Dependencies:** None
+  - **Time Estimate:** 3 hours
+  - **CRITICAL:** Mobile app expects camelCase - this is a breaking change if not done correctly
+
+- [ ] **Task 1.3B:** Add `questionCount` to exam creation response
+  - [ ] Count questions after exam creation
+  - [ ] Include `questionCount` field in success response data object
+  - [ ] Verify mobile app sharing screen receives this field
+  - [ ] Add validation to ensure questionCount is always present
+  - **Files:** `src/app/api/mobile/exam-questions/route.ts`, `src/lib/services/exam-creator.ts`
+  - **Dependencies:** None
+  - **Time Estimate:** 1 hour
+  - **CRITICAL:** Mobile app sharing screen requires this immediately after exam creation
+
+- [ ] **Task 1.3C:** Implement `examMetadata` field for math exams
+  - [ ] Create `examMetadata` structure in database (topic, difficulty, estimatedTimeMinutes)
+  - [ ] Extract topic from Gemini response (use detected_concepts field)
+  - [ ] Map difficulty level from Gemini response
+  - [ ] Calculate estimatedTimeMinutes based on question count and difficulty
+  - [ ] Return `examMetadata` object for math exams, `null` for general exams
+  - [ ] Add to list exams response
+  - [ ] Add to get exam response
+  - **Files:** `src/lib/services/math-exam-creator.ts`, API response formatters
+  - **Dependencies:** Task 1.3A
+  - **Time Estimate:** 2 hours
+  - **CRITICAL:** Mobile app uses this to differentiate math from general exams
+
+- [ ] **Task 1.3D:** Ensure `completedAt` field tracking
+  - [ ] Verify `completedAt` is set to `null` when exam is created
+  - [ ] Update submission endpoint to set `completedAt` to current timestamp when student submits
+  - [ ] Include `completedAt` in list exams response
+  - [ ] Include `completedAt` in get exam response
+  - [ ] Test mobile app grading status badges (Valmis vs Arvosteltu)
+  - **Files:** `src/app/api/exam/[id]/submit/route.ts`, API response formatters
+  - **Dependencies:** None
+  - **Time Estimate:** 1 hour
+  - **CRITICAL:** Mobile app relies on this for showing "Valmis" vs "Arvosteltu" status
+
+- [ ] **Task 1.3E:** Enforce `student_id` filtering on all endpoints
+  - [ ] Add `student_id` validation to exam creation endpoint
+  - [ ] Add `student_id` query parameter validation to list exams endpoint
+  - [ ] Filter database queries by `student_id` (WHERE user_id = student_id)
+  - [ ] Return 400 error if `student_id` is missing
+  - [ ] Return empty list if `student_id` is invalid (not 403 - privacy)
+  - [ ] Add unit tests for filtering
+  - **Files:** `src/app/api/mobile/exam-questions/route.ts`, `src/app/api/mobile/exams/route.ts`
+  - **Dependencies:** None
+  - **Time Estimate:** 2 hours
+  - **CRITICAL:** Privacy requirement - students must only see their own exams
+
+#### 7.1.3 TypeScript Types and Interfaces
+- [ ] **Task 1.4:** Create math exam type definitions (UPDATED - camelCase)
+  - [ ] Define `MathExamMetadata` interface (topic, difficulty, estimatedTimeMinutes)
+  - [ ] Define `MathQuestion` interface (9 answer types) with camelCase fields
   - [ ] Define `AnswerFormat` interfaces for each type
   - [ ] Define `GradingRules` interface
+  - [ ] Define API response types with camelCase fields
   - [ ] Export all types from index
   - **Files:** `src/lib/types/math-exam.ts`
   - **Dependencies:** None
-  - **Time Estimate:** 2 hours
-
-#### 7.1.3 Math Prompt Templates
-- [ ] **Task 1.4:** Create math prompt service
-  - [ ] Extract math prompts from `MATH_EXAM_FINAL_IMPLEMENTATION_PLAN.md` Section 4
-  - [ ] Create prompt templates for grades 1-9
-  - [ ] Add topic-specific prompts (circle geometry, algebra, etc.)
-  - [ ] Add Finnish language prompt templates
-  - [ ] Implement prompt selection logic based on grade/topic
-  - **Files:** `src/lib/prompts/math-exam-prompts.ts`
-  - **Dependencies:** None
   - **Time Estimate:** 3 hours
 
-- [ ] **Task 1.5:** Implement MathPromptService
-  - [ ] Create `MathPromptService` class
-  - [ ] Implement `generateMathPrompt(grade, topic?, language)` method
+#### 7.1.4 Math Prompt Templates
+- [ ] **Task 1.5:** Create math prompt service
+  - [ ] Use production-ready prompt from Appendix A (Section 13)
+  - [ ] Implement single adaptive prompt (no grade-based templates)
+  - [ ] Add Finnish language support
   - [ ] Add prompt validation
+  - **Files:** `src/lib/prompts/math-exam-prompts.ts`
+  - **Dependencies:** None
+  - **Time Estimate:** 2 hours
+  - **NOTE:** Using single adaptive prompt with dynamic difficulty analysis (simpler than grade-based templates)
+
+- [ ] **Task 1.6:** Implement MathPromptService
+  - [ ] Create `MathPromptService` class
+  - [ ] Implement `generateMathPrompt(language)` method (no grade parameter needed)
+  - [ ] Return production prompt from Appendix A
   - [ ] Add unit tests for prompt generation
   - **Files:** `src/lib/services/math-prompt-service.ts`
-  - **Dependencies:** Task 1.4
-  - **Time Estimate:** 2 hours
+  - **Dependencies:** Task 1.5
+  - **Time Estimate:** 1 hour
 
-#### 7.1.4 Schema Validation
-- [ ] **Task 1.6:** Create math schema validator
+#### 7.1.5 Schema Validation
+- [ ] **Task 1.7:** Create math schema validator (UPDATED - camelCase)
   - [ ] Implement `validateMathExamSchema(examData)` function
-  - [ ] Validate exam metadata structure
-  - [ ] Validate question structure (9 answer types)
+  - [ ] Validate exam_metadata structure (topic, difficulty, estimatedTimeMinutes)
+  - [ ] Validate question structure (9 answer types) with camelCase fields
   - [ ] Validate LaTeX syntax (basic check)
   - [ ] Validate answer_format structure per type
   - [ ] Validate grading_rules structure
   - [ ] Return detailed validation errors
+  - [ ] Ensure all field names are camelCase in validated output
   - **Files:** `src/lib/services/math-schema-validator.ts`
-  - **Dependencies:** Task 1.3
+  - **Dependencies:** Task 1.4
   - **Time Estimate:** 4 hours
 
-#### 7.1.5 LaTeX Conversion
-- [ ] **Task 1.7:** Implement LaTeX to plain text converter
+#### 7.1.6 LaTeX Conversion
+- [ ] **Task 1.8:** Implement LaTeX to plain text converter
   - [ ] Create `convertLatexToPlainText(text)` function
   - [ ] Handle Greek letters (α, β, π, θ, Δ)
   - [ ] Handle fractions (\frac{a}{b} → (a/b))
@@ -806,69 +890,111 @@ if (question.answerFormat != null) {
   - **Dependencies:** None
   - **Time Estimate:** 3 hours
 
-#### 7.1.6 Math Exam Creator
-- [ ] **Task 1.8:** Create MathExamCreator service
+#### 7.1.7 Math Exam Creator
+- [ ] **Task 1.9:** Create MathExamCreator service (UPDATED - camelCase + examMetadata)
   - [ ] Implement `MathExamCreator` class
   - [ ] Implement `createFromGeminiResponse(response, options)` method
   - [ ] Parse Gemini JSON response
   - [ ] Apply LaTeX escape fix (from Section 4.7.1 of implementation plan)
   - [ ] Validate schema using MathSchemaValidator
+  - [ ] Extract examMetadata from Gemini response (topic, difficulty, estimatedTimeMinutes)
   - [ ] Convert LaTeX to plain text for all questions
-  - [ ] Store exam in `examgenie_exams` with `exam_type = 'math'`
-  - [ ] Store questions in `examgenie_questions` with all math fields
-  - [ ] Return standard `{ examId, examUrl, gradingUrl }` format
+  - [ ] Store exam in `examgenie_exams` with `exam_type = 'math'` and examMetadata
+  - [ ] Store questions in `examgenie_questions` with all math fields (camelCase in JSONB)
+  - [ ] Count questions and include in response
+  - [ ] Return `{ success, data: { examId, examUrl, shareId, questionCount }, message }` format
   - [ ] Add error handling and logging
   - **Files:** `src/lib/services/math-exam-creator.ts`
-  - **Dependencies:** Tasks 1.6, 1.7
-  - **Time Estimate:** 5 hours
+  - **Dependencies:** Tasks 1.7, 1.8, 1.3C
+  - **Time Estimate:** 6 hours
 
-#### 7.1.7 Mobile API Integration
-- [ ] **Task 1.9:** Update MobileApiService for math detection
+#### 7.1.8 Mobile API Integration
+- [ ] **Task 1.10:** Update MobileApiService for math detection (UPDATED - camelCase response)
   - [ ] Add math exam detection: `subject === 'Mathematics'` OR `subject === 'Math'`
   - [ ] Call `MathPromptService` when math exam detected
   - [ ] Call `MathExamCreator` when math exam detected
+  - [ ] Ensure response uses camelCase fields
+  - [ ] Include questionCount in creation response
   - [ ] Maintain backward compatibility for general exams
   - [ ] Add logging for math exam requests
   - [ ] Update error messages
+  - [ ] Test with mobile app models
   - **Files:** `src/app/api/mobile/exam-questions/route.ts`
-  - **Dependencies:** Tasks 1.5, 1.8
+  - **Dependencies:** Tasks 1.6, 1.9, 1.3A, 1.3B
+  - **Time Estimate:** 3 hours
+
+#### 7.1.9 API Response Formatting
+- [ ] **Task 1.11:** Update list exams endpoint (UPDATED - examMetadata + camelCase)
+  - [ ] Add examMetadata to response for math exams
+  - [ ] Ensure all fields use camelCase (examId, createdAt, completedAt, questionCount)
+  - [ ] Filter exams by student_id query parameter
+  - [ ] Return examMetadata as null for general exams
+  - [ ] Test with mobile app
+  - **Files:** `src/app/api/mobile/exams/route.ts`
+  - **Dependencies:** Tasks 1.3A, 1.3C, 1.3E
   - **Time Estimate:** 2 hours
 
-#### 7.1.8 Testing and Validation
-- [ ] **Task 1.10:** End-to-end testing of math exam generation
+- [ ] **Task 1.12:** Update get exam endpoint (UPDATED - camelCase + questionLatex)
+  - [ ] Ensure all question fields use camelCase (questionText, questionLatex, answerType)
+  - [ ] Include questionLatex field (string | null)
+  - [ ] Include examMetadata in exam object
+  - [ ] Ensure completedAt field is present
+  - [ ] Test with mobile app
+  - **Files:** `src/app/api/mobile/exams/[id]/route.ts`
+  - **Dependencies:** Tasks 1.3A, 1.3C, 1.3D
+  - **Time Estimate:** 2 hours
+
+#### 7.1.10 Testing and Validation
+- [ ] **Task 1.13:** Frontend alignment testing
+  - [ ] Test exam creation response format (camelCase, questionCount present)
+  - [ ] Test list exams response format (examMetadata for math, null for general)
+  - [ ] Test get exam response format (questionLatex field present)
+  - [ ] Test completedAt field tracking (null → timestamp after submission)
+  - [ ] Test student_id filtering (privacy requirement)
+  - [ ] Verify mobile app can parse all responses
+  - [ ] Verify no breaking changes for general exams
+  - **Files:** Manual testing / Test scripts
+  - **Dependencies:** All Phase 1 tasks
+  - **Time Estimate:** 3 hours
+
+- [ ] **Task 1.14:** End-to-end testing of math exam generation
   - [ ] Test with real textbook image (IMG_6248.JPG - circle geometry)
-  - [ ] Verify Gemini generates valid JSON
+  - [ ] Verify Gemini generates valid JSON with examMetadata
   - [ ] Verify schema validation passes
   - [ ] Verify exam stored correctly in database
   - [ ] Verify questions have plain text versions
-  - [ ] Verify mobile API returns correct format
+  - [ ] Verify mobile API returns correct camelCase format
   - [ ] Test quality score ≥88% (from implementation plan)
   - **Files:** Manual testing / Test scripts
   - **Dependencies:** All Phase 1 tasks
   - **Time Estimate:** 3 hours
 
-- [ ] **Task 1.11:** Create test script for math exam generation
+- [ ] **Task 1.15:** Create test script for math exam generation
   - [ ] Create Node.js script similar to `generate_geometry_exam.js`
-  - [ ] Test with multiple grade levels
-  - [ ] Test with different math topics
+  - [ ] Test adaptive prompt with different textbook topics
+  - [ ] Verify topic auto-detection works
+  - [ ] Verify difficulty analysis is accurate
   - [ ] Generate quality report
   - [ ] Save sample outputs for documentation
   - **Files:** `test-math-exam-generation.js`
   - **Dependencies:** All Phase 1 tasks
   - **Time Estimate:** 2 hours
 
-#### 7.1.9 Documentation
-- [ ] **Task 1.12:** Update API documentation
-  - [ ] Document new exam_type field in response
-  - [ ] Document question_text_plain field
+#### 7.1.11 Documentation
+- [ ] **Task 1.16:** Update API documentation (UPDATED - alignment requirements)
+  - [ ] Document camelCase field naming convention
+  - [ ] Document examMetadata structure
+  - [ ] Document questionCount in creation response
+  - [ ] Document questionLatex field
+  - [ ] Document completedAt tracking
+  - [ ] Document student_id filtering requirements
   - [ ] Document answer_type enum values
-  - [ ] Document answer_format structures
-  - [ ] Add example requests and responses
+  - [ ] Add example requests and responses (camelCase)
   - **Files:** `API_DOCUMENTATION.md`
   - **Dependencies:** Phase 1 complete
-  - **Time Estimate:** 2 hours
+  - **Time Estimate:** 3 hours
 
-**Phase 1 Total Estimate:** ~30 hours (~1 week)
+**Phase 1 Total Estimate (UPDATED):** ~41 hours (~1.5 weeks)
 
 ---
 
@@ -1144,63 +1270,114 @@ FormData {
 
 **No mobile client changes required.**
 
-### 9.2 Response Format (Enhanced)
+### 9.2 Response Format (Enhanced - ALIGNED WITH FRONTEND)
 
 **POST /api/mobile/exam-questions** - Response:
+
+**CRITICAL:** Frontend mobile app requires `questionCount` in creation response for sharing screen display.
 
 ```typescript
 {
   success: true,
   data: {
-    metadata: {
-      processingTime: 15234,
-      geminiProcessingTime: 12000,
-      imageCount: 2,
-      promptUsed: 'custom',
-      processingMode: 'mathematics'  // NEW: indicates math exam
-    }
+    examId: '550e8400-e29b-41d4-a716-446655440000',  // camelCase ✅
+    examUrl: 'https://exam-generator.vercel.app/exam/abc12345',
+    shareId: 'abc12345',
+    questionCount: 15  // ✅ REQUIRED - Mobile app needs this immediately
   },
-  examUrl: 'https://exam-generator.vercel.app/exam/uuid-xxx',
-  examId: 'uuid-xxx',
-  gradingUrl: 'https://exam-generator.vercel.app/grading/uuid-xxx'
+  message: 'Exam generated successfully'
 }
 ```
 
-### 9.3 Exam Fetch Format (Enhanced)
+**Field Naming Convention:** All fields use **camelCase** (NOT snake_case):
+- ✅ `examId` (NOT exam_id)
+- ✅ `examUrl` (NOT exam_url)
+- ✅ `shareId` (NOT share_id)
+- ✅ `questionCount` (NOT question_count)
 
-**GET /api/exam/[id]** - Response:
+### 9.3 List Exams Format (ALIGNED WITH FRONTEND)
+
+**GET /api/mobile/exams?student_id={uuid}** - Response:
+
+**CRITICAL:** All responses use camelCase. `examMetadata` differentiates math from general exams.
 
 ```typescript
 {
-  exam_id: 'uuid-xxx',
-  subject: 'matematiikka',
-  grade: '8',
-  status: 'READY',
-  exam_type: 'math',        // NEW: helps clients detect math exam
-  category: 'mathematics',  // NEW: for analytics
-  questions: [
+  success: true,
+  exams: [
     {
-      id: 'q_001',
-      question_number: 1,
-      question_text: 'Laske ympyräsektorin pinta-ala, kun säde on $r = 5.3$ cm ja keskuskulma on $\\alpha = 56°$.',
-      question_text_plain: 'Laske ympyräsektorin pinta-ala, kun säde on r = 5.3 cm ja keskuskulma on α = 56°.',  // NEW
-      answer_type: 'numeric',                    // NEW: was 'question_type'
-      answer_format: {                           // NEW
-        type: 'decimal',
-        tolerance: 0.5,
-        units: 'cm²',
-        decimals: 1
-      },
-      question_latex: 'Kaava: $A = \\frac{\\alpha}{360°} \\times \\pi r^2$',  // NEW (optional)
-      difficulty: 'medium',                      // NEW
-      estimated_time_seconds: 180,               // NEW
-      max_points: 2                              // EXISTING
+      examId: 'uuid-1',              // camelCase ✅
+      subject: 'Mathematics',
+      grade: null,                   // null for math exams
+      createdAt: '2025-10-04T12:35:00Z',  // camelCase ✅
+      completedAt: null,             // camelCase ✅ - null = ungraded, timestamp = graded
+      questionCount: 10,             // camelCase ✅
+      examMetadata: {                // ✅ Present for math exams, null for general
+        topic: 'Ympyräsektorit ja kaaret',
+        difficulty: 'intermediate',
+        estimatedTimeMinutes: 45
+      }
+    },
+    {
+      examId: 'uuid-2',
+      subject: 'History',
+      grade: '8',
+      createdAt: '2025-10-03T10:20:00Z',
+      completedAt: '2025-10-03T11:15:00Z',  // Graded - show "Arvosteltu" badge
+      questionCount: 15,
+      examMetadata: null             // ✅ null for general exams
     }
-  ]
+  ],
+  total: 2
 }
 ```
 
-**Mobile client should use `question_text_plain` for display.**
+### 9.4 Get Exam Questions Format (ALIGNED WITH FRONTEND)
+
+**GET /api/mobile/exams/{exam_id}** - Response:
+
+```typescript
+{
+  success: true,
+  exam: {
+    examId: '550e8400-e29b-41d4-a716-446655440000',  // camelCase ✅
+    subject: 'Mathematics',
+    grade: null,
+    createdAt: '2025-10-04T12:35:00Z',              // camelCase ✅
+    completedAt: null,                              // camelCase ✅
+    examMetadata: {                                 // Present for math, null for general
+      topic: 'Ympyräsektorit ja kaaret',
+      difficulty: 'intermediate',
+      estimatedTimeMinutes: 45
+    },
+    questions: [
+      {
+        id: 1,
+        questionText: 'Laske ympyräsektorin pinta-ala, kun säde on $r = 8.2$ cm ja keskuskulma on $\\alpha = 72°$.',  // camelCase ✅
+        questionLatex: 'Kaava: $A = \\frac{\\alpha}{360°} \\times \\pi r^2$',  // camelCase ✅ (optional)
+        answerType: 'numeric',                      // camelCase ✅
+        options: null
+      },
+      {
+        id: 2,
+        questionText: 'Millä tavalla toisistaan eroavat ympyrän kehän pituuden lauseke?',
+        questionLatex: null,
+        answerType: 'multiple_choice',              // camelCase ✅
+        options: {
+          'A': 'Kaaren pituus on aina pienempi',
+          'B': 'Kaaren pituus on osuus kehästä',
+          'C': 'Kaaren pituus on suurempi',
+          'D': 'Ne ovat samat'
+        }
+      }
+    ]
+  }
+}
+```
+
+**Field Naming - All camelCase:**
+- ✅ `examId`, `questionText`, `questionLatex`, `answerType`, `createdAt`, `completedAt`, `questionCount`, `examMetadata`
+- ❌ NOT: exam_id, question_text, question_latex, answer_type, created_at, completed_at
 
 ### 9.4 Submission Format (Unchanged)
 
@@ -1489,18 +1666,56 @@ DROP INDEX IF EXISTS idx_exams_exam_type;
 - `MathExamRisks.md` - Risk analysis from education specialist
 - `schema_examgenie_exams.md` - Current database schema
 - `generate_geometry_exam.js` - Working Gemini integration example
+- **`BACKEND_ALIGNMENT_RESPONSE.md`** - ✅ Frontend-backend alignment confirmation (NEW)
+- **`FRONTEND_MATH_EXAM_REQUIREMENTS.md`** - ✅ API contract specification for frontend (NEW)
+- **`FINAL_BACKEND_ALIGNMENT_CHECKLIST.md`** - Frontend team's critical issues list
 
 **Key Implementation Sections:**
 - Section 4.7.1: LaTeX Escape Handling
 - Section 4.7.2: Preventing Duplicate Text
 - Section 13: Risk Mitigation & Operational Concerns
+- **Section 9.2-9.4:** API Response Formats (UPDATED - camelCase + examMetadata)
+- **Section 8, Task 1.3A-1.3E:** Frontend Alignment Tasks (NEW)
 
 ---
 
-**Document Status:** ✅ Ready for Development
-**Approval Required:** Database migration, architecture approach
+**Document Status:** ✅ Updated with Frontend-Backend Alignment Requirements (Ready for Development)
+**Approval Required:** Database migration, architecture approach, API response format changes
 **Owner:** ExamGenie Development Team
-**Last Updated:** 2025-10-04
+**Last Updated:** 2025-10-04 (Version 1.1)
+
+---
+
+## 15. Changelog
+
+### Version 1.1 (2025-10-04) - Frontend-Backend Alignment Update
+
+**What Changed:**
+1. **API Response Formats (Section 9.2-9.4):** Updated all API response examples to use camelCase field names as required by mobile app
+2. **Success Criteria (Section 1):** Added 6 new criteria related to frontend alignment
+3. **Task List (Section 8):** Added 5 new critical frontend alignment tasks (1.3A-1.3E):
+   - Task 1.3A: Ensure camelCase field naming (3 hours)
+   - Task 1.3B: Add questionCount to creation response (1 hour)
+   - Task 1.3C: Implement examMetadata field (2 hours)
+   - Task 1.3D: Ensure completedAt tracking (1 hour)
+   - Task 1.3E: Enforce student_id filtering (2 hours)
+4. **Updated Existing Tasks:** Modified tasks 1.4-1.16 to ensure camelCase compliance
+5. **Time Estimates:** Increased Phase 1 estimate from 30 hours to 41 hours
+6. **References:** Added links to BACKEND_ALIGNMENT_RESPONSE.md and FRONTEND_MATH_EXAM_REQUIREMENTS.md
+
+**Why This Matters:**
+- Mobile app models expect specific field names (camelCase)
+- Mobile app sharing screen requires `questionCount` immediately after exam creation
+- Mobile app uses `examMetadata` to differentiate math from general exams
+- Mobile app uses `completedAt` to show grading status badges ("Valmis" vs "Arvosteltu")
+- Privacy requirement: `student_id` filtering prevents cross-user data access
+
+**Impact:**
+- Zero frontend changes required (backend adapts to existing mobile app)
+- No breaking changes for existing general exam functionality
+- Minimal frontend changes (3 optional model fields + display logic)
+
+**Status:** All critical frontend team concerns addressed. Ready for Phase 1 implementation.
 
 ---
 
