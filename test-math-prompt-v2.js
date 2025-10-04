@@ -1,8 +1,14 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: '.env.local' });
 
-const API_KEY = 'REMOVED_API_KEY';
+const API_KEY = process.env.GEMINI_API_KEY;
+
+if (!API_KEY) {
+  console.error('ERROR: GEMINI_API_KEY not found in .env.local');
+  process.exit(1);
+}
 
 // NEW PROMPT - Dynamic difficulty analysis with topic auto-detection
 const prompt = `ROLE: You are an expert mathematics teacher creating exam questions for students studying from their textbook.
