@@ -207,12 +207,13 @@ CRITICAL CONSTRAINT: Questions must test actual knowledge, not document referenc
 - Visual references (anything requiring seeing images/diagrams)
 - Document structure (page numbers, chapters, sections)
 - Location-based phrasing (positional references)
+- Questions that aren't explicitly based on the source material
 
 TARGET: Use the same language as the source material. Subject area: ${categoryDescriptions[category as keyof typeof categoryDescriptions] || category}.
 
 TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts.
 
-REQUIRED FORMAT:
+REQUIRED FORMAT WITH EXAMPLE:
 {
   "questions": [
     {

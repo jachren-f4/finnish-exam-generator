@@ -206,6 +206,20 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 - **Output:** 15 questions per exam with explanations
 - **Cost:** ~$0.001 per exam generation
 
+**Active Prompt:** `getCategoryAwarePrompt()` in `/src/lib/config.ts:196-232`
+- **Primary prompt** used by mobile API endpoint
+- Takes `category`, `grade`, and `language` parameters
+- ⚠️ **Known Limitation:** `subject` parameter is sent by mobile app but NOT injected into prompt
+  - Example: Sending `subject=Physics` results in generic prompt: "Subject area: Science, history, geography, biology, physics, chemistry..."
+  - Only `category` (core_academics, mathematics, language_studies) determines subject description
+  - `subject` is stored in database but doesn't guide question generation
+
+**Unused Prompts in config.ts:**
+- `DEFAULT_EXAM_GENERATION` (lines 103-124) - Basic fallback, not called
+- `getSimplifiedCategoryPrompt()` (lines 158-194) - Defined but never used
+- `OCR_EXTRACTION` (lines 126-154) - Legacy OCR, not used
+- `getLanguageStudiesPrompt()` (lines 235-300) - Only for `category=language_studies`
+
 **Prompt Optimization:**
 - Variant 4 implementation (100% quality, 35% size reduction)
 - Few-shot learning with Finnish examples
