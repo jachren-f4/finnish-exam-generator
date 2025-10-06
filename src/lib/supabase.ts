@@ -146,6 +146,7 @@ export interface ExamGenieExam {
   diagnostic_image_urls: string[] | null
   ocr_raw_text: string | null
   diagnostic_enabled: boolean
+  generation_prompt: string | null
 }
 
 export interface ExamGenieQuestion {

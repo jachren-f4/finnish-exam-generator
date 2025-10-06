@@ -111,7 +111,7 @@ export class MobileApiService {
         diagnosticData,
         timer,
         request,
-        undefined, // promptUsed not available from processWithGemini
+        geminiResult.promptUsed,
         geminiResult.processingTime,
         fileMetadataList
       )
@@ -219,7 +219,7 @@ export class MobileApiService {
     subject?: string,
     grade?: number,
     language: string = 'en'
-  ): Promise<{ success: true; data: any; processingTime: number } | { success: false; error: string; details: string }> {
+  ): Promise<{ success: true; data: any; processingTime: number; promptUsed: string } | { success: false; error: string; details: string }> {
     try {
       // Determine which prompt to use
       let promptToUse: string
@@ -276,7 +276,8 @@ export class MobileApiService {
       return {
         success: true,
         data: result,
-        processingTime: geminiProcessingTime
+        processingTime: geminiProcessingTime,
+        promptUsed: promptToUse
       }
 
     } catch (error: any) {
@@ -511,7 +512,8 @@ PROMPT SIZE:
         status: 'READY',
         processed_text: geminiData.rawText,
         share_id: shareId,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        generation_prompt: promptUsed || null
         // completed_at is NULL by default - will be set when student completes the exam
       }
 
