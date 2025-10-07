@@ -251,13 +251,8 @@ export class MobileApiService {
       console.log('=== END PROMPT ===')
       console.log('Prompt length:', promptToUse.length, 'characters')
 
-      // Log prompt to file for user review
-      await this.logPromptToFile(promptToUse, promptType, {
-        category,
-        grade,
-        language,
-        imageCount: fileMetadataList.length
-      })
+      // Note: File logging disabled - prompts are now saved to database (generation_prompt field)
+      // Legacy logPromptToFile() call removed to prevent filesystem errors on Vercel
 
       console.log('Starting Gemini processing...')
       console.log('=== USING LEGACY MODE ===')
@@ -305,63 +300,16 @@ export class MobileApiService {
   }
 
   /**
-   * Log prompt to file for quality analysis
+   * REMOVED: logPromptToFile() method
+   *
+   * File-based prompt logging has been disabled because:
+   * - Vercel serverless functions have read-only filesystems (except /tmp)
+   * - Prompts are now saved to database (generation_prompt field) which is more reliable
+   * - Console logs still show the full prompt for debugging
+   *
+   * If you need to review prompts, query the database:
+   * SELECT id, generation_prompt FROM examgenie_exams WHERE created_at > NOW() - INTERVAL '1 day'
    */
-  private static async logPromptToFile(
-    prompt: string,
-    promptType: string,
-    metadata: {
-      category?: string
-      grade?: number
-      language?: string
-      imageCount?: number
-    }
-  ): Promise<void> {
-    try {
-      const fs = require('fs').promises
-      const path = require('path')
-
-      const promptsDir = path.join(process.cwd(), 'prompttests')
-
-      // Ensure directory exists
-      try {
-        await fs.access(promptsDir)
-      } catch {
-        await fs.mkdir(promptsDir, { recursive: true })
-      }
-
-      const timestamp = new Date().toISOString()
-      const filename = `prompt-${Date.now()}.txt`
-      const filepath = path.join(promptsDir, filename)
-
-      const logContent = `=== EXAM GENERATION PROMPT ===
-Timestamp: ${timestamp}
-Prompt Type: ${promptType}
-Category: ${metadata.category || 'not specified'}
-Grade: ${metadata.grade || 'not specified'}
-Language: ${metadata.language || 'en'}
-Image Count: ${metadata.imageCount || 0}
-
-PROMPT:
-${prompt}
-
-==================================================
-
-PROMPT SIZE:
-- Characters: ${prompt.length}
-- Approx Tokens: ${Math.ceil(prompt.length / 4)}
-- Lines: ${prompt.split('\n').length}
-
-==================================================
-`
-
-      await fs.writeFile(filepath, logContent, 'utf-8')
-      console.log(`Prompt logged to: ${filepath}`)
-    } catch (error) {
-      console.error('Failed to log prompt to file:', error)
-      // Don't throw - logging failure shouldn't break exam generation
-    }
-  }
 
   /**
    * Create ExamGenie exam from Gemini response
