@@ -88,6 +88,98 @@ ENABLE_PROMPT_LOGGING=true  # Logs prompts to /prompttests/
 
 ## Development Workflow
 
+### 🌿 Branch & Environment Strategy
+
+This project uses a **staging + production** workflow optimized for solo development:
+
+**Environments:**
+- **Production:** `main` branch → https://exam-generator.vercel.app (production Supabase)
+- **Staging:** `staging` branch → https://exam-generator-staging.vercel.app (staging Supabase)
+- **Feature branches:** Optional for experimental/risky changes
+
+**Branch Protection:**
+- ✅ `main` - PROTECTED (requires PR to merge)
+- ❌ `staging` - NOT PROTECTED (direct push allowed for solo dev speed)
+
+### 📝 Git Workflow for Claude Code / AI Assistants
+
+**DEFAULT: Always work on staging branch unless explicitly told otherwise.**
+
+#### Daily Development (Default Workflow)
+
+```bash
+# 1. ALWAYS start by checking out staging
+git checkout staging
+git pull origin staging
+
+# 2. Make your changes
+# Edit files, add features, fix bugs
+
+# 3. BEFORE committing: Run production build
+npm run build
+
+# 4. If build succeeds, commit and push to staging
+git add .
+git commit -m "Brief description of changes"
+git push origin staging
+
+# ✅ Automatically deploys to: exam-generator-staging.vercel.app
+# ✅ Uses staging Supabase database (safe for testing)
+```
+
+#### When to Use Feature Branches
+
+**Only create feature branches for:**
+- 🔬 Experimental features that might not work
+- 🧪 Risky refactors or major changes
+- 📱 Changes that need a stable preview URL for mobile testing
+- 🐛 Complex bugs requiring isolated testing
+
+```bash
+# Create feature branch from staging
+git checkout staging
+git pull origin staging
+git checkout -b feature/descriptive-name
+
+# Make changes, commit, push
+git add .
+git commit -m "Description"
+git push origin feature/descriptive-name
+
+# ✅ Vercel auto-creates preview URL:
+# exam-generator-git-feature-descriptive-name-*.vercel.app
+
+# When ready, merge back to staging
+git checkout staging
+git merge feature/descriptive-name
+git push origin staging
+
+# Delete feature branch
+git branch -d feature/descriptive-name
+git push origin --delete feature/descriptive-name
+```
+
+#### Releasing to Production
+
+**Only push to production when staging is stable and tested:**
+
+```bash
+# Ensure staging is up to date
+git checkout staging
+git pull origin staging
+
+# Build must pass before release
+npm run build
+
+# Create PR via GitHub UI: staging → main
+# Or use GitHub CLI:
+gh pr create --base main --head staging --title "Release: [description]"
+
+# After PR approval and merge:
+# ✅ Vercel auto-deploys to production
+# ✅ Real users get the changes
+```
+
 ### ⚠️ CRITICAL: Build Validation Before Production
 
 **Always run a production build locally before pushing:**
@@ -102,19 +194,25 @@ npm run build
 - Vercel deployment will fail if build doesn't pass, potentially breaking production
 - Running `npm run build` locally catches these errors before they reach production
 
-**Recommended Workflow:**
-1. Make changes and test in dev mode (`npm run dev`)
-2. **Before committing:** Run `npm run build` to verify production compatibility
-3. Fix any TypeScript errors or build issues
-4. Only commit and push after successful build
-5. Vercel deploys automatically after push
-
 **Common build errors caught by production build:**
 - Missing TypeScript type definitions
 - Unused variables/imports (ESLint warnings)
 - Interface mismatches
 - Import path errors
 - Environment variable issues
+
+### 🚫 What NOT to Do
+
+```bash
+# ❌ NEVER push directly to main
+git push origin main  # Will be rejected (protected)
+
+# ❌ NEVER skip the build check
+git push origin staging  # Without running npm run build first
+
+# ❌ NEVER work on main branch
+git checkout main  # Should only be used for releases via PR
+```
 
 ### Development Commands
 
@@ -126,9 +224,28 @@ npm run start           # Start production server
 npm run lint            # Run ESLint
 npm run type-check      # TypeScript validation
 
+# Git commands (for AI assistants)
+git checkout staging     # Switch to staging (DEFAULT branch)
+git pull origin staging  # Get latest changes
+git push origin staging  # Push changes (triggers staging deployment)
+
 # Testing
 npm run test            # Run tests (if configured)
 ```
+
+### 📊 Environment URLs & Databases
+
+| Environment | Git Branch | URL | Database | Push Method |
+|-------------|-----------|-----|----------|-------------|
+| **Production** | `main` | exam-generator.vercel.app | Production Supabase | PR only |
+| **Staging** | `staging` | exam-generator-staging.vercel.app | Staging Supabase | Direct push ✅ |
+| **Feature Preview** | `feature/*` | Auto-generated | Staging Supabase | Direct push ✅ |
+
+**Environment Variables:**
+- Production and Staging use different Supabase credentials
+- Configure in Vercel: Settings → Environment Variables
+- Production vars set to "Production" environment
+- Staging vars set to "Preview" environment
 
 ## Project Structure
 
