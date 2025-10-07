@@ -8,6 +8,7 @@ import { processImagesWithGemini } from '../gemini'
 import { supabaseAdmin } from '../supabase'
 import { PromptLogger, ImageReference } from '../utils/prompt-logger'
 import { shuffleQuestionsOptions, getShuffleStats } from '../utils/question-shuffler'
+import { getConfiguredProviderType } from './ai-providers/provider-factory'
 
 export interface MobileApiRequest {
   images: File[]
@@ -461,7 +462,8 @@ export class MobileApiService {
         processed_text: geminiData.rawText,
         share_id: shareId,
         created_at: new Date().toISOString(),
-        generation_prompt: promptUsed || null
+        generation_prompt: promptUsed || null,
+        ai_provider: getConfiguredProviderType()
         // completed_at is NULL by default - will be set when student completes the exam
       }
 
