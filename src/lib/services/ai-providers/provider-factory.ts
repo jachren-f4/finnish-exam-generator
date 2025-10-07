@@ -7,6 +7,7 @@
 import { AIProvider, AIProviderConfig } from './ai-provider.interface';
 import { GeminiProvider } from './gemini-provider';
 import { OpenAIProvider } from './openai-provider';
+import { GEMINI_CONFIG } from '../../config';
 
 export type AIProviderType = 'gemini' | 'openai';
 
@@ -44,7 +45,7 @@ export function createAIProvider(
       }
       return new GeminiProvider({
         apiKey,
-        modelName: config?.modelName || 'gemini-2.0-flash-exp',
+        modelName: config?.modelName || GEMINI_CONFIG.MODEL_NAME,
       });
     }
 

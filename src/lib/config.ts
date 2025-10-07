@@ -200,34 +200,38 @@ Return only JSON.`
       language_studies: 'Foreign language learning including vocabulary, grammar, translation, and comprehension'
     }
 
-    // VARIANT 4: Back to proven structure with minimal fix (text format only)
     return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students.
 
-CRITICAL CONSTRAINT: Questions must test actual knowledge, not document references. Avoid:
-- Visual references (anything requiring seeing images/diagrams)
-- Document structure (page numbers, chapters, sections)
-- Location-based phrasing (positional references)
-- Questions that aren't explicitly based on the source material
+CRITICAL CONSTRAINTS:
+1. Generate questions ONLY from content visible in the provided images
+2. Do NOT generate questions about topics not shown in the images
+3. Questions must test actual knowledge, not document references
+4. Avoid visual references (anything requiring seeing images/diagrams)
+5. Avoid document structure (page numbers, chapters, sections)
+6. Avoid location-based phrasing (positional references)
+7. When in doubt, skip the question rather than inventing content
 
-TARGET: Use the same language as the source material. Subject area: ${categoryDescriptions[category as keyof typeof categoryDescriptions] || category}.
+TARGET: Use the same language as the source material.
 
-TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts.
+TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts shown in the images.
 
-REQUIRED FORMAT WITH EXAMPLE:
+REQUIRED FORMAT:
 {
   "questions": [
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "Mitä ovat lämpöeristeet?",
-      "options": ["Materiaaleja jotka estävät lämmön siirtymistä", "Materiaaleja jotka edistävät lämmön siirtymistä", "Materiaaleja jotka tuottavat lämpöä", "Materiaaleja jotka kuluttavat lämpöä"],
-      "correct_answer": "Materiaaleja jotka estävät lämmön siirtymistä",
-      "explanation": "Lämpöeristeet estävät lämpöenergian siirtymisen."
+      "question": "[Question text in same language as source material]",
+      "options": ["[Option A]", "[Option B]", "[Option C]", "[Option D]"],
+      "correct_answer": "[Exact match from options array]",
+      "explanation": "[Brief explanation in same language]"
     }
   ]
 }
 
 IMPORTANT: The correct_answer field must contain the exact text from the options array.
+
+VALIDATION: Before finalizing, verify each question references content actually present in the provided images.
 
 QUALITY FOCUS: Create questions that test knowledge, not visual recognition.`
   },

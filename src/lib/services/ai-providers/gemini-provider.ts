@@ -11,6 +11,7 @@ import {
   ImagePart,
   AIGenerationResult,
 } from './ai-provider.interface';
+import { GEMINI_CONFIG } from '../../config';
 
 export class GeminiProvider implements AIProvider {
   private genAI: GoogleGenerativeAI;
@@ -18,7 +19,7 @@ export class GeminiProvider implements AIProvider {
 
   constructor(config: AIProviderConfig) {
     this.genAI = new GoogleGenerativeAI(config.apiKey);
-    this.modelName = config.modelName || 'gemini-2.0-flash-exp';
+    this.modelName = config.modelName || GEMINI_CONFIG.MODEL_NAME;
   }
 
   async generateContent(
