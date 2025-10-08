@@ -50,7 +50,7 @@ export interface RequestLogData {
 export class RequestLogger {
   private supabase: ReturnType<typeof createClient>
   private enabled: boolean
-  private hashIpAddresses: boolean
+  private hashIpAddresses: boolean = false // Default: don't hash IPs (can be configured via env)
 
   constructor() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -101,8 +101,8 @@ export class RequestLogger {
       }
 
       // Insert log entry (async, don't wait for response)
-      const { error } = await this.supabase
-        .from('api_request_logs')
+      const { error } = await (this.supabase
+        .from('api_request_logs') as any)
         .insert(logEntry)
 
       if (error) {
@@ -153,8 +153,8 @@ export class RequestLogger {
     }
 
     try {
-      let query = this.supabase
-        .from('api_request_logs')
+      let query = (this.supabase
+        .from('api_request_logs') as any)
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1)
@@ -207,15 +207,15 @@ export class RequestLogger {
       startDate.setDate(startDate.getDate() - days)
 
       // Get total requests
-      const { count: totalRequests } = await this.supabase
-        .from('api_request_logs')
+      const { count: totalRequests } = await (this.supabase
+        .from('api_request_logs') as any)
         .select('*', { count: 'exact', head: true })
         .gte('created_at', startDate.toISOString())
         .eq('endpoint', '/api/mobile/exam-questions')
 
       // Get authenticated requests
-      const { count: authenticatedRequests } = await this.supabase
-        .from('api_request_logs')
+      const { count: authenticatedRequests } = await (this.supabase
+        .from('api_request_logs') as any)
         .select('*', { count: 'exact', head: true })
         .gte('created_at', startDate.toISOString())
         .eq('endpoint', '/api/mobile/exam-questions')
@@ -254,15 +254,15 @@ export class RequestLogger {
       startDate.setDate(startDate.getDate() - days)
 
       // Get total attempts
-      const { count: totalAttempts } = await this.supabase
-        .from('api_request_logs')
+      const { count: totalAttempts } = await (this.supabase
+        .from('api_request_logs') as any)
         .select('*', { count: 'exact', head: true })
         .gte('created_at', startDate.toISOString())
         .eq('endpoint', '/api/mobile/exam-questions')
 
       // Get violations
-      const { count: violations } = await this.supabase
-        .from('api_request_logs')
+      const { count: violations } = await (this.supabase
+        .from('api_request_logs') as any)
         .select('*', { count: 'exact', head: true })
         .gte('created_at', startDate.toISOString())
         .eq('endpoint', '/api/mobile/exam-questions')
@@ -273,8 +273,8 @@ export class RequestLogger {
         : 0
 
       // Get top violators
-      const { data: violatorData } = await this.supabase
-        .from('api_request_logs')
+      const { data: violatorData } = await (this.supabase
+        .from('api_request_logs') as any)
         .select('user_id')
         .gte('created_at', startDate.toISOString())
         .eq('rate_limit_status', 'exceeded')
@@ -282,7 +282,7 @@ export class RequestLogger {
 
       // Count violations per user
       const violatorCounts = new Map<string, number>()
-      violatorData?.forEach((log) => {
+      violatorData?.forEach((log: any) => {
         const count = violatorCounts.get(log.user_id) || 0
         violatorCounts.set(log.user_id, count + 1)
       })
@@ -317,8 +317,8 @@ export class RequestLogger {
       const cutoffDate = new Date()
       cutoffDate.setDate(cutoffDate.getDate() - days)
 
-      const { error, count } = await this.supabase
-        .from('api_request_logs')
+      const { error, count } = await (this.supabase
+        .from('api_request_logs') as any)
         .delete({ count: 'exact' })
         .lt('created_at', cutoffDate.toISOString())
 

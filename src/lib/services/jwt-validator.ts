@@ -79,8 +79,8 @@ export class JWTValidator {
         valid: true,
         userId: user.id,
         email: user.email,
-        expiresAt: user.exp ? new Date(user.exp * 1000) : undefined,
-        issuedAt: user.aud ? new Date(user.created_at!) : undefined
+        expiresAt: undefined, // Supabase User type doesn't expose exp directly
+        issuedAt: user.created_at ? new Date(user.created_at) : undefined
       }
     } catch (error) {
       console.error('[JWTValidator] Token validation error:', error)

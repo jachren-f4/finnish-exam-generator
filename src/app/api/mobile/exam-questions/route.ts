@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       // --- OPTIONAL JWT VALIDATION (Phase 2) ---
       // Attempt to validate JWT from Authorization header
       // Falls back to user_id from body if JWT not provided (backwards compatibility)
-      let jwtUserId: string | null = null
+      let jwtUserId: string | null | undefined = null
       let hasValidJwt = false
       const authHeader = req.headers.get('Authorization')
 
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
           authSource: hasValidJwt ? 'jwt' : (user_id ? 'body' : 'none'),
           requestMetadata: { grade, subject, category, language },
           responseStatus: 429,
-          processingTimeMs: Date.now() - timer['startTime'],
+          processingTimeMs: timer.getCurrentDuration(),
           errorCode: 'RATE_LIMIT_EXCEEDED',
           rateLimitStatus: 'exceeded',
           rateLimitRemaining: 0,
