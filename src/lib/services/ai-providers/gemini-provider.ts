@@ -26,7 +26,12 @@ export class GeminiProvider implements AIProvider {
     prompt: string,
     images?: ImagePart[]
   ): Promise<AIGenerationResult> {
-    const model = this.genAI.getGenerativeModel({ model: this.modelName });
+    const model = this.genAI.getGenerativeModel({
+      model: this.modelName,
+      generationConfig: {
+        temperature: 0 // Reduce hallucinations and improve source fidelity
+      }
+    });
 
     // Build content array: [prompt, ...images]
     const content: Array<string | ImagePart> = [prompt];
