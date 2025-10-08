@@ -202,14 +202,11 @@ Return only JSON.`
 
     return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students.
 
-CRITICAL CONSTRAINTS:
-1. Generate questions ONLY from content visible in the provided images
-2. Do NOT generate questions about topics not shown in the images
-3. Questions must test actual knowledge, not document references
-4. Avoid visual references (anything requiring seeing images/diagrams)
-5. Avoid document structure (page numbers, chapters, sections)
-6. Avoid location-based phrasing (positional references)
-7. When in doubt, skip the question rather than inventing content
+CRITICAL CONSTRAINT: Questions must test actual knowledge, not document references. Avoid:
+- Visual references (anything requiring seeing images/diagrams)
+- Document structure (page numbers, chapters, sections)
+- Location-based phrasing (positional references)
+- Questions that aren't explicitly based on the source material
 
 TARGET: Use the same language as the source material.
 
