@@ -208,11 +208,11 @@ CRITICAL CONSTRAINT: Questions must test actual knowledge, not document referenc
 - Location-based phrasing (positional references)
 - Questions that aren't explicitly based on the source material
 
-TARGET: Use the same language as the source material.
+TARGET: Use the same language as the source material. Subject area: ${categoryDescriptions[category as keyof typeof categoryDescriptions] || category}.
 
-TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts shown in the images.
+TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts.
 
-REQUIRED FORMAT:
+REQUIRED FORMAT WITH EXAMPLE:
 {
   "questions": [
     {
@@ -227,8 +227,6 @@ REQUIRED FORMAT:
 }
 
 IMPORTANT: The correct_answer field must contain the exact text from the options array.
-
-VALIDATION: Before finalizing, verify each question references content actually present in the provided images.
 
 QUALITY FOCUS: Create questions that test knowledge, not visual recognition.`
   },
