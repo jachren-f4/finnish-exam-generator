@@ -98,6 +98,13 @@ export const PERFORMANCE_CONFIG = {
   }
 } as const
 
+// Rate Limiting Configuration
+export const RATE_LIMIT_CONFIG = {
+  HOURLY_LIMIT: parseInt(process.env.RATE_LIMIT_HOURLY || '10', 10),
+  DAILY_LIMIT: parseInt(process.env.RATE_LIMIT_DAILY || '50', 10),
+  ENABLED: process.env.RATE_LIMITING_ENABLED !== 'false', // Default: enabled
+} as const
+
 // Default Prompts
 export const PROMPTS = {
   DEFAULT_EXAM_GENERATION: `

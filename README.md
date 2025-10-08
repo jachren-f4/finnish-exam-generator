@@ -21,6 +21,7 @@ npm run dev
 
 - [Overview](#overview)
 - [Tech Stack](#tech-stack)
+- [Security Features](#security-features)
 - [Environment Setup](#environment-setup)
 - [Development Workflow](#development-workflow)
 - [Project Structure](#project-structure)
@@ -60,6 +61,46 @@ An AI-powered educational platform that transforms textbook images into exam que
 - **Deployment:** Vercel with automatic CI/CD
 - **Storage:** Temporary file storage (`/tmp` on Vercel, `uploads/` locally)
 
+## Security Features
+
+**Production-Ready Security** (Phase 1 - October 2025)
+
+### Rate Limiting
+- **10 requests/hour, 50 requests/day** per user
+- In-memory tracking with automatic cleanup (every 5 minutes)
+- Returns HTTP 429 with Finnish error messages when exceeded
+- Rate limit headers in all responses: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+
+### Authentication
+- **Phase 1 (Current):** Optional JWT authentication via `Authorization: Bearer <token>`
+- Falls back gracefully to `user_id` in request body if JWT not provided
+- JWT takes precedence when both are present
+- **Phase 2 (Alpha):** Flutter app adds JWT headers
+- **Phase 3 (Post-Alpha):** Enforce mandatory JWT at 95%+ adoption
+
+### Request Logging
+- All API requests logged to `api_request_logs` database table
+- Tracks: user_id, endpoint, JWT status, rate limits, processing time, IP address
+- Async non-blocking (doesn't impact API performance)
+- Analytics: JWT adoption rate, rate limit violations
+
+### Admin Monitoring
+- **Endpoint:** `/api/admin/rate-limits` (requires service role key)
+- View rate limit usage per user or across all users
+- Reset rate limits if needed
+- Query request logs for security analysis
+
+### API Key Protection
+- ✅ `GEMINI_API_KEY` server-side only (never exposed to client)
+- ✅ Verified in git history (no leaks)
+- ✅ `.env*.local` properly gitignored
+
+**Detailed Documentation:**
+- `/SECURITY_IMPLEMENTATION_SUMMARY.md` - Implementation overview
+- `/API_SECURITY_DOCUMENTATION.md` - Complete API reference
+- `/FLUTTER_RATE_LIMIT_HANDLING.md` - Mobile client specifications
+- `/TESTING_GUIDE.md` - Security testing procedures
+
 ## Environment Setup
 
 Create `.env.local` in project root:
@@ -79,12 +120,19 @@ NEXT_PUBLIC_APP_URL=https://exam-generator.vercel.app  # Production
 
 # Optional - Development
 ENABLE_PROMPT_LOGGING=true  # Logs prompts to /prompttests/
+
+# Optional - Security (defaults shown)
+RATE_LIMIT_HOURLY=10        # Max requests per hour per user
+RATE_LIMIT_DAILY=50         # Max requests per day per user
+RATE_LIMITING_ENABLED=true  # Enable/disable rate limiting
+ENABLE_REQUEST_LOGGING=true # Log API requests to database
 ```
 
 **Important:**
 - `NEXT_PUBLIC_APP_URL` determines exam sharing URLs - set correctly for your environment
 - Get Gemini API key from: https://aistudio.google.com/app/apikey
 - Supabase credentials from: https://app.supabase.com/project/_/settings/api
+- Rate limiting is enabled by default to prevent abuse (see Security Features)
 
 ## Development Workflow
 
