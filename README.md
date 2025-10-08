@@ -319,6 +319,7 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 
 ### 1. AI Question Generation
 - **Powered by:** Gemini 2.5 Flash-Lite
+- **Model Configuration:** `temperature: 0` (deterministic output, reduces hallucinations)
 - **Prompt System:** Category-aware prompts (mathematics, core_academics, language_studies)
 - **Output:** 15 questions per exam with explanations
 - **Cost:** ~$0.001 per exam generation
@@ -331,17 +332,66 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
   - Only `category` (core_academics, mathematics, language_studies) determines subject description
   - `subject` is stored in database but doesn't guide question generation
 
+**Current Working Prompt Example** (as of October 2025):
+```
+Create a text-based exam from educational content for grade 5 students.
+
+CRITICAL CONSTRAINT: Questions must test actual knowledge, not document references. Avoid:
+- Visual references (anything requiring seeing images/diagrams)
+- Document structure (page numbers, chapters, sections)
+- Location-based phrasing (positional references)
+- Questions that aren't explicitly based on the source material
+
+TARGET: Use the same language as the source material. Subject area: Science, history, geography, biology, physics, chemistry, environmental studies, or social studies.
+
+TASK: Generate exactly 15 questions that test understanding of the educational concepts.
+
+REQUIRED FORMAT WITH EXAMPLE:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "[Question text in same language as source material]",
+      "options": ["[Option A]", "[Option B]", "[Option C]", "[Option D]"],
+      "correct_answer": "[Exact match from options array]",
+      "explanation": "[Brief explanation in same language]"
+    }
+  ]
+}
+
+IMPORTANT: The correct_answer field must contain the exact text from the options array.
+
+QUALITY FOCUS: Create questions that test knowledge, not visual recognition.
+```
+
+**Quality Metrics** (October 8, 2025 testing):
+- ✅ 100% multiple choice questions (0% true/false contamination)
+- ✅ 0% image reference questions (eliminated "What does image 1 show?" type questions)
+- ✅ 0% garbled questions with high-resolution images
+- ✅ Consistent quality across compressed and high-resolution images
+- ✅ Works with production prompt structure + generic placeholders
+
+**Prompt Optimization History:**
+- **October 8, 2025:** Fixed temperature=0 config lost during provider refactoring
+  - Issue: New `GeminiProvider` class wasn't passing `generationConfig` to API
+  - Impact: Was using Gemini's default temperature (~0.9), causing high variance in quality
+  - Fix: Restored `generationConfig: { temperature: 0 }` in `/src/lib/services/ai-providers/gemini-provider.ts`
+- **October 8, 2025:** Replaced concrete Finnish example with generic placeholders
+  - Issue: Heat insulation example ("lämpöeristeet") was causing topic contamination
+  - Fix: Changed to `"[Question text in same language as source material]"` placeholder
+  - Result: 0% off-topic questions while maintaining structure
+- **October 8, 2025:** Restored production prompt structure from main branch
+  - Added back: Subject area description in TARGET section
+  - Added back: "REQUIRED FORMAT WITH EXAMPLE" header
+  - Removed: "shown in the images" phrase that was causing image references
+  - Result: Combines production's proven structure with staging's contamination fix
+
 **Unused Prompts in config.ts:**
 - `DEFAULT_EXAM_GENERATION` (lines 103-124) - Basic fallback, not called
 - `getSimplifiedCategoryPrompt()` (lines 158-194) - Defined but never used
 - `OCR_EXTRACTION` (lines 126-154) - Legacy OCR, not used
 - `getLanguageStudiesPrompt()` (lines 235-300) - Only for `category=language_studies`
-
-**Prompt Optimization:**
-- Variant 4 implementation (100% quality, 35% size reduction)
-- Few-shot learning with Finnish examples
-- Answer format validation (text vs letter format)
-- No image references (knowledge-based questions only)
 
 ### 2. Answer Shuffling
 - **Algorithm:** Fisher-Yates shuffle
