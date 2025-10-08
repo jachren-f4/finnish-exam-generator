@@ -521,6 +521,19 @@ vercel logs       # Production logs
 ### "Mobile app can't connect"
 **Solution:** CORS is enabled for all origins. Verify endpoint URL and ensure HTTPS in production.
 
+### "CURL exam creation fails on localhost with foreign key constraint error"
+**Solution:** Use deployed staging environment instead of localhost for testing
+- **Issue:** RLS policies prevent localhost from inserting into `examgenie_exams` table
+- **Workaround:** Test against https://exam-generator-staging.vercel.app
+- **Example:**
+```bash
+curl -X POST https://exam-generator-staging.vercel.app/api/mobile/exam-questions \
+  -F "images=@path/to/image.jpg" \
+  -F "category=core_academics" \
+  -F "grade=8" \
+  -F "student_id=fc495b10-c771-4bd1-8bb4-b2c5003b9613"
+```
+
 ## Important Notes
 
 ### Text Extraction
