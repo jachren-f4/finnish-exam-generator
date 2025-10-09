@@ -1,0 +1,138 @@
+12
+Tasainen ja
+kiihtyvä liike
+
+Puhelimen sovelluksesta näet juoksulenkistäsi muutakin
+kuin keskinopeutesi. Näet kuvaajan avulla, miten
+nopeutesi on muuttunut. Välillä nopeus pysyy melkein
+samana, ja toisinaan se kasvaa ja toisinaan pienenee.
+Kuinka juokset, kun nopeutesi pysyy samana?
+
+Tasainen liike on malli liikkeestä
+Kun juoksuladalla ei ole nousuja ja laskuja, nope-
+us ei juuri muutu. Kun nopeus ei muutu, liikettä
+sanotaan tasaiseksi. Usein liikkuvan kappaleen
+nopeus hivenen muuttuu, mutta liike on melkein
+tasaista. Esimerkiksi oheisessa kuvassa juoksijan
+nopeus on ollut koko matkan noin 9 km/h. Juok-
+sijan liikettä voidaan tällöin kuvata yksinkertaista-
+en niin, että tämä ajatellaan liikkuvan koko ajan
+samalla nopeudella. Tällöin juoksijan liikettä kuva-
+taan tasaisen liikkeen mallilla.
+
+Tasainen liike on malli, jonka avulla juoksijan
+liikettä voidaan tarkastella, vaikka juoksijan nope-
+us välillä muuttuukin. Voidaan tehdä esimerkkisi-
+en muuttumisen.
+
+Tasainen liike on malli, jolla kuvataan liikettä.
+Tasainen liike tarkoittaa liikettä, jossa kappaleen
+nopeus ei muutu.
+
+Tasaisen liikkeen kuvaaja on suora
+Tarkastellaan pyöräilijän ja kävelijän liikkeitä. Pol-
+kupyöräilijä ja kävelijä kulkevat suoralla tiellä. Hei-
+dän kulkemansa matka mitattiin minuutin välein.
+Piirretään aika-matka -koordinaatistoon. Sekä
+pyöräilijän että kävelijän liikettä esittävät pisteet
+näyttävät olevan suoralla viivalla. Piirretään pistee-
+den kautta suorat.
+
+TASASEN LIIKKEEN MATKAN KUVAJA
+m matka
+400
+350
+300
+250
+200
+150
+100
+50
+0
+0
+50
+100
+150
+200
+aika
+S
+• pyöräilijä
+• kävelijä
+▲ Mitä jyrkempi suora, sitä suurempi nopeus.
+
+Pyöräilijän ja kävelijän etenemät matkat mitattiin
+vain minuutin välein. Koska emme tiedä liike-
+tarkemmin, emme tiedä, ovatko he pysähtyneet
+hetkeksi. Liikettä kuvataan suoralla ja samalla ole-
+tetaan, että he ovat liikkuneet tasaisesti. Sekä
+liike on polkupyöräilijän ja kävelijän liikkeen malli.
+
+Suoran jyrkkyys kuvaa nopeutta
+aika-matka -kuvaajassa
+
+Kuvaajasta nähdään, että pyöräilijä on pyöräillyt
+nopeammin, sillä hän on pyöräillyt 100 metriä 60
+sekunnissa ja kävelijä on kulunut samaan mat-
+kaan 120 sekuntia. Nopeuksien ero näkyy kuvaajis-
+sa suorien jyrkkyyksien erona. Polkupyöräilijä on
+liikkunut nopeammin, ja hänen liikkeensä kuvaa-
+ja on jyrkempi kuin hitaamman kävelijän liikkeen
+kuvaaja.
+
+Matkan kuvaaja on siitä jyrkempi, mitä suurempi
+nopeus on.
+
+Nopeuden laskeminen
+Annetuista tiedoista voidaan laskea myös heidän
+nopeutensa.
+
+Polkupyöräilijä pyöräili 300 m matkan 180 sekun-
+nissa, joten hänen nopeuteensa oli
+
+nopeus = matka = 300 m = 1,67 m/s.
+aika 180 s
+
+Kävelijä käveli 180 sekunnissa 150 metriä, joten
+hänen nopeuteensa oli
+
+nopeus = matka = 150 m = 0,83 m/s.
+aika 180 s
+
+Nopeuden kuvaaja on vaakasuora suora
+Koska sekä pyöräilijä että kävelijä liikkuivat tasai-
+sesti, heidän nopeuteensa eivät muuttuneet matkan
+aikana. Nopeuden kuvaaja piirretään aika-nopeus
+-koordinaatistoon.
+
+Nopeuden kuvaaja tasaisessa liikkeessä
+Nopeuden kuvaaja on vaakasuora viiva
+aika-nopeus -koordinaatistossa.
+
+TASASEN LIIKKEEN NOPEUDEN KUVAJA
+nopeus
+s
+2,0
+1,6
+1,2
+0,8
+0,4
+0
+0
+50
+100
+150
+aika
+S
+• pyöräilijä
+• kävelijä
+
+▲ Koska nopeus on vakio, kuvaaja on vaakasuora viiva.
+
+▲ Tasaisesti liikkuvan junan nopeus pysyy samana.
+
+62 Liike ja voima
+
+▲ Kun auton vakionopeuden säädin on päällä,
+auton nopeus ei muutu eli se liikkuu tasaisesti.
+
+12 Tasainen ja kiihtyvä liike 63

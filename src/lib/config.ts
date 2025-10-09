@@ -209,17 +209,20 @@ Return only JSON.`
 
     return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students.
 
-CRITICAL CONSTRAINT: Questions must test actual knowledge, not document references. Avoid:
-- Visual references (anything requiring seeing images/diagrams)
-- Document structure (page numbers, chapters, sections)
-- Location-based phrasing (positional references)
+CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
+
+Avoid:
+- Visual references from the material, like images or page or chapter numbers
+- References to graph, table, diagram, or coordinate systems
+- Something that is factually untrue
+- Something that is impossible to answer without the images
 - Questions that aren't explicitly based on the source material
 
-TARGET: Use the same language as the source material. Subject area: ${categoryDescriptions[category as keyof typeof categoryDescriptions] || category}.
+TARGET: Use the same language as the source material. Subject area: core academics.
 
-TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts.
+TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts in the material.
 
-REQUIRED FORMAT WITH EXAMPLE:
+REQUIRED FORMAT:
 {
   "questions": [
     {
@@ -233,9 +236,7 @@ REQUIRED FORMAT WITH EXAMPLE:
   ]
 }
 
-IMPORTANT: The correct_answer field must contain the exact text from the options array.
-
-QUALITY FOCUS: Create questions that test knowledge, not visual recognition.`
+IMPORTANT: The correct_answer field must contain the exact text from the options array.`
   },
 
   getLanguageStudiesPrompt: (grade?: number, studentLanguage: string = 'en') => {

@@ -1,0 +1,105 @@
+11
+Nopeus kuvaa
+liikettä
+
+Nopeutesi vaihtelee, kun olet lenkkeilemässä. Alamäessä
+liikut nopeammin ja ylämäessä hitaammin. Lenkin jälkeen
+voit katsoa puhelimesti sovelluksesta, kuinka pitkän
+matkan juoksit ja kuinka kauan siihen meni. Sovellus
+kertoo myös keskinopeutesi.
+Miten keskinopeus lasketaan?
+
+Keskinopeuden yksikkö on m/s
+Polkupyöräilijän liikettä voidaan kuvata monel-
+la tavalla. Voidaan esimerkiksi sanoa, että ajetaan
+lujaa. Se ei kerro liikkumisesta kovin täsmällises-
+ti. Voidaan myös kertoa, että puhelimen sovelluk-
+sen mukaan pyöräilijän keskinopeus koulumatkal-
+la oli 20 km/h.
+Autojen, mopojen ja lentokoneiden nopeuden
+yksikkönä käytetään kilometriä tunnissa (km/h).
+Sadan metrin pikajuoksussa ei ole järkevää käyt-
+tää yksikköä km/h, koska matka on alle kilomet-
+rin ja juoksuaika lyhyt. Pikajuoksijan keskinopeus
+voi olla 12 m/s. Tällöin nopeuden yksikkö on met-
+riä sekunnissa (m/s).
+
+Nopeuden yksikkömuunnos,
+suhdelukuna 3,6
+
+3,6 km/h = 1 m/s
+
+3,6
+km
+m
+h
+s
+3,6
+
+km
+h
+
+Liike voidaan esittää koordinaatistossa
+Keskinopeus kuvaa liikettä lukuna, vaikkapa
+30 km/h. Liikkeestä saa monipuolisempaa tietoa,
+jos se esitetään taulukon tai kuvaajan avulla.
+Sivun alalaidassa olevan kuvaajan on merkitty
+pyöräily matka ja pyöräilyn käytetty aika. Ajan ja
+matkan mittaustulokset merkitään taulukkoon ja
+niiden perusteella piirretään pyöräilijän kulkeman
+matkan kuvaaja koordinaatistoon.
+
+Aika (s)
+0,0
+1,0
+2,0
+3,0
+4,0
+5,0
+6,0
+
+Matka (m)
+0
+4
+11
+18
+26
+42
+60
+
+1. Piirretään aika-matka-koordinaatisto, jossa vaa-
+ka-akselilla on aika ja pystyakselilla matka. Mitoi-
+tetaan akselit siten, että kaikki havaintopisteet
+mahtuvat koordinaatistoon. Suurin arvo on lähellä
+akselin loppupäätä.
+2. Merkitään taulukosta pyöräilijän liikkumista
+kuvaavat ajat ja vastaavat matkat koordinaatistoon
+tasavälein.
+
+3. Havaintopisteet näyttävät muodostavan käyrän.
+Piirretään käyrä, joka kulkee mahdollisimman
+läheltä kaikkia havaintopisteitä mutta ei välttämät-
+tä niiden kautta.
+
+Keskinopeuden laskeminen
+Keskinopeus saadaan laskettua, kun kuljettu matka
+jaetaan siihen käytetyllä ajalla.
+
+Keskinopeus
+keskinopeus = matka
+aika
+eli v = s
+t
+
+v on keskinopeus
+s on kuljettu matka
+t on matkaan käytetty aika.
+
+Nopeus muuttuu pyöräilijän
+pyöräillessä alas mäkeä.
+
+58
+Liike ja voima
+Nopeuden yksikkömuunnos.
+
+59
