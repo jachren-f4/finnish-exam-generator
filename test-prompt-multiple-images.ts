@@ -60,7 +60,7 @@ IMPORTANT: The correct_answer field must contain the exact text from the options
 
 async function testGeminiCallMultipleImages() {
   console.log('🔧 Initializing Gemini API...');
-  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY!);
 
   const model = genAI.getGenerativeModel({
     model: MODEL_NAME,

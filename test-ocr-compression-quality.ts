@@ -46,7 +46,7 @@ interface OCRTestResult {
 }
 
 async function extractTextFromImage(imagePath: string): Promise<OCRTestResult> {
-  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY!);
 
   const model = genAI.getGenerativeModel({
     model: MODEL_NAME,
