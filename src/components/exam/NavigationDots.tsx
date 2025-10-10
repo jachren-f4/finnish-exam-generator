@@ -13,10 +13,10 @@ export function NavigationDots({ total, current, onDotClick }: NavigationDotsPro
     <div
       style={{
         display: 'flex',
-        gap: SPACING.sm,
+        gap: SPACING.xs,
         alignItems: 'center',
         justifyContent: 'center',
-        padding: `${SPACING.md} 0`,
+        padding: `${SPACING.sm} 0`,
       }}
     >
       {Array.from({ length: total }).map((_, index) => {
@@ -31,8 +31,8 @@ export function NavigationDots({ total, current, onDotClick }: NavigationDotsPro
             aria-label={`Question ${index + 1}`}
             aria-current={isActive ? 'step' : undefined}
             style={{
-              width: isActive ? '24px' : '8px',
-              height: '8px',
+              width: isActive ? '20px' : '6px',
+              height: '6px',
               borderRadius: RADIUS.full,
               background: isActive
                 ? COLORS.primary.dark

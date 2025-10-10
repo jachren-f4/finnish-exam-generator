@@ -98,6 +98,13 @@ export const PERFORMANCE_CONFIG = {
   }
 } as const
 
+// Rate Limiting Configuration
+export const RATE_LIMIT_CONFIG = {
+  HOURLY_LIMIT: parseInt(process.env.RATE_LIMIT_HOURLY || '10', 10),
+  DAILY_LIMIT: parseInt(process.env.RATE_LIMIT_DAILY || '50', 10),
+  ENABLED: process.env.RATE_LIMITING_ENABLED !== 'false', // Default: enabled
+} as const
+
 // Default Prompts
 export const PROMPTS = {
   DEFAULT_EXAM_GENERATION: `
@@ -200,36 +207,36 @@ Return only JSON.`
       language_studies: 'Foreign language learning including vocabulary, grammar, translation, and comprehension'
     }
 
-    // VARIANT 4: Back to proven structure with minimal fix (text format only)
     return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students.
 
-CRITICAL CONSTRAINT: Questions must test actual knowledge, not document references. Avoid:
-- Visual references (anything requiring seeing images/diagrams)
-- Document structure (page numbers, chapters, sections)
-- Location-based phrasing (positional references)
+CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
+
+Avoid:
+- Visual references from the material, like images or page or chapter numbers
+- References to graph, table, diagram, or coordinate systems
+- Something that is factually untrue
+- Something that is impossible to answer without the images
 - Questions that aren't explicitly based on the source material
 
-TARGET: Use the same language as the source material. Subject area: ${categoryDescriptions[category as keyof typeof categoryDescriptions] || category}.
+TARGET: Use the same language as the source material. Subject area: core academics.
 
-TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts.
+TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts in the material.
 
-REQUIRED FORMAT WITH EXAMPLE:
+REQUIRED FORMAT:
 {
   "questions": [
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "Mitä ovat lämpöeristeet?",
-      "options": ["Materiaaleja jotka estävät lämmön siirtymistä", "Materiaaleja jotka edistävät lämmön siirtymistä", "Materiaaleja jotka tuottavat lämpöä", "Materiaaleja jotka kuluttavat lämpöä"],
-      "correct_answer": "Materiaaleja jotka estävät lämmön siirtymistä",
-      "explanation": "Lämpöeristeet estävät lämpöenergian siirtymisen."
+      "question": "[Question text in same language as source material]",
+      "options": ["[Option A]", "[Option B]", "[Option C]", "[Option D]"],
+      "correct_answer": "[Exact match from options array]",
+      "explanation": "[Brief explanation in same language]"
     }
   ]
 }
 
-IMPORTANT: The correct_answer field must contain the exact text from the options array.
-
-QUALITY FOCUS: Create questions that test knowledge, not visual recognition.`
+IMPORTANT: The correct_answer field must contain the exact text from the options array.`
   },
 
   getLanguageStudiesPrompt: (grade?: number, studentLanguage: string = 'en') => {

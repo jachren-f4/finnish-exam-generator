@@ -21,6 +21,7 @@ npm run dev
 
 - [Overview](#overview)
 - [Tech Stack](#tech-stack)
+- [Security Features](#security-features)
 - [Environment Setup](#environment-setup)
 - [Development Workflow](#development-workflow)
 - [Project Structure](#project-structure)
@@ -60,6 +61,18 @@ An AI-powered educational platform that transforms textbook images into exam que
 - **Deployment:** Vercel with automatic CI/CD
 - **Storage:** Temporary file storage (`/tmp` on Vercel, `uploads/` locally)
 
+## Security Features
+
+| Feature | Details |
+|---------|---------|
+| **Rate Limiting** | 10 req/hour, 50 req/day per user • Returns HTTP 429 with headers |
+| **Authentication** | Optional JWT (Phase 1) • Falls back to `user_id` • Gradual enforcement planned |
+| **Request Logging** | All API calls logged to DB • Tracks user, endpoint, JWT status, timing, IP |
+| **Admin Monitoring** | `/api/admin/rate-limits` endpoint • View usage, reset limits, query logs |
+| **API Key Protection** | Server-side only • Never exposed to client • Gitignored properly |
+
+**📚 Detailed Documentation:** `/SECURITY_IMPLEMENTATION_SUMMARY.md` • `/API_SECURITY_DOCUMENTATION.md` • `/FLUTTER_RATE_LIMIT_HANDLING.md` • `/TESTING_GUIDE.md`
+
 ## Environment Setup
 
 Create `.env.local` in project root:
@@ -79,94 +92,70 @@ NEXT_PUBLIC_APP_URL=https://exam-generator.vercel.app  # Production
 
 # Optional - Development
 ENABLE_PROMPT_LOGGING=true  # Logs prompts to /prompttests/
+
+# Optional - Security (defaults shown)
+RATE_LIMIT_HOURLY=10        # Max requests per hour per user
+RATE_LIMIT_DAILY=50         # Max requests per day per user
+RATE_LIMITING_ENABLED=true  # Enable/disable rate limiting
+ENABLE_REQUEST_LOGGING=true # Log API requests to database
 ```
 
-**Important:**
-- `NEXT_PUBLIC_APP_URL` determines exam sharing URLs - set correctly for your environment
-- Get Gemini API key from: https://aistudio.google.com/app/apikey
-- Supabase credentials from: https://app.supabase.com/project/_/settings/api
+**Keys:** [Gemini API](https://aistudio.google.com/app/apikey) • [Supabase](https://app.supabase.com/project/_/settings/api) • Set `NEXT_PUBLIC_APP_URL` for exam sharing URLs
 
 ## Development Workflow
 
-### ⚠️ CRITICAL: Build Validation Before Production
+**🔴 CRITICAL:** Always run `npm run build` before pushing! Dev mode misses type errors that break production.
 
-**Always run a production build locally before pushing:**
+### Branch Strategy
+
+| Branch | URL | Database | Push | Purpose |
+|--------|-----|----------|------|---------|
+| `staging` | exam-generator-staging.vercel.app | Staging DB | Direct ✅ | **DEFAULT** - Daily dev |
+| `main` | exam-generator.vercel.app | Production DB | PR only | Releases |
+| `feature/*` | Auto-generated preview | Staging DB | Direct ✅ | Experimental work |
+
+### Daily Workflow (AI Assistants)
 
 ```bash
-npm run build
+git checkout staging && git pull origin staging
+# Make changes
+npm run build  # REQUIRED before push
+git add . && git commit -m "Description" && git push origin staging
 ```
 
-**Why this matters:**
-- Dev mode (`npm run dev`) uses relaxed TypeScript checking and may miss type errors
-- Production builds enforce strict type checking and will fail on errors dev mode ignores
-- Vercel deployment will fail if build doesn't pass, potentially breaking production
-- Running `npm run build` locally catches these errors before they reach production
-
-**Recommended Workflow:**
-1. Make changes and test in dev mode (`npm run dev`)
-2. **Before committing:** Run `npm run build` to verify production compatibility
-3. Fix any TypeScript errors or build issues
-4. Only commit and push after successful build
-5. Vercel deploys automatically after push
-
-**Common build errors caught by production build:**
-- Missing TypeScript type definitions
-- Unused variables/imports (ESLint warnings)
-- Interface mismatches
-- Import path errors
-- Environment variable issues
-
-### Development Commands
+### Release to Production
 
 ```bash
-# Development
-npm run dev              # Start dev server (port 3001)
-npm run build           # Build for production (ALWAYS RUN BEFORE PUSH)
-npm run start           # Start production server
-npm run lint            # Run ESLint
-npm run type-check      # TypeScript validation
+npm run build  # Must pass
+gh pr create --base main --head staging --title "Release: [description]"
+# After merge → Vercel auto-deploys
+```
 
-# Testing
-npm run test            # Run tests (if configured)
+### Key Commands
+
+```bash
+npm run dev        # Start dev server (port 3001)
+npm run build      # ALWAYS RUN BEFORE PUSH
+npm run lint       # ESLint check
 ```
 
 ## Project Structure
 
 ```
 src/
-├── app/                          # Next.js App Router
-│   ├── api/                      # API Routes
-│   │   ├── mobile/              # Mobile API (PRIMARY)
-│   │   │   ├── exam-questions/  # Generate exam from images
-│   │   │   ├── exams/          # List/retrieve exams
-│   │   │   └── stats/          # Student statistics
-│   │   ├── exam/[id]/          # Exam taking & grading
-│   │   ├── files/upload/       # File upload handler
-│   │   └── ocr/                # Legacy OCR (unused)
-│   ├── exam/[id]/              # Exam taking page
-│   ├── grading/[id]/           # Grading results page
-│   ├── shared/exam/[share_id]/ # Shared exam view
-│   └── page.tsx                # Home page
-├── components/                  # React components
-│   └── exam/
-│       └── NavigationDots.tsx  # Progress indicator
-├── constants/                   # Design system
-│   ├── design-tokens.ts        # Colors, typography, spacing
-│   ├── exam-ui.ts             # UI text constants
-│   └── exam-icons.ts          # Icon constants
-├── lib/                        # Core business logic
-│   ├── services/              # Service layer
-│   │   ├── mobile-api-service.ts
-│   │   ├── question-generator-service.ts
-│   │   └── grading-service.ts
-│   ├── utils/                 # Utilities
-│   │   ├── question-shuffler.ts  # Fisher-Yates shuffling
-│   │   └── database-manager.ts
-│   ├── gemini.ts             # Gemini API integration
-│   ├── supabase.ts           # Database client
-│   └── config.ts             # Exam generation prompts
-└── types/
-    └── index.ts              # TypeScript definitions
+├── app/api/
+│   ├── mobile/              # Mobile API (exam-questions, exams, stats)
+│   ├── exam/[id]/          # Exam taking & grading
+│   └── files/upload/       # File upload handler
+├── components/exam/         # React components (NavigationDots, etc.)
+├── constants/              # Design tokens, UI text, icons
+├── lib/
+│   ├── services/          # mobile-api, question-generator, grading
+│   ├── utils/            # question-shuffler, database-manager
+│   ├── gemini.ts         # Gemini API integration
+│   ├── supabase.ts       # Database client
+│   └── config.ts         # Exam generation prompts
+└── types/                 # TypeScript definitions
 ```
 
 ## API Endpoints
@@ -201,30 +190,13 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 ## Key Features
 
 ### 1. AI Question Generation
-- **Powered by:** Gemini 2.5 Flash-Lite
-- **Prompt System:** Category-aware prompts (mathematics, core_academics, language_studies)
-- **Output:** 15 questions per exam with explanations
-- **Cost:** ~$0.001 per exam generation
-
-**Active Prompt:** `getCategoryAwarePrompt()` in `/src/lib/config.ts:196-232`
-- **Primary prompt** used by mobile API endpoint
-- Takes `category`, `grade`, and `language` parameters
-- ⚠️ **Known Limitation:** `subject` parameter is sent by mobile app but NOT injected into prompt
-  - Example: Sending `subject=Physics` results in generic prompt: "Subject area: Science, history, geography, biology, physics, chemistry..."
-  - Only `category` (core_academics, mathematics, language_studies) determines subject description
-  - `subject` is stored in database but doesn't guide question generation
-
-**Unused Prompts in config.ts:**
-- `DEFAULT_EXAM_GENERATION` (lines 103-124) - Basic fallback, not called
-- `getSimplifiedCategoryPrompt()` (lines 158-194) - Defined but never used
-- `OCR_EXTRACTION` (lines 126-154) - Legacy OCR, not used
-- `getLanguageStudiesPrompt()` (lines 235-300) - Only for `category=language_studies`
-
-**Prompt Optimization:**
-- Variant 4 implementation (100% quality, 35% size reduction)
-- Few-shot learning with Finnish examples
-- Answer format validation (text vs letter format)
-- No image references (knowledge-based questions only)
+- **Model:** Gemini 2.5 Flash-Lite with `temperature: 0` (deterministic, reduces hallucinations)
+- **Categories:** mathematics, core_academics, language_studies
+- **Output:** 15 questions per exam • ~$0.001 cost
+- **Quality:** 100% multiple choice • 0% image references • Consistent across compression levels
+- **Prompt:** `getCategoryAwarePrompt()` in `/src/lib/config.ts` • See `/PROMPT_VARIANTS_DOCUMENTATION.md` for optimization history
+- **Image Requirements:** Minimum 3 images recommended when source material contains graphs/charts to avoid visual reference questions • Single text-heavy images work well • 2 images insufficient for graph-heavy content
+- ⚠️ **Known Limitation:** `subject` parameter stored in DB but doesn't guide generation (only `category` matters)
 
 ### 2. Answer Shuffling
 - **Algorithm:** Fisher-Yates shuffle
@@ -252,6 +224,8 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 
 ## Common Tasks
 
+These are used to run tests directly from Claude Code.
+
 ### Generate Exam Locally
 
 ```bash
@@ -265,6 +239,20 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 
 ```bash
 npx tsx test-prompt-variants.ts assets/images/test-image.jpg
+```
+
+### Test Prompt Quality with Multiple Images
+
+```bash
+# Test with multiple images to verify question quality
+npx tsx test-prompt-multiple-images.ts
+```
+
+### Test OCR Quality Across Compression Levels
+
+```bash
+# Compare text extraction quality between compressed/uncompressed images
+npx tsx test-ocr-compression-quality.ts
 ```
 
 ### Database Migrations
@@ -282,52 +270,20 @@ vercel logs       # Production logs
 
 ## Troubleshooting
 
-### "Exam URLs point to wrong domain"
-**Solution:** Check `NEXT_PUBLIC_APP_URL` in `.env.local`
-- Production: `https://exam-generator.vercel.app`
-- Local: `http://localhost:3001`
-
-### "Gemini API errors (503)"
-**Solution:** API overload - automatic retry logic will handle it
-- Check `GEMINI_API_KEY` is set correctly
-- Review `/prompttests/` for logged prompts
-
-### "TypeScript build errors in Vercel"
-**Solution:** Always run `npm run build` locally before pushing
-- Dev mode doesn't catch all type errors
-- Production build enforces strict checking
-
-### "Can't find exam in database"
-**Solution:**
-- Verify Supabase configuration
-- Check if exam created with system user (for anonymous requests)
-- Confirm `share_id` is correct
-
-### "Mobile app can't connect"
-**Solution:** CORS is enabled for all origins. Verify endpoint URL and ensure HTTPS in production.
+| Issue | Solution |
+|-------|----------|
+| **Wrong exam URLs** | Check `NEXT_PUBLIC_APP_URL` in `.env.local` |
+| **TypeScript build errors** | Always run `npm run build` before pushing |
+| **localhost CURL fails** | Use staging: `https://exam-generator-staging.vercel.app` (RLS policies block localhost) |
+| **Gemini 503 errors** | Verify `GEMINI_API_KEY` • Check `/prompttests/` logs • Retry logic handles overload |
 
 ## Important Notes
 
-### Text Extraction
-- All text extraction via Gemini AI (no traditional OCR libraries)
-- "OCR" naming in code is legacy/misleading
-
-### Constraints
-- **Images:** Max 20 per web request, 5 per mobile request
-- **File Size:** Max 10MB per image
-- **Formats:** JPEG, PNG, WebP, HEIC
-
-### Authentication
-- Mobile API supports optional authentication
-- Creates system user for anonymous requests
-
-### Storage
-- Temporary file storage only (`/tmp` on Vercel, `uploads/` locally)
-- Auto-cleanup after processing
-
-### Finnish Education Context
-- Grades 1-9 (peruskoulu)
-- Curriculum-aligned question difficulty
+- **Text Extraction:** Gemini AI only (no OCR libraries) • "OCR" naming is legacy
+- **Constraints:** Max 20 images/web, 5/mobile • 10MB per image • JPEG, PNG, WebP, HEIC
+- **Authentication:** Optional • Falls back to system user for anonymous requests
+- **Storage:** Temporary only (`/tmp` on Vercel) • Auto-cleanup after processing
+- **Finnish Education:** Grades 1-9 (peruskoulu) • Curriculum-aligned difficulty
 
 ## Documentation
 
@@ -345,33 +301,13 @@ vercel logs       # Production logs
 - `/prompttests/` - Sample prompts and logs
 - `/assets/references/mobile2.PNG` - Mobile app UI reference
 
-## For Claude Code / AI Assistants
+## For AI Assistants
 
-When working on this project:
+**Read:** `README.md` • `/PROJECT_OVERVIEW.md` • `/CLAUDE.md`
 
-1. **Read First:**
-   - This README for overview
-   - `/PROJECT_OVERVIEW.md` for detailed context
-   - `/CLAUDE.md` for specific instructions
+**Rules:** ✅ Run `npm run build` before commit • Use Gemini (no OCR libs) • Test with Finnish content • Maintain mobile API compatibility | ❌ Don't modify `.env.local` keys • Don't create traditional OCR
 
-2. **Development Rules:**
-   - ✅ Always run `npm run build` before committing
-   - ✅ Use Gemini for text extraction (no OCR libraries)
-   - ✅ Test with Finnish content when possible
-   - ✅ Maintain mobile API backward compatibility
-   - ❌ Never modify API keys in `.env.local`
-   - ❌ Never create traditional OCR implementations
-
-3. **Code Standards:**
-   - TypeScript strict mode
-   - Inline styles with design tokens (no Tailwind in new components)
-   - Service layer architecture for business logic
-   - Comprehensive error handling
-
-4. **Testing:**
-   - Use sample images from `/assets/images/`
-   - Test mobile API with curl or Postman
-   - Verify production build succeeds
+**Standards:** TypeScript strict • Inline styles with design tokens • Service layer architecture • Comprehensive error handling
 
 ## Current Status (October 2025)
 

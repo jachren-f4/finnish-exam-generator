@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { OperationTimer } from '@/lib/utils/performance-logger'
 import { RequestProcessor } from '@/lib/middleware/request-processor'
@@ -7,6 +7,9 @@ import { ApiResponseBuilder } from '@/lib/utils/api-response'
 import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
 import { withOptionalAuth } from '@/middleware/auth'
 import { FINNISH_SUBJECTS, FinnishSubject } from '@/lib/supabase'
+import { getRateLimiter } from '@/lib/services/rate-limiter'
+import { getRequestLogger } from '@/lib/services/request-logger'
+import { getJWTValidator } from '@/lib/services/jwt-validator'
 
 /**
  * ExamGenie MVP Mobile API Route - Handles subject-aware exam generation
@@ -48,6 +51,96 @@ export async function POST(request: NextRequest) {
       // Backward compatibility: Accept both user_id and student_id (mobile app currently sends student_id)
       const user_id = formData.get('user_id')?.toString() || formData.get('student_id')?.toString()
       const language = formData.get('language')?.toString() || 'en' // User's language for exam generation
+
+      // --- OPTIONAL JWT VALIDATION (Phase 2) ---
+      // Attempt to validate JWT from Authorization header
+      // Falls back to user_id from body if JWT not provided (backwards compatibility)
+      let jwtUserId: string | null | undefined = null
+      let hasValidJwt = false
+      const authHeader = req.headers.get('Authorization')
+
+      if (authHeader) {
+        const jwtValidator = getJWTValidator()
+        const validationResult = await jwtValidator.validateToken(authHeader)
+
+        if (validationResult.valid) {
+          jwtUserId = validationResult.userId
+          hasValidJwt = true
+          console.log(`[JWT] Valid token for user: ${jwtUserId}`)
+        } else {
+          console.warn(`[JWT] Invalid token: ${validationResult.error}`)
+        }
+      }
+
+      // Determine final user_id: JWT takes precedence over body
+      const finalUserId = jwtUserId || user_id
+      // --- END JWT VALIDATION ---
+
+      // --- RATE LIMITING CHECK ---
+      // Check rate limit BEFORE processing images to save resources
+      if (!finalUserId) {
+        return ApiResponseBuilder.validationError(
+          'user_id tai student_id vaaditaan', // Finnish: user_id or student_id required
+          'Rate limiting requires user identification',
+          { requestId: processingId }
+        )
+      }
+
+      const rateLimiter = getRateLimiter()
+      const rateLimitResult = await rateLimiter.checkAllLimits(finalUserId)
+
+      if (!rateLimitResult.allowed) {
+        // Rate limit exceeded - return 429 with Finnish error message
+        console.warn(`[RateLimit] User ${finalUserId} exceeded limit (${rateLimitResult.limit} per hour)`)
+
+        // Log rate limit violation
+        const logger = getRequestLogger()
+        logger.logRequest({
+          requestId: processingId,
+          userId: finalUserId,
+          endpoint: '/api/mobile/exam-questions',
+          method: 'POST',
+          ipAddress: clientInfo.ip,
+          userAgent: clientInfo.userAgent,
+          imageCount: images?.length || 0,
+          hasValidJwt,
+          authSource: hasValidJwt ? 'jwt' : (user_id ? 'body' : 'none'),
+          requestMetadata: { grade, subject, category, language },
+          responseStatus: 429,
+          processingTimeMs: timer.getCurrentDuration(),
+          errorCode: 'RATE_LIMIT_EXCEEDED',
+          rateLimitStatus: 'exceeded',
+          rateLimitRemaining: 0,
+        })
+
+        return NextResponse.json(
+          {
+            error: 'Päivittäinen koeraja saavutettu', // Finnish: Daily exam limit reached
+            error_code: 'RATE_LIMIT_EXCEEDED',
+            limit: rateLimitResult.limit,
+            remaining: 0,
+            resetAt: rateLimitResult.resetAt.toISOString(),
+            retryAfter: rateLimitResult.retryAfter,
+            details: `Voit luoda uuden kokeen ${Math.ceil((rateLimitResult.retryAfter || 0) / 60)} minuutin kuluttua.`, // You can create a new exam in X minutes
+            requestId: processingId
+          },
+          {
+            status: 429,
+            headers: {
+              'Content-Type': 'application/json',
+              'Retry-After': rateLimitResult.retryAfter?.toString() || '3600',
+              'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+              'X-RateLimit-Remaining': '0',
+              'X-RateLimit-Reset': Math.floor(rateLimitResult.resetAt.getTime() / 1000).toString()
+            }
+          }
+        )
+      }
+
+      // Log successful rate limit check
+      console.log(`[RateLimit] User ${finalUserId} - Remaining: ${rateLimitResult.remaining}/${rateLimitResult.limit}`)
+      console.log(`[Auth] JWT provided: ${hasValidJwt}, Source: ${hasValidJwt ? 'jwt' : (user_id ? 'body' : 'none')}`)
+      // --- END RATE LIMITING ---
 
       // Create processed data structure
       const processedData = {
@@ -106,7 +199,10 @@ export async function POST(request: NextRequest) {
     console.log('Category:', category || 'not specified')
     console.log('Subject:', subject || 'not specified (will be detected)')
     console.log('Grade:', grade || 'not specified')
-    console.log('User ID:', user_id || 'not specified')
+    console.log('User ID (final):', finalUserId || 'not specified')
+    console.log('User ID (from JWT):', jwtUserId || 'not provided')
+    console.log('User ID (from body):', user_id || 'not provided')
+    console.log('Auth Method:', hasValidJwt ? 'JWT' : (user_id ? 'Body' : 'None'))
     console.log('Language:', language)
     console.log('Client IP:', clientInfo.ip)
     console.log('User Agent:', clientInfo.userAgent.substring(0, 100))
@@ -122,7 +218,7 @@ export async function POST(request: NextRequest) {
         subject: subject && !category ? subject : undefined, // Only use subject if category not provided
         grade,
         language,
-        user_id: user_id || authContext.user?.id // Use user_id from mobile app or authenticated user
+        user_id: finalUserId || authContext.user?.id // Use finalUserId (JWT or body) or authenticated user
       })
 
     // Handle service result
@@ -148,18 +244,65 @@ export async function POST(request: NextRequest) {
       gradingUrl: result.gradingUrl!
     } : null
 
-    return ApiResponseBuilder.successWithExam(
+    // Get updated rate limit status for response headers
+    const finalRateLimitStatus = finalUserId ? await getRateLimiter().getUsage(finalUserId) : null
+
+    const response = ApiResponseBuilder.successWithExam(
       result.data,
       examResult,
-      { 
+      {
         requestId: processingId,
         processingTime: result.data?.metadata.processingTime
       }
     )
 
+    // Add rate limit headers to successful response
+    if (finalRateLimitStatus) {
+      response.headers.set('X-RateLimit-Limit', finalRateLimitStatus.hourlyLimit.toString())
+      response.headers.set('X-RateLimit-Remaining', (finalRateLimitStatus.hourlyLimit - finalRateLimitStatus.hourly).toString())
+      const resetTime = new Date(Date.now() + 60 * 60 * 1000) // 1 hour from now
+      response.headers.set('X-RateLimit-Reset', Math.floor(resetTime.getTime() / 1000).toString())
+    }
+
+    // Log successful request
+    const logger = getRequestLogger()
+    logger.logRequest({
+      requestId: processingId,
+      userId: finalUserId,
+      endpoint: '/api/mobile/exam-questions',
+      method: 'POST',
+      ipAddress: clientInfo.ip,
+      userAgent: clientInfo.userAgent,
+      imageCount: images?.length || 0,
+      hasValidJwt,
+      authSource: hasValidJwt ? 'jwt' : (user_id ? 'body' : 'none'),
+      requestMetadata: { grade, subject, category, language },
+      responseStatus: 200,
+      processingTimeMs: result.data?.metadata.processingTime,
+      rateLimitStatus: 'passed',
+      rateLimitRemaining: finalRateLimitStatus ? (finalRateLimitStatus.hourlyLimit - finalRateLimitStatus.hourly) : undefined,
+    })
+
+    return response
+
     } catch (error) {
       // Handle unexpected errors
       const managedError = ErrorManager.handleError(error, errorContext)
+
+      // Log error
+      const logger = getRequestLogger()
+      logger.logRequest({
+        requestId: processingId,
+        userId: authContext.user?.id,
+        endpoint: '/api/mobile/exam-questions',
+        method: 'POST',
+        ipAddress: clientInfo.ip,
+        userAgent: clientInfo.userAgent,
+        hasValidJwt: false,
+        authSource: 'none',
+        responseStatus: 500,
+        errorCode: managedError.code || 'INTERNAL_ERROR',
+      })
 
       return ApiResponseBuilder.internalError(
         ErrorManager.getUserMessage(managedError),

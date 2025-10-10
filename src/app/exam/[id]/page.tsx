@@ -300,8 +300,8 @@ export default function ExamPage() {
     }}>
       {/* ExamGenie Branding */}
       <div style={{
-        padding: SPACING.lg,
-        paddingBottom: SPACING.md,
+        padding: SPACING.md,
+        paddingBottom: SPACING.sm,
       }}>
         <div style={{
           maxWidth: '640px',
@@ -342,7 +342,7 @@ export default function ExamPage() {
       {/* Main Content */}
       <div style={{
         flex: 1,
-        padding: SPACING.lg,
+        padding: SPACING.md,
         maxWidth: '640px',
         margin: '0 auto',
         width: '100%',
@@ -354,19 +354,19 @@ export default function ExamPage() {
               background: COLORS.background.primary,
               borderRadius: RADIUS.lg,
               boxShadow: SHADOWS.card,
-              padding: SPACING.xl,
-              marginBottom: SPACING.lg,
+              padding: SPACING.md,
+              marginBottom: SPACING.md,
             }}>
               {/* Question Type Badge */}
               <div style={{
                 display: 'inline-block',
                 background: COLORS.background.secondary,
                 color: COLORS.primary.medium,
-                padding: `${SPACING.sm} ${SPACING.md}`,
+                padding: `${SPACING.xs} ${SPACING.sm}`,
                 borderRadius: RADIUS.sm,
                 fontSize: TYPOGRAPHY.fontSize.sm,
                 fontWeight: TYPOGRAPHY.fontWeight.medium,
-                marginBottom: SPACING.md,
+                marginBottom: SPACING.sm,
               }}>
                 {currentQuestion + 1} / {exam.total_questions}
               </div>
@@ -375,19 +375,19 @@ export default function ExamPage() {
                 fontSize: TYPOGRAPHY.fontSize.xl,
                 fontWeight: TYPOGRAPHY.fontWeight.semibold,
                 color: COLORS.primary.text,
-                marginBottom: SPACING.xl,
+                marginBottom: SPACING.md,
                 lineHeight: TYPOGRAPHY.lineHeight.normal,
               }}>{currentQ.question_text}</h2>
 
               {/* Answer Input */}
               {currentQ.question_type === 'multiple_choice' && currentQ.options ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.md }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.sm }}>
                   {currentQ.options.map((option, idx) => (
                     <label key={idx} style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: SPACING.md,
-                      padding: SPACING.md,
+                      gap: SPACING.sm,
+                      padding: `${SPACING.sm} ${SPACING.md}`,
                       border: `2px solid ${answers[currentQ.id] === option ? COLORS.primary.dark : COLORS.border.light}`,
                       borderRadius: RADIUS.md,
                       background: answers[currentQ.id] === option ? COLORS.background.secondary : COLORS.background.primary,
@@ -416,13 +416,13 @@ export default function ExamPage() {
                   ))}
                 </div>
               ) : currentQ.question_type === 'true_false' ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.md }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.sm }}>
                   {[EXAM_UI.TRUE, EXAM_UI.FALSE].map((option) => (
                     <label key={option} style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: SPACING.md,
-                      padding: SPACING.md,
+                      gap: SPACING.sm,
+                      padding: `${SPACING.sm} ${SPACING.md}`,
                       border: `2px solid ${answers[currentQ.id] === (option === EXAM_UI.TRUE ? 'true' : 'false') ? COLORS.primary.dark : COLORS.border.light}`,
                       borderRadius: RADIUS.md,
                       background: answers[currentQ.id] === (option === EXAM_UI.TRUE ? 'true' : 'false') ? COLORS.background.secondary : COLORS.background.primary,
@@ -682,7 +682,7 @@ export default function ExamPage() {
           background: COLORS.background.primary,
           borderTop: `1px solid ${COLORS.border.light}`,
           boxShadow: SHADOWS.card,
-          padding: SPACING.lg,
+          padding: SPACING.md,
         }}>
           <div style={{
             maxWidth: '640px',
@@ -690,7 +690,7 @@ export default function ExamPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: SPACING.md,
+            gap: SPACING.sm,
           }}>
             {/* Previous Button */}
             <button

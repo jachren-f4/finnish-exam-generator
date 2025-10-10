@@ -147,6 +147,7 @@ export interface ExamGenieExam {
   ocr_raw_text: string | null
   diagnostic_enabled: boolean
   generation_prompt: string | null
+  ai_provider: string | null
 }
 
 export interface ExamGenieQuestion {
