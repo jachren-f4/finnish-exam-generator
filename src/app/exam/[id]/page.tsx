@@ -310,25 +310,55 @@ export default function ExamPage() {
           margin: '0 auto',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           gap: SPACING.md,
         }}>
-          <img
-            src="/assets/logo.png"
-            alt="ExamGenie Logo"
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: RADIUS.md,
-            }}
-          />
-          <h1 style={{
-            fontSize: TYPOGRAPHY.fontSize.xl,
-            fontWeight: TYPOGRAPHY.fontWeight.semibold,
-            color: COLORS.primary.text,
-            margin: 0,
+          {/* Logo and Title */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: SPACING.md,
           }}>
-            ExamGenie
-          </h1>
+            <img
+              src="/assets/logo.png"
+              alt="ExamGenie Logo"
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: RADIUS.md,
+              }}
+            />
+            <h1 style={{
+              fontSize: TYPOGRAPHY.fontSize.xl,
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              color: COLORS.primary.text,
+              margin: 0,
+            }}>
+              ExamGenie
+            </h1>
+          </div>
+
+          {/* Audio Summary Link - Show only on first question */}
+          {mode === 'take' && currentQuestion === 0 && exam.audio_url && (
+            <a
+              href={exam.audio_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: SPACING.xs,
+                color: COLORS.primary.dark,
+                textDecoration: 'none',
+                fontSize: TYPOGRAPHY.fontSize.sm,
+                fontWeight: TYPOGRAPHY.fontWeight.medium,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span style={{ fontSize: TYPOGRAPHY.fontSize.base }}>🎧</span>
+              <span>Uutta! Kuuntele koealue tästä!</span>
+            </a>
+          )}
         </div>
       </div>
 
@@ -372,36 +402,6 @@ export default function ExamPage() {
               }}>
                 {currentQuestion + 1} / {exam.total_questions}
               </div>
-
-              {/* Audio Summary Link - Show only on first question */}
-              {currentQuestion === 0 && exam.audio_url && (
-                <div style={{
-                  marginTop: SPACING.sm,
-                  marginBottom: SPACING.md,
-                  padding: SPACING.md,
-                  background: COLORS.background.secondary,
-                  borderRadius: RADIUS.md,
-                  border: `1px solid ${COLORS.border.light}`,
-                }}>
-                  <a
-                    href={exam.audio_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: SPACING.sm,
-                      color: COLORS.primary.dark,
-                      textDecoration: 'none',
-                      fontSize: TYPOGRAPHY.fontSize.sm,
-                      fontWeight: TYPOGRAPHY.fontWeight.medium,
-                    }}
-                  >
-                    <span style={{ fontSize: TYPOGRAPHY.fontSize.lg }}>🎧</span>
-                    <span>Listen to audio summary</span>
-                  </a>
-                </div>
-              )}
 
               <h2 style={{
                 fontSize: TYPOGRAPHY.fontSize.xl,
