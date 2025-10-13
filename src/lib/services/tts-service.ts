@@ -92,9 +92,18 @@ export class TTSService {
 
     try {
       console.log('[TTS] Calling Google Cloud TTS API...')
+      console.log('[TTS] Request config:', {
+        languageCode,
+        voiceName,
+        textLength: text.length,
+        audioEncoding: config.audioEncoding
+      })
+
       const [response] = await client.synthesizeSpeech(request)
+      console.log('[TTS] TTS API responded')
 
       if (!response.audioContent) {
+        console.error('[TTS] ERROR: No audio content in TTS response')
         throw new Error('No audio content in TTS response')
       }
 
@@ -123,7 +132,15 @@ export class TTSService {
       }
 
     } catch (error) {
-      console.error('[TTS] Audio generation failed:', error)
+      console.error('[TTS] Audio generation failed')
+      console.error('[TTS] Error type:', error?.constructor?.name)
+      console.error('[TTS] Error message:', error instanceof Error ? error.message : String(error))
+      console.error('[TTS] Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+
+      if (error && typeof error === 'object') {
+        console.error('[TTS] Error details:', JSON.stringify(error, null, 2))
+      }
+
       throw new Error(`TTS generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }

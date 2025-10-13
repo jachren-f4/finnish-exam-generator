@@ -654,7 +654,15 @@ export class MobileApiService {
       console.log('[Audio Generation] Audio summary generation complete for exam:', examId)
 
     } catch (error) {
-      console.error('[Audio Generation] Failed to generate audio summary:', error)
+      console.error('[Audio Generation] Failed to generate audio summary')
+      console.error('[Audio Generation] Error type:', error?.constructor?.name)
+      console.error('[Audio Generation] Error message:', error instanceof Error ? error.message : String(error))
+      console.error('[Audio Generation] Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+
+      if (error && typeof error === 'object' && 'code' in error) {
+        console.error('[Audio Generation] Error code:', (error as any).code)
+      }
+
       // Don't throw - this is a background operation that shouldn't block exam creation
     }
   }
