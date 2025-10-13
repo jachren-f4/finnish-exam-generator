@@ -546,12 +546,10 @@ export class MobileApiService {
       timer.endPhase('ExamGenie Exam Creation')
       console.log(`⏱️  [TIMER] ExamGenie exam creation: ${Date.now() - examCreationStartTime}ms`)
 
-      // Trigger async audio generation if summary is available
+      // Generate audio summary if available (synchronous to ensure completion)
       if (summaryText && summaryData?.language) {
-        console.log('=== TRIGGERING ASYNC AUDIO GENERATION ===')
-        // Run in background - don't await
-        this.generateAudioSummaryAsync(examId, summaryText, summaryData.language)
-          .catch(err => console.error('[Audio Generation] Background error:', err))
+        console.log('=== GENERATING AUDIO SUMMARY ===')
+        await this.generateAudioSummaryAsync(examId, summaryText, summaryData.language)
       } else {
         console.log('No summary available - skipping audio generation')
       }
