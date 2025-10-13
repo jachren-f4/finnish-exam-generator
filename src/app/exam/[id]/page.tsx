@@ -294,12 +294,23 @@ export default function ExamPage() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: COLORS.background.primary,
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
+    <>
+      <style>{`
+        @media (max-width: 640px) {
+          .audio-text-desktop {
+            display: none !important;
+          }
+          .audio-text-mobile {
+            display: inline !important;
+          }
+        }
+      `}</style>
+      <div style={{
+        minHeight: '100vh',
+        background: COLORS.background.primary,
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
       {/* ExamGenie Branding */}
       <div style={{
         padding: SPACING.md,
@@ -344,19 +355,35 @@ export default function ExamPage() {
               href={exam.audio_url}
               target="_blank"
               rel="noopener noreferrer"
+              className="audio-link-badge"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: SPACING.xs,
-                color: COLORS.primary.dark,
+                gap: '8px',
+                color: COLORS.primary.text,
                 textDecoration: 'none',
                 fontSize: TYPOGRAPHY.fontSize.sm,
-                fontWeight: TYPOGRAPHY.fontWeight.medium,
-                whiteSpace: 'nowrap',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                transition: 'color 0.2s',
               }}
             >
-              <span style={{ fontSize: TYPOGRAPHY.fontSize.base }}>🎧</span>
-              <span>Uutta! Kuuntele koealue tästä!</span>
+              <span style={{
+                background: '#FF6B35',
+                color: 'white',
+                padding: '4px 10px',
+                borderRadius: '12px',
+                fontSize: '11px',
+                fontWeight: '700',
+                letterSpacing: '0.5px',
+              }}>
+                UUTTA!
+              </span>
+              <span className="audio-text-desktop" style={{ whiteSpace: 'nowrap' }}>
+                🎧 Kuuntele koealue tästä!
+              </span>
+              <span className="audio-text-mobile" style={{ whiteSpace: 'nowrap', display: 'none' }}>
+                🎧 Kuuntele
+              </span>
             </a>
           )}
         </div>
@@ -788,5 +815,6 @@ export default function ExamPage() {
         </div>
       )}
     </div>
+    </>
   )
 }
