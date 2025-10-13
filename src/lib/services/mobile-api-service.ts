@@ -357,6 +357,9 @@ export class MobileApiService {
             summaryData.summary_conclusion || ''
           ].filter(s => s.trim()).join('\n\n')
 
+          // Remove bold markdown formatting for TTS (e.g., **text** → text)
+          summaryText = summaryText.replace(/\*\*([^*]+)\*\*/g, '$1')
+
           console.log('Combined summary length:', summaryText.length, 'characters')
           console.log('Summary preview:', summaryText.substring(0, 200))
         } else {
