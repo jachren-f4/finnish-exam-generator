@@ -168,11 +168,20 @@ src/
 - **Used by:** Flutter mobile app
 
 ```bash
+# Localhost (no student_id needed)
 curl -X POST http://localhost:3001/api/mobile/exam-questions \
   -F "images=@textbook-page.jpg" \
   -F "category=mathematics" \
   -F "grade=5" \
   -F "language=fi"
+
+# Staging (requires student_id for rate limiting)
+curl -X POST https://exam-generator-staging.vercel.app/api/mobile/exam-questions \
+  -F "images=@textbook-page.jpg" \
+  -F "category=mathematics" \
+  -F "grade=5" \
+  -F "language=fi" \
+  -F "student_id=fc495b10-c771-4bd1-8bb4-b2c5003b9613"
 ```
 
 **GET `/api/mobile/exams?user_id={id}`** - List user's exams
@@ -229,10 +238,18 @@ These are used to run tests directly from Claude Code.
 ### Generate Exam Locally
 
 ```bash
+# Localhost
 curl -X POST http://localhost:3001/api/mobile/exam-questions \
   -F "images=@assets/images/test-image.jpg" \
   -F "category=core_academics" \
   -F "grade=5"
+
+# Staging (use this test student_id)
+curl -X POST https://exam-generator-staging.vercel.app/api/mobile/exam-questions \
+  -F "images=@assets/images/test-image.jpg" \
+  -F "category=core_academics" \
+  -F "grade=5" \
+  -F "student_id=fc495b10-c771-4bd1-8bb4-b2c5003b9613"
 ```
 
 ### Test Prompt Variants
@@ -275,6 +292,7 @@ vercel logs       # Production logs
 | **Wrong exam URLs** | Check `NEXT_PUBLIC_APP_URL` in `.env.local` |
 | **TypeScript build errors** | Always run `npm run build` before pushing |
 | **localhost CURL fails** | Use staging: `https://exam-generator-staging.vercel.app` (RLS policies block localhost) |
+| **Staging "user_id required" error** | Add `-F "student_id=fc495b10-c771-4bd1-8bb4-b2c5003b9613"` to curl command |
 | **Gemini 503 errors** | Verify `GEMINI_API_KEY` • Check `/prompttests/` logs • Retry logic handles overload |
 
 ## Important Notes
