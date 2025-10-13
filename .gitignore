@@ -35,6 +35,7 @@ yarn-error.log*
 # API keys and secrets
 *.key
 secrets.json
+AITestPrepApp.json
 
 # typescript
 *.tsbuildinfo
