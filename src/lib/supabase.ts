@@ -58,6 +58,8 @@ export interface ExamData {
   diagnostic_image_urls?: string[]
   ocr_raw_text?: string
   diagnostic_enabled?: boolean
+  audio_url?: string | null
+  summary_text?: string | null
 }
 
 export interface QuestionData {
