@@ -81,7 +81,6 @@ export class TTSService {
       voice: {
         languageCode: config.languageCode,
         name: voiceName,
-        ssmlGender: 'NEUTRAL' as const,
       },
       audioConfig: {
         audioEncoding: (config.audioEncoding || 'MP3') as any,
