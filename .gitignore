@@ -46,3 +46,6 @@ next-env.d.ts
 
 # prompt logging (localhost only)
 /prompttests
+
+# README (managed separately)
+README.md
