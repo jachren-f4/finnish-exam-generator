@@ -236,7 +236,9 @@ export class ExamRepository {
         created_at: examgenieExam.created_at,
         questions,
         total_questions: questions.length,
-        max_total_points: totalPoints
+        max_total_points: totalPoints,
+        audio_url: examgenieExam.audio_url || null,
+        summary_text: examgenieExam.summary_text || null
       }
 
     } catch (error) {

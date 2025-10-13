@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@google-cloud/text-to-speech": "^6.3.0",
     "@google/generative-ai": "^0.21.0",
     "@supabase/supabase-js": "^2.57.4",
     "@types/jsonwebtoken": "^9.0.10",
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@eslint/js": "^8.57.0",
     "@types/formidable": "^3.4.5",
+    "@types/google-cloud__text-to-speech": "^0.5.2",
     "@types/node": "^20.0.0",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",

@@ -12,6 +12,8 @@ interface ExamState extends ExamData {
   canReuse: boolean
   hasBeenCompleted: boolean
   latestGrading?: any
+  audio_url?: string | null
+  summary_text?: string | null
 }
 
 export default function ExamPage() {
@@ -292,12 +294,23 @@ export default function ExamPage() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: COLORS.background.primary,
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
+    <>
+      <style>{`
+        @media (max-width: 640px) {
+          .audio-text-desktop {
+            display: none !important;
+          }
+          .audio-text-mobile {
+            display: inline !important;
+          }
+        }
+      `}</style>
+      <div style={{
+        minHeight: '100vh',
+        background: COLORS.background.primary,
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
       {/* ExamGenie Branding */}
       <div style={{
         padding: SPACING.md,
@@ -308,25 +321,71 @@ export default function ExamPage() {
           margin: '0 auto',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           gap: SPACING.md,
         }}>
-          <img
-            src="/assets/logo.png"
-            alt="ExamGenie Logo"
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: RADIUS.md,
-            }}
-          />
-          <h1 style={{
-            fontSize: TYPOGRAPHY.fontSize.xl,
-            fontWeight: TYPOGRAPHY.fontWeight.semibold,
-            color: COLORS.primary.text,
-            margin: 0,
+          {/* Logo and Title */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: SPACING.md,
           }}>
-            ExamGenie
-          </h1>
+            <img
+              src="/assets/logo.png"
+              alt="ExamGenie Logo"
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: RADIUS.md,
+              }}
+            />
+            <h1 style={{
+              fontSize: TYPOGRAPHY.fontSize.xl,
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              color: COLORS.primary.text,
+              margin: 0,
+            }}>
+              ExamGenie
+            </h1>
+          </div>
+
+          {/* Audio Summary Link - Show only on first question */}
+          {mode === 'take' && currentQuestion === 0 && exam.audio_url && (
+            <a
+              href={exam.audio_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="audio-link-badge"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                color: COLORS.primary.text,
+                textDecoration: 'none',
+                fontSize: TYPOGRAPHY.fontSize.sm,
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                transition: 'color 0.2s',
+              }}
+            >
+              <span style={{
+                background: '#FF6B35',
+                color: 'white',
+                padding: '4px 10px',
+                borderRadius: '12px',
+                fontSize: '11px',
+                fontWeight: '700',
+                letterSpacing: '0.5px',
+              }}>
+                UUTTA!
+              </span>
+              <span className="audio-text-desktop" style={{ whiteSpace: 'nowrap' }}>
+                🎧 Kuuntele koealue tästä!
+              </span>
+              <span className="audio-text-mobile" style={{ whiteSpace: 'nowrap', display: 'none' }}>
+                🎧 Kuuntele
+              </span>
+            </a>
+          )}
         </div>
       </div>
 
@@ -756,5 +815,6 @@ export default function ExamPage() {
         </div>
       )}
     </div>
+    </>
   )
 }
