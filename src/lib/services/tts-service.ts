@@ -148,9 +148,9 @@ export class TTSService {
    * Get default voice name for a language code
    */
   private getDefaultVoiceName(languageCode: string): string {
-    // Map common language codes to high-quality Neural2 voices
+    // Map common language codes to high-quality voices
     const voiceMap: Record<string, string> = {
-      'fi-FI': 'fi-FI-Standard-A', // Finnish
+      'fi-FI': 'fi-FI-Standard-B', // Finnish (only Standard-B exists, female voice)
       'en-US': 'en-US-Neural2-C', // English (US)
       'en-GB': 'en-GB-Neural2-B', // English (UK)
       'sv-SE': 'sv-SE-Standard-A', // Swedish
