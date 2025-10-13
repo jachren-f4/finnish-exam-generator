@@ -602,7 +602,7 @@ export class MobileApiService {
       const audioResult = await ttsService.generateAudio(summaryText, {
         languageCode: ttsLanguageCode,
         audioEncoding: 'MP3',
-        speakingRate: 1.0,
+        speakingRate: 0.8, // 20% slower for better educational clarity
         pitch: 0.0,
       })
 
