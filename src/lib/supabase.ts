@@ -148,6 +148,9 @@ export interface ExamGenieExam {
   diagnostic_enabled: boolean
   generation_prompt: string | null
   ai_provider: string | null
+  summary_text: string | null
+  audio_url: string | null
+  audio_metadata: any | null
 }
 
 export interface ExamGenieQuestion {

@@ -230,18 +230,18 @@ export class MobileApiService {
         promptToUse = customPrompt
         promptType = 'CUSTOM'
       } else if (category) {
-        // Use specialized prompt for language studies, regular category prompt for others
+        // Use specialized prompt for language studies, category prompt with summary for others
         if (category === 'language_studies') {
           promptToUse = PROMPTS.getLanguageStudiesPrompt(grade, language)
           promptType = `LANGUAGE_STUDIES(grade-${grade || 'auto'}, student-lang-${language})`
         } else {
-          promptToUse = PROMPTS.getCategoryAwarePrompt(category, grade, language)
-          promptType = `CATEGORY_AWARE(${category}, grade-${grade || 'auto'}, lang-${language})`
+          promptToUse = PROMPTS.getCategoryAwarePromptWithSummary(category, grade, language)
+          promptType = `CATEGORY_AWARE_WITH_SUMMARY(${category}, grade-${grade || 'auto'}, lang-${language})`
         }
       } else {
-        // Always use category-aware prompt with core_academics as default
-        promptToUse = PROMPTS.getCategoryAwarePrompt('core_academics', grade, language)
-        promptType = `CATEGORY_AWARE(core_academics, grade-${grade || 'auto'}, lang-${language})`
+        // Always use category-aware prompt with summary and core_academics as default
+        promptToUse = PROMPTS.getCategoryAwarePromptWithSummary('core_academics', grade, language)
+        promptType = `CATEGORY_AWARE_WITH_SUMMARY(core_academics, grade-${grade || 'auto'}, lang-${language})`
       }
 
       console.log('Using prompt type:', promptType)
@@ -333,11 +333,35 @@ export class MobileApiService {
     try {
       timer.startPhase('ExamGenie Exam Creation')
 
-      // Parse the Gemini response to extract questions
+      // Parse the Gemini response to extract questions and summary
       let parsedQuestions = []
+      let summaryData: any = null
+      let summaryText: string | null = null
+
       try {
         const parsedResult = JSON.parse(geminiData.rawText)
         parsedQuestions = parsedResult.questions || []
+
+        // Extract summary if present
+        if (parsedResult.summary) {
+          summaryData = parsedResult.summary
+          console.log('=== SUMMARY EXTRACTED ===')
+          console.log('Summary language:', summaryData.language || 'not specified')
+          console.log('Summary word count:', summaryData.total_word_count || 'not specified')
+
+          // Combine all summary sections into single text for TTS
+          summaryText = [
+            summaryData.introduction || '',
+            summaryData.key_concepts || '',
+            summaryData.examples_and_applications || '',
+            summaryData.summary_conclusion || ''
+          ].filter(s => s.trim()).join('\n\n')
+
+          console.log('Combined summary length:', summaryText.length, 'characters')
+          console.log('Summary preview:', summaryText.substring(0, 200))
+        } else {
+          console.log('No summary found in response (may be language_studies or custom prompt)')
+        }
       } catch (parseError) {
         console.error('Failed to parse Gemini JSON response:', parseError)
         return null
@@ -463,8 +487,10 @@ export class MobileApiService {
         share_id: shareId,
         created_at: new Date().toISOString(),
         generation_prompt: promptUsed || null,
-        ai_provider: getConfiguredProviderType()
+        ai_provider: getConfiguredProviderType(),
+        summary_text: summaryText || null
         // completed_at is NULL by default - will be set when student completes the exam
+        // audio_url and audio_metadata will be set later by async audio generation
       }
 
       // Note: user_id is already set in examData above
@@ -520,6 +546,16 @@ export class MobileApiService {
       timer.endPhase('ExamGenie Exam Creation')
       console.log(`⏱️  [TIMER] ExamGenie exam creation: ${Date.now() - examCreationStartTime}ms`)
 
+      // Trigger async audio generation if summary is available
+      if (summaryText && summaryData?.language) {
+        console.log('=== TRIGGERING ASYNC AUDIO GENERATION ===')
+        // Run in background - don't await
+        this.generateAudioSummaryAsync(examId, summaryText, summaryData.language)
+          .catch(err => console.error('[Audio Generation] Background error:', err))
+      } else {
+        console.log('No summary available - skipping audio generation')
+      }
+
       // Return exam URLs in the expected format
       const examUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/exam/${examId}`
       const gradingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/grading/${examId}`
@@ -535,6 +571,91 @@ export class MobileApiService {
       console.error('Error message:', examError instanceof Error ? examError.message : 'Unknown error')
       console.error('Error stack:', examError instanceof Error ? examError.stack : 'No stack trace')
       return null
+    }
+  }
+
+  /**
+   * Generate audio summary asynchronously (non-blocking)
+   * This method runs in the background and updates the database when complete
+   * @param examId - Exam ID to update
+   * @param summaryText - Combined summary text for TTS
+   * @param languageCode - ISO 639-1 language code (e.g., 'fi', 'en')
+   */
+  static async generateAudioSummaryAsync(
+    examId: string,
+    summaryText: string,
+    languageCode: string
+  ): Promise<void> {
+    console.log('[Audio Generation] Starting async audio generation for exam:', examId)
+    console.log('[Audio Generation] Language:', languageCode)
+
+    try {
+      // Import TTS service
+      const { ttsService, TTSService } = await import('./tts-service')
+
+      // Convert ISO 639-1 code to Google Cloud language code
+      const ttsLanguageCode = TTSService.getLanguageCodeForTTS(languageCode)
+      console.log('[Audio Generation] TTS language code:', ttsLanguageCode)
+
+      // Generate audio using TTS service
+      const audioResult = await ttsService.generateAudio(summaryText, {
+        languageCode: ttsLanguageCode,
+        audioEncoding: 'MP3',
+        speakingRate: 1.0,
+        pitch: 0.0,
+      })
+
+      console.log('[Audio Generation] Audio generated, size:', audioResult.audioBuffer.length, 'bytes')
+
+      // Upload audio to Supabase Storage
+      const uploadResult = await SupabaseStorageManager.uploadAudioSummary(
+        audioResult.audioBuffer,
+        examId,
+        languageCode
+      )
+
+      if (uploadResult.error || !uploadResult.url) {
+        console.error('[Audio Generation] Upload failed:', uploadResult.error)
+        return
+      }
+
+      console.log('[Audio Generation] Audio uploaded:', uploadResult.url)
+
+      // Update exam record with audio URL and metadata
+      if (!supabaseAdmin) {
+        console.error('[Audio Generation] Supabase admin client not available')
+        return
+      }
+
+      const audioMetadata = {
+        durationSeconds: audioResult.metadata.durationSeconds,
+        fileSizeBytes: audioResult.metadata.fileSizeBytes,
+        voiceUsed: audioResult.metadata.voiceUsed,
+        languageCode: audioResult.metadata.languageCode,
+        generatedAt: audioResult.metadata.generatedAt,
+      }
+
+      const { error: updateError } = await supabaseAdmin
+        .from('examgenie_exams')
+        .update({
+          audio_url: uploadResult.url,
+          audio_metadata: audioMetadata,
+        })
+        .eq('id', examId)
+
+      if (updateError) {
+        console.error('[Audio Generation] Failed to update exam with audio URL:', updateError)
+        // Clean up uploaded file
+        await SupabaseStorageManager.deleteAudioSummary(uploadResult.url)
+        return
+      }
+
+      console.log('[Audio Generation] Exam updated with audio URL successfully')
+      console.log('[Audio Generation] Audio summary generation complete for exam:', examId)
+
+    } catch (error) {
+      console.error('[Audio Generation] Failed to generate audio summary:', error)
+      // Don't throw - this is a background operation that shouldn't block exam creation
     }
   }
 

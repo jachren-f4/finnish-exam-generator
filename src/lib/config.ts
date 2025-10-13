@@ -239,6 +239,65 @@ REQUIRED FORMAT:
 IMPORTANT: The correct_answer field must contain the exact text from the options array.`
   },
 
+  getCategoryAwarePromptWithSummary: (category: string, grade?: number, language: string = 'en') => {
+    const categoryDescriptions = {
+      mathematics: 'Mathematics and logic problems',
+      core_academics: 'Science, history, geography, biology, physics, chemistry, environmental studies, or social studies',
+      language_studies: 'Foreign language learning including vocabulary, grammar, translation, and comprehension'
+    }
+
+    return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students AND generate an educational summary.
+
+CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
+
+Avoid:
+- Visual references from the material, like images or page or chapter numbers
+- References to graph, table, diagram, or coordinate systems
+- Something that is factually untrue
+- Something that is impossible to answer without the images
+- Questions that aren't explicitly based on the source material
+
+TARGET: Use the same language as the source material. Subject area: core academics.
+
+TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts in the material.
+
+REQUIRED FORMAT:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "[Question text in same language as source material]",
+      "options": ["[Option A]", "[Option B]", "[Option C]", "[Option D]"],
+      "correct_answer": "[Exact match from options array]",
+      "explanation": "[Brief explanation in same language]"
+    }
+  ],
+  "summary": {
+    "introduction": "[100-250 word introduction to the topic in the same language as the source material]",
+    "key_concepts": "[250-500 word explanation of main concepts in the same language]",
+    "examples_and_applications": "[200-400 word section on practical examples and applications in the same language]",
+    "summary_conclusion": "[100-250 word conclusion summarizing key takeaways in the same language]",
+    "total_word_count": [approximate total word count],
+    "language": "[ISO 639-1 language code, e.g., 'fi' for Finnish, 'en' for English]"
+  }
+}
+
+SUMMARY REQUIREMENTS:
+- Write in the SAME language as the source material
+- Target audience: Grade ${grade || 'appropriate'} students
+- Total length: ~1000 words (Gemini 2.5 Flash-Lite typical output)
+- Structure: 4 sections as specified in the JSON format
+- Educational tone: clear, pedagogical, age-appropriate
+- Focus on reinforcing concepts from the exam questions
+- Use proper formatting: **bold** for key terms, numbered lists where appropriate
+
+IMPORTANT:
+- The correct_answer field must contain the exact text from the options array
+- The summary must be in the SAME language as the questions and source material
+- Do not reference visual elements in the summary either`
+  },
+
   getLanguageStudiesPrompt: (grade?: number, studentLanguage: string = 'en') => {
     return `Analyze the foreign language learning material and generate language exam questions.
 

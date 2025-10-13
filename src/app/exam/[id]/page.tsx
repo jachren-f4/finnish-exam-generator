@@ -12,6 +12,8 @@ interface ExamState extends ExamData {
   canReuse: boolean
   hasBeenCompleted: boolean
   latestGrading?: any
+  audio_url?: string | null
+  summary_text?: string | null
 }
 
 export default function ExamPage() {
@@ -370,6 +372,36 @@ export default function ExamPage() {
               }}>
                 {currentQuestion + 1} / {exam.total_questions}
               </div>
+
+              {/* Audio Summary Link - Show only on first question */}
+              {currentQuestion === 0 && exam.audio_url && (
+                <div style={{
+                  marginTop: SPACING.sm,
+                  marginBottom: SPACING.md,
+                  padding: SPACING.md,
+                  background: COLORS.background.secondary,
+                  borderRadius: RADIUS.md,
+                  border: `1px solid ${COLORS.border.light}`,
+                }}>
+                  <a
+                    href={exam.audio_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: SPACING.sm,
+                      color: COLORS.primary.dark,
+                      textDecoration: 'none',
+                      fontSize: TYPOGRAPHY.fontSize.sm,
+                      fontWeight: TYPOGRAPHY.fontWeight.medium,
+                    }}
+                  >
+                    <span style={{ fontSize: TYPOGRAPHY.fontSize.lg }}>🎧</span>
+                    <span>Listen to audio summary</span>
+                  </a>
+                </div>
+              )}
 
               <h2 style={{
                 fontSize: TYPOGRAPHY.fontSize.xl,
