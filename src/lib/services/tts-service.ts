@@ -93,8 +93,8 @@ export class TTSService {
     try {
       console.log('[TTS] Calling Google Cloud TTS API...')
       console.log('[TTS] Request config:', {
-        languageCode,
-        voiceName,
+        languageCode: config.languageCode,
+        voiceName: voiceName,
         textLength: text.length,
         audioEncoding: config.audioEncoding
       })
