@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useLayoutEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Script from 'next/script'
 import type { ExamData, StudentAnswer } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
 import { ICONS } from '@/constants/exam-icons'
@@ -35,6 +36,24 @@ export default function ExamPage() {
       fetchExam()
     }
   }, [examId])
+
+  // Render LaTeX math notation with KaTeX
+  // Use useLayoutEffect to render synchronously before browser paint (eliminates flash)
+  useLayoutEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).renderMathInElement) {
+      try {
+        (window as any).renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },   // Block math
+            { left: "$", right: "$", display: false }      // Inline math
+          ],
+          throwOnError: false  // Don't break on invalid LaTeX
+        })
+      } catch (error) {
+        console.warn('KaTeX rendering failed:', error)
+      }
+    }
+  }, [currentQuestion, exam])  // Re-render when question changes
 
   const fetchExam = async () => {
     try {
@@ -295,6 +314,20 @@ export default function ExamPage() {
 
   return (
     <>
+      {/* KaTeX Scripts for LaTeX Rendering */}
+      <Script
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+        integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8"
+        crossOrigin="anonymous"
+        strategy="afterInteractive"
+      />
+      <Script
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+        integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+        crossOrigin="anonymous"
+        strategy="afterInteractive"
+      />
+
       <style>{`
         @media (max-width: 640px) {
           .audio-text-desktop {

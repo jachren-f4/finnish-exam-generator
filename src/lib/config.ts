@@ -57,6 +57,25 @@ export const EXAM_CONFIG = {
   })
 } as const
 
+// Math Exam Configuration
+export const MATH_EXAM_CONFIG = {
+  DEFAULT_QUESTION_COUNT: 15,
+  QUESTION_DISTRIBUTION: {
+    computational: 6,           // Pure numerical calculation
+    formula_simplification: 4,  // Apply or simplify correctly
+    word_problems: 3,           // Realistic numeric applications
+    conceptual: 2               // Reasoning or understanding
+  },
+  TEMPERATURE_RETRY_STRATEGY: [0, 0.3, 0.5],
+  MAX_RETRY_ATTEMPTS: 3,
+  VALIDATION_THRESHOLD: 90, // Minimum score to pass (out of 100)
+  INFINITE_LOOP_DETECTION: {
+    MAX_CHARS: 50000,
+    REPEATED_PHRASE_THRESHOLD: 5,
+    KNOWN_LOOP_PHRASE_THRESHOLD: 10
+  }
+} as const
+
 // Grading Configuration
 export const GRADING_CONFIG = {
   SCALE: '4-10' as const,
