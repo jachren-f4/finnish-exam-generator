@@ -57,45 +57,47 @@ async function testMathService() {
   // Verify results
   console.log('✅ Math exam generated successfully!\n')
   console.log('=== RESULTS ===')
-  console.log(`⏱️  Processing time: ${result.processingTime}ms (${elapsedTime}s total)`)
-  console.log(`🌡️  Temperature used: ${result.temperatureUsed}`)
-  console.log(`📝 Questions generated: ${result.questions.length}`)
-  console.log(`🎯 Validation score: ${result.validationScore}/100`)
-  console.log(`📖 Topic: ${result.topic}`)
-  console.log(`🎓 Grade level: ${result.grade}\n`)
+  console.log(`⏱️  Processing time: ${result.processingTime || 0}ms (${elapsedTime}s total)`)
+  console.log(`🌡️  Temperature used: ${result.temperatureUsed || 0}`)
+  console.log(`📝 Questions generated: ${result.questions?.length || 0}`)
+  console.log(`🎯 Validation score: ${result.validationScore || 0}/100`)
+  console.log(`📖 Topic: ${result.topic || 'N/A'}`)
+  console.log(`🎓 Grade level: ${result.grade || 'N/A'}\n`)
 
   // Usage metadata
   if (result.geminiUsage) {
     const usage = result.geminiUsage
     console.log('=== GEMINI USAGE ===')
-    console.log(`📥 Input tokens: ${usage.inputTokens || 'N/A'}`)
-    console.log(`📤 Output tokens: ${usage.outputTokens || 'N/A'}`)
+    console.log(`📥 Input tokens: ${usage.promptTokenCount || 'N/A'}`)
+    console.log(`📤 Output tokens: ${usage.candidatesTokenCount || 'N/A'}`)
     console.log(`💰 Input cost: $${(usage.inputCost || 0).toFixed(4)}`)
     console.log(`💰 Output cost: $${(usage.outputCost || 0).toFixed(4)}`)
-    console.log(`💰 Total cost: $${(usage.totalCost || 0).toFixed(4)}\n`)
+    console.log(`💰 Total cost: $${(usage.estimatedCost || 0).toFixed(4)}\n`)
   }
 
   // Verify requirements
   let testsPassed = true
+  const questions = result.questions || []
+  const validationScore = result.validationScore || 0
 
   // Test 1: Question count
-  if (result.questions.length !== 15) {
-    console.error(`❌ Expected 15 questions, got ${result.questions.length}`)
+  if (questions.length !== 15) {
+    console.error(`❌ Expected 15 questions, got ${questions.length}`)
     testsPassed = false
   } else {
     console.log('✅ Question count: 15')
   }
 
   // Test 2: Validation score
-  if (result.validationScore < 90) {
-    console.error(`❌ Validation score below threshold: ${result.validationScore}/100`)
+  if (validationScore < 90) {
+    console.error(`❌ Validation score below threshold: ${validationScore}/100`)
     testsPassed = false
   } else {
-    console.log(`✅ Validation score: ${result.validationScore}/100 (>= 90)`)
+    console.log(`✅ Validation score: ${validationScore}/100 (>= 90)`)
   }
 
   // Test 3: LaTeX notation present
-  const hasLatex = result.questions.some(q =>
+  const hasLatex = questions.some(q =>
     q.question.includes('$') ||
     q.correct_answer?.includes('$') ||
     q.options?.some(opt => opt.includes('$'))
@@ -108,7 +110,7 @@ async function testMathService() {
 
   // Show sample questions
   console.log('\n=== SAMPLE QUESTIONS ===')
-  result.questions.slice(0, 3).forEach((q, idx) => {
+  questions.slice(0, 3).forEach((q, idx) => {
     console.log(`\nQuestion ${idx + 1} [${q.type}]:`)
     console.log(`Q: ${q.question}`)
     if (q.options) {

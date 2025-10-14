@@ -9,6 +9,7 @@ import { supabaseAdmin } from '../supabase'
 import { PromptLogger, ImageReference } from '../utils/prompt-logger'
 import { shuffleQuestionsOptions, getShuffleStats } from '../utils/question-shuffler'
 import { getConfiguredProviderType } from './ai-providers/provider-factory'
+import { MathExamService } from './math-exam-service'
 
 export interface MobileApiRequest {
   images: File[]
@@ -210,7 +211,92 @@ export class MobileApiService {
   }
 
   /**
+   * Process images with Math Exam Service (specialized for mathematics category)
+   */
+  private static async processWithMathService(
+    fileMetadataList: any[],
+    timer: OperationTimer,
+    grade?: number,
+    language: string = 'en',
+    processingId: string = 'math-mobile-api'
+  ): Promise<{ success: true; data: any; processingTime: number; promptUsed: string } | { success: false; error: string; details: string }> {
+    try {
+      console.log('=== ROUTING TO MATH EXAM SERVICE ===')
+      console.log('Grade:', grade || 'auto-detect')
+      console.log('Language:', language)
+
+      const mathStartTime = Date.now()
+
+      // Load images from temporary files
+      const fs = require('fs').promises
+      const path = require('path')
+      const imageParts = []
+
+      for (const fileMetadata of fileMetadataList) {
+        const filePath = path.join('/tmp', `${fileMetadata.id}${path.extname(fileMetadata.filename)}`)
+        const buffer = await fs.readFile(filePath)
+        const base64Data = buffer.toString('base64')
+
+        imageParts.push({
+          inlineData: {
+            data: base64Data,
+            mimeType: fileMetadata.mimeType
+          }
+        })
+      }
+
+      // Call math exam service
+      const mathResult = await MathExamService.generateMathExam({
+        images: imageParts,
+        grade: grade || 8, // Default to grade 8 if not specified
+        language,
+        processingId
+      })
+
+      if (!mathResult.success) {
+        return {
+          success: false,
+          error: mathResult.error || 'Math exam generation failed',
+          details: mathResult.details || 'Unknown error in math service'
+        }
+      }
+
+      const mathProcessingTime = Date.now() - mathStartTime
+      console.log(`⏱️  [MATH-SERVICE] Processing completed: ${mathProcessingTime}ms`)
+      console.log(`⏱️  [MATH-SERVICE] Temperature used: ${mathResult.temperatureUsed}`)
+      console.log(`⏱️  [MATH-SERVICE] Validation score: ${mathResult.validationScore}/100`)
+      console.log(`⏱️  [MATH-SERVICE] Questions generated: ${mathResult.questions?.length || 0}`)
+
+      // Format result to match expected structure
+      const formattedData = {
+        rawText: JSON.stringify({
+          questions: mathResult.questions,
+          topic: mathResult.topic,
+          difficulty: 'medium' // Math exams don't have difficulty in the same way
+        }),
+        geminiUsage: mathResult.geminiUsage
+      }
+
+      return {
+        success: true,
+        data: formattedData,
+        processingTime: mathProcessingTime,
+        promptUsed: 'MATH_V1_PROMPT'
+      }
+
+    } catch (error: any) {
+      console.error('Error in Math Service processing:', error)
+      return {
+        success: false,
+        error: 'Math service processing failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }
+    }
+  }
+
+  /**
    * Process images with Gemini AI using category and language-aware prompts
+   * Routes to Math Service for mathematics category
    */
   private static async processWithGemini(
     fileMetadataList: any[],
@@ -222,6 +308,17 @@ export class MobileApiService {
     language: string = 'en'
   ): Promise<{ success: true; data: any; processingTime: number; promptUsed: string } | { success: false; error: string; details: string }> {
     try {
+      // ROUTING LOGIC: Check if this is a mathematics exam
+      if (category === 'mathematics' && !customPrompt) {
+        console.log('🔀 ROUTING: Mathematics category detected → Math Exam Service')
+        return await this.processWithMathService(
+          fileMetadataList,
+          timer,
+          grade,
+          language,
+          'math-mobile-api'
+        )
+      }
       // Determine which prompt to use
       let promptToUse: string
       let promptType: string
