@@ -686,6 +686,7 @@ export class MobileApiService {
   ): Promise<void> {
     console.log('[Audio Generation] Starting async audio generation for exam:', examId)
     console.log('[Audio Generation] Language:', languageCode)
+    console.log('[Audio Generation] Original summary length:', summaryText.length, 'characters')
 
     try {
       // Import TTS service
@@ -695,8 +696,28 @@ export class MobileApiService {
       const ttsLanguageCode = TTSService.getLanguageCodeForTTS(languageCode)
       console.log('[Audio Generation] TTS language code:', ttsLanguageCode)
 
+      // Truncate summary to fit within 5000 bytes (Google Cloud TTS limit)
+      // Must check BYTE length, not character length, due to multi-byte UTF-8 characters
+      const MAX_TTS_BYTES = 4900 // Use 4900 to be safe (leave 100 bytes buffer)
+      let processedSummaryText = summaryText
+      const originalByteLength = Buffer.byteLength(summaryText, 'utf8')
+
+      if (originalByteLength > MAX_TTS_BYTES) {
+        // Truncate by bytes, not characters
+        let truncated = summaryText
+        while (Buffer.byteLength(truncated, 'utf8') > MAX_TTS_BYTES) {
+          truncated = truncated.substring(0, truncated.length - 100) // Remove 100 chars at a time
+        }
+        processedSummaryText = truncated
+        console.log('[Audio Generation] ⚠️  Summary truncated from', originalByteLength, 'bytes to', Buffer.byteLength(processedSummaryText, 'utf8'), 'bytes')
+        console.log('[Audio Generation] Character count:', summaryText.length, '→', processedSummaryText.length)
+        console.log('[Audio Generation] Truncation reason: Google Cloud TTS 5000-byte limit')
+      } else {
+        console.log('[Audio Generation] Summary size within TTS limit:', originalByteLength, 'bytes')
+      }
+
       // Generate audio using TTS service
-      const audioResult = await ttsService.generateAudio(summaryText, {
+      const audioResult = await ttsService.generateAudio(processedSummaryText, {
         languageCode: ttsLanguageCode,
         audioEncoding: 'MP3',
         speakingRate: 0.8, // 20% slower for better educational clarity
