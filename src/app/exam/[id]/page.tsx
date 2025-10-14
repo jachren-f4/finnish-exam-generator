@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useLayoutEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Script from 'next/script'
 import type { ExamData, StudentAnswer } from '@/lib/supabase'
@@ -38,26 +38,21 @@ export default function ExamPage() {
   }, [examId])
 
   // Render LaTeX math notation with KaTeX
-  useEffect(() => {
-    const renderMath = () => {
-      if (typeof window !== 'undefined' && (window as any).renderMathInElement) {
-        try {
-          (window as any).renderMathInElement(document.body, {
-            delimiters: [
-              { left: "$$", right: "$$", display: true },   // Block math
-              { left: "$", right: "$", display: false }      // Inline math
-            ],
-            throwOnError: false  // Don't break on invalid LaTeX
-          })
-        } catch (error) {
-          console.warn('KaTeX rendering failed:', error)
-        }
+  // Use useLayoutEffect to render synchronously before browser paint (eliminates flash)
+  useLayoutEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).renderMathInElement) {
+      try {
+        (window as any).renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },   // Block math
+            { left: "$", right: "$", display: false }      // Inline math
+          ],
+          throwOnError: false  // Don't break on invalid LaTeX
+        })
+      } catch (error) {
+        console.warn('KaTeX rendering failed:', error)
       }
     }
-
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(renderMath, 100)
-    return () => clearTimeout(timer)
   }, [currentQuestion, exam])  // Re-render when question changes
 
   const fetchExam = async () => {
