@@ -798,7 +798,7 @@ export class MobileApiService {
           processingTime: breakdown.totalDuration,
           geminiProcessingTime: geminiResult.processingTime,
           imageCount: request.images.length,
-          promptUsed: request.customPrompt && request.customPrompt.trim() !== '' ? 'custom' : 'default',
+          promptUsed: geminiResult.promptUsed || (request.customPrompt && request.customPrompt.trim() !== '' ? 'custom' : 'default'),
           processingMode: 'legacy',
           geminiUsage: geminiResult.data.geminiUsage,
           performanceBreakdown: breakdown.phases,
