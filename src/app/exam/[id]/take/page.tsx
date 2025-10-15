@@ -8,6 +8,7 @@ import { EXAM_UI } from '@/constants/exam-ui'
 import { ICONS } from '@/constants/exam-icons'
 import { NavigationDots } from '@/components/exam/NavigationDots'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
+import { awardExamDollars } from '@/lib/utils/genie-dollars'
 
 interface ExamState extends ExamData {
   canReuse: boolean
@@ -112,6 +113,10 @@ export default function ExamPage() {
       }
 
       const result = await response.json()
+
+      // Award Genie Dollars for completing exam
+      awardExamDollars(examId)
+
       router.push(`/exam/${examId}`)
 
     } catch (error) {

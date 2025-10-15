@@ -6,6 +6,7 @@ import type { ExamData } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
 import { ICONS } from '@/constants/exam-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
+import { awardAudioDollars } from '@/lib/utils/genie-dollars'
 
 interface AudioExamState extends ExamData {
   audio_url?: string | null
@@ -31,6 +32,7 @@ export default function AudioSummaryPage() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [celebrationMessage, setCelebrationMessage] = useState('')
 
   useEffect(() => {
     if (examId) {
@@ -119,6 +121,14 @@ export default function AudioSummaryPage() {
 
   const handleEnded = () => {
     setIsPlaying(false)
+
+    // Award Genie Dollars
+    const awarded = awardAudioDollars(examId)
+    if (awarded > 0) {
+      setCelebrationMessage(`🎉 You earned ${awarded} Genie Dollars! 💵`)
+      // Clear message after 3 seconds
+      setTimeout(() => setCelebrationMessage(''), 3000)
+    }
   }
 
   if (isLoading) {
@@ -230,6 +240,16 @@ export default function AudioSummaryPage() {
           cursor: pointer;
           border: none;
         }
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
       `}</style>
       <div style={{
         minHeight: '100vh',
@@ -320,7 +340,29 @@ export default function AudioSummaryPage() {
           boxShadow: SHADOWS.card,
           padding: SPACING.lg,
           marginBottom: SPACING.md,
+          position: 'relative',
         }}>
+          {/* Celebration Message */}
+          {celebrationMessage && (
+            <div style={{
+              position: 'absolute',
+              top: SPACING.md,
+              left: SPACING.md,
+              right: SPACING.md,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: '#FFFFFF',
+              padding: SPACING.md,
+              borderRadius: RADIUS.md,
+              fontSize: TYPOGRAPHY.fontSize.base,
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              textAlign: 'center',
+              boxShadow: SHADOWS.card,
+              animation: 'slideDown 0.3s ease-out',
+              zIndex: 10,
+            }}>
+              {celebrationMessage}
+            </div>
+          )}
           <div style={{
             display: 'flex',
             alignItems: 'center',
