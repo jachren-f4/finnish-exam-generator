@@ -344,7 +344,7 @@ export default function ExamPage() {
           margin: '0 auto',
           display: 'flex',
           alignItems: 'center',
-          gap: SPACING.md,
+          gap: SPACING.sm,
         }}>
           <button
             onClick={() => router.push(`/exam/${examId}`)}
@@ -353,6 +353,7 @@ export default function ExamPage() {
               border: 'none',
               color: COLORS.primary.text,
               fontSize: TYPOGRAPHY.fontSize.xl,
+              fontWeight: TYPOGRAPHY.fontWeight.bold,
               cursor: 'pointer',
               padding: SPACING.xs,
               display: 'flex',
