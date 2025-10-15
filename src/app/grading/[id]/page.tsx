@@ -470,7 +470,7 @@ export default function GradingPage() {
         {/* Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.md }}>
           <button
-            onClick={() => window.print()}
+            onClick={() => window.location.href = `/exam/${examId}`}
             style={{
               width: '100%',
               background: BUTTONS.primary.background,
@@ -478,6 +478,23 @@ export default function GradingPage() {
               padding: BUTTONS.primary.padding,
               borderRadius: BUTTONS.primary.radius,
               border: 'none',
+              fontSize: TYPOGRAPHY.fontSize.base,
+              fontWeight: TYPOGRAPHY.fontWeight.medium,
+              minHeight: TOUCH_TARGETS.comfortable,
+              cursor: 'pointer',
+            }}
+          >
+            {ICONS.ARROW_LEFT} Back to Menu
+          </button>
+          <button
+            onClick={() => window.print()}
+            style={{
+              width: '100%',
+              background: BUTTONS.secondary.background,
+              color: BUTTONS.secondary.text,
+              padding: BUTTONS.secondary.padding,
+              borderRadius: BUTTONS.secondary.radius,
+              border: `2px solid ${COLORS.border.medium}`,
               fontSize: TYPOGRAPHY.fontSize.base,
               fontWeight: TYPOGRAPHY.fontWeight.medium,
               minHeight: TOUCH_TARGETS.comfortable,
