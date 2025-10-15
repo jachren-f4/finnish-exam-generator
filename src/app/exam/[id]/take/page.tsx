@@ -334,7 +334,7 @@ export default function ExamPage() {
         display: 'flex',
         flexDirection: 'column',
       }}>
-      {/* ExamGenie Branding */}
+      {/* Header */}
       <div style={{
         padding: SPACING.md,
         paddingBottom: SPACING.sm,
@@ -344,33 +344,33 @@ export default function ExamPage() {
           margin: '0 auto',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
           gap: SPACING.md,
         }}>
-          {/* Logo and Title */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: SPACING.md,
-          }}>
-            <img
-              src="/assets/logo.png"
-              alt="ExamGenie Logo"
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: RADIUS.md,
-              }}
-            />
-            <h1 style={{
-              fontSize: TYPOGRAPHY.fontSize.xl,
-              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+          <button
+            onClick={() => router.push(`/exam/${examId}`)}
+            style={{
+              background: 'transparent',
+              border: 'none',
               color: COLORS.primary.text,
-              margin: 0,
-            }}>
-              ExamGenie
-            </h1>
-          </div>
+              fontSize: TYPOGRAPHY.fontSize.xl,
+              cursor: 'pointer',
+              padding: SPACING.xs,
+              display: 'flex',
+              alignItems: 'center',
+              minHeight: TOUCH_TARGETS.comfortable,
+            }}
+            aria-label="Back to menu"
+          >
+            {ICONS.ARROW_LEFT}
+          </button>
+          <h1 style={{
+            fontSize: TYPOGRAPHY.fontSize.xl,
+            fontWeight: TYPOGRAPHY.fontWeight.semibold,
+            color: COLORS.primary.text,
+            margin: 0,
+          }}>
+            Take exam
+          </h1>
         </div>
       </div>
 

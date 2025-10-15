@@ -204,14 +204,15 @@ export default function ExamMenuPage() {
           background: COLORS.background.primary,
           borderRadius: RADIUS.lg,
           boxShadow: SHADOWS.card,
-          padding: SPACING.lg,
+          padding: SPACING.md,
           marginBottom: SPACING.md,
         }}>
           <h2 style={{
-            fontSize: TYPOGRAPHY.fontSize['2xl'],
-            fontWeight: TYPOGRAPHY.fontWeight.bold,
+            fontSize: TYPOGRAPHY.fontSize.xl,
+            fontWeight: TYPOGRAPHY.fontWeight.semibold,
             color: COLORS.primary.text,
             marginBottom: SPACING.xs,
+            lineHeight: TYPOGRAPHY.lineHeight.normal,
           }}>
             {exam.subject}
           </h2>
@@ -219,6 +220,7 @@ export default function ExamMenuPage() {
             fontSize: TYPOGRAPHY.fontSize.base,
             color: COLORS.primary.medium,
             margin: 0,
+            lineHeight: TYPOGRAPHY.lineHeight.normal,
           }}>
             Grade {exam.grade} • {exam.total_questions} questions
           </p>
@@ -230,7 +232,7 @@ export default function ExamMenuPage() {
             background: COLORS.background.primary,
             borderRadius: RADIUS.lg,
             boxShadow: SHADOWS.card,
-            padding: SPACING.lg,
+            padding: SPACING.md,
             marginBottom: SPACING.md,
           }}>
             <div style={{
@@ -250,6 +252,7 @@ export default function ExamMenuPage() {
                   fontWeight: TYPOGRAPHY.fontWeight.semibold,
                   color: COLORS.primary.text,
                   marginBottom: SPACING.xs,
+                  lineHeight: TYPOGRAPHY.lineHeight.normal,
                 }}>
                   Audio Summary
                 </h3>
@@ -257,6 +260,7 @@ export default function ExamMenuPage() {
                   fontSize: TYPOGRAPHY.fontSize.sm,
                   color: COLORS.primary.medium,
                   marginBottom: SPACING.md,
+                  lineHeight: TYPOGRAPHY.lineHeight.normal,
                 }}>
                   Listen to an overview of the material before taking the exam
                 </p>
@@ -276,6 +280,7 @@ export default function ExamMenuPage() {
                     textDecoration: 'none',
                     cursor: 'pointer',
                     transition: TRANSITIONS.normal,
+                    minHeight: TOUCH_TARGETS.comfortable,
                   }}
                 >
                   Listen Now
@@ -290,7 +295,7 @@ export default function ExamMenuPage() {
           background: COLORS.background.primary,
           borderRadius: RADIUS.lg,
           boxShadow: SHADOWS.card,
-          padding: SPACING.lg,
+          padding: SPACING.md,
           marginBottom: SPACING.md,
         }}>
           <div style={{
@@ -310,6 +315,7 @@ export default function ExamMenuPage() {
                 fontWeight: TYPOGRAPHY.fontWeight.semibold,
                 color: COLORS.primary.text,
                 marginBottom: SPACING.xs,
+                lineHeight: TYPOGRAPHY.lineHeight.normal,
               }}>
                 {isCompleted ? 'Exam Completed' : 'Exam'}
               </h3>
@@ -317,6 +323,7 @@ export default function ExamMenuPage() {
                 fontSize: TYPOGRAPHY.fontSize.sm,
                 color: COLORS.primary.medium,
                 marginBottom: SPACING.md,
+                lineHeight: TYPOGRAPHY.lineHeight.normal,
               }}>
                 {isCompleted
                   ? `You've completed this exam. ${exam.canReuse ? 'You can retake it if you wish.' : ''}`
@@ -350,7 +357,7 @@ export default function ExamMenuPage() {
             background: COLORS.background.primary,
             borderRadius: RADIUS.lg,
             boxShadow: SHADOWS.card,
-            padding: SPACING.lg,
+            padding: SPACING.md,
             marginBottom: SPACING.md,
           }}>
             <div style={{
@@ -370,6 +377,7 @@ export default function ExamMenuPage() {
                   fontWeight: TYPOGRAPHY.fontWeight.semibold,
                   color: COLORS.primary.text,
                   marginBottom: SPACING.xs,
+                  lineHeight: TYPOGRAPHY.lineHeight.normal,
                 }}>
                   Results
                 </h3>
@@ -377,6 +385,7 @@ export default function ExamMenuPage() {
                   fontSize: TYPOGRAPHY.fontSize.sm,
                   color: COLORS.primary.medium,
                   marginBottom: SPACING.sm,
+                  lineHeight: TYPOGRAPHY.lineHeight.normal,
                 }}>
                   Score: {exam.latestGrading.percentage}% ({exam.latestGrading.total_points}/{exam.latestGrading.max_total_points} points)
                 </p>
@@ -384,6 +393,7 @@ export default function ExamMenuPage() {
                   fontSize: TYPOGRAPHY.fontSize.sm,
                   color: COLORS.primary.medium,
                   marginBottom: SPACING.md,
+                  lineHeight: TYPOGRAPHY.lineHeight.normal,
                 }}>
                   Grade: {exam.latestGrading.final_grade}
                 </p>
