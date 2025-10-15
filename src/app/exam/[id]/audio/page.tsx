@@ -34,6 +34,10 @@ export default function AudioSummaryPage() {
   const [duration, setDuration] = useState(0)
   const [celebrationMessage, setCelebrationMessage] = useState('')
 
+  // Listening tracking state
+  const [listenedSeconds, setListenedSeconds] = useState<Set<number>>(new Set())
+  const lastRecordedSecond = useRef<number>(-1)
+
   useEffect(() => {
     if (examId) {
       fetchExam()
@@ -101,7 +105,14 @@ export default function AudioSummaryPage() {
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
+      const currentSecond = Math.floor(audioRef.current.currentTime)
       setCurrentTime(audioRef.current.currentTime)
+
+      // Only add if this is a new second and audio is playing
+      if (currentSecond !== lastRecordedSecond.current && isPlaying) {
+        setListenedSeconds(prev => new Set([...prev, currentSecond]))
+        lastRecordedSecond.current = currentSecond
+      }
     }
   }
 
@@ -122,11 +133,21 @@ export default function AudioSummaryPage() {
   const handleEnded = () => {
     setIsPlaying(false)
 
-    // Award Genie Dollars
-    const awarded = awardAudioDollars(examId)
-    if (awarded > 0) {
-      setCelebrationMessage(`🎉 You earned ${awarded} Genie Dollars! 💵`)
-      // Clear message after 3 seconds
+    // Calculate listening percentage
+    const REQUIRED_PERCENTAGE = 80
+    const listeningPercentage = duration > 0 ? (listenedSeconds.size / Math.floor(duration)) * 100 : 0
+
+    // Only award if user listened to at least 80% of the audio
+    if (listeningPercentage >= REQUIRED_PERCENTAGE) {
+      const awarded = awardAudioDollars(examId)
+      if (awarded > 0) {
+        setCelebrationMessage(`🎉 You earned ${awarded} Genie Dollars! 💵`)
+        // Clear message after 3 seconds
+        setTimeout(() => setCelebrationMessage(''), 3000)
+      }
+    } else {
+      // Show message if threshold not met
+      setCelebrationMessage(`⏰ Listen to at least ${REQUIRED_PERCENTAGE}% to earn Genie Dollars`)
       setTimeout(() => setCelebrationMessage(''), 3000)
     }
   }
