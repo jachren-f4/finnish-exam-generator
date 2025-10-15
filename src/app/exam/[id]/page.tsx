@@ -59,6 +59,10 @@ export default function ExamMenuPage() {
     router.push(`/grading/${examId}`)
   }
 
+  const handleListenAudio = () => {
+    router.push(`/exam/${examId}/audio`)
+  }
+
   if (isLoading) {
     return (
       <div style={{
@@ -264,12 +268,9 @@ export default function ExamMenuPage() {
                 }}>
                   Listen to an overview of the material before taking the exam
                 </p>
-                <a
-                  href={exam.audio_url || ''}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={handleListenAudio}
                   style={{
-                    display: 'inline-block',
                     background: BUTTONS.secondary.background,
                     color: BUTTONS.secondary.text,
                     padding: BUTTONS.secondary.padding,
@@ -277,14 +278,13 @@ export default function ExamMenuPage() {
                     border: `2px solid ${COLORS.border.medium}`,
                     fontSize: TYPOGRAPHY.fontSize.base,
                     fontWeight: TYPOGRAPHY.fontWeight.medium,
-                    textDecoration: 'none',
                     cursor: 'pointer',
                     transition: TRANSITIONS.normal,
                     minHeight: TOUCH_TARGETS.comfortable,
                   }}
                 >
                   Listen Now
-                </a>
+                </button>
               </div>
             </div>
           </div>
