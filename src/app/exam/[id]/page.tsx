@@ -179,25 +179,60 @@ export default function ExamMenuPage() {
           margin: '0 auto',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           gap: SPACING.md,
         }}>
-          <img
-            src="/assets/logo.png"
-            alt="ExamGenie Logo"
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: RADIUS.md,
-            }}
-          />
-          <h1 style={{
-            fontSize: TYPOGRAPHY.fontSize.xl,
-            fontWeight: TYPOGRAPHY.fontWeight.semibold,
-            color: COLORS.primary.text,
-            margin: 0,
+          {/* Logo Section */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: SPACING.md,
           }}>
-            ExamGenie
-          </h1>
+            <img
+              src="/assets/logo.png"
+              alt="ExamGenie Logo"
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: RADIUS.md,
+              }}
+            />
+            <h1 style={{
+              fontSize: TYPOGRAPHY.fontSize.xl,
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              color: COLORS.primary.text,
+              margin: 0,
+            }}>
+              ExamGenie
+            </h1>
+          </div>
+
+          {/* Genie Dollars Badge */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: SPACING.sm,
+            background: COLORS.background.secondary,
+            padding: `${SPACING.sm} ${SPACING.md}`,
+            borderRadius: '20px',
+            border: `1px solid ${COLORS.border.light}`,
+          }}>
+            <span style={{ fontSize: '18px' }}>💵</span>
+            <span style={{
+              fontSize: TYPOGRAPHY.fontSize.sm,
+              color: COLORS.primary.medium,
+              fontWeight: TYPOGRAPHY.fontWeight.medium,
+            }}>
+              Genie Dollars
+            </span>
+            <span style={{
+              fontSize: TYPOGRAPHY.fontSize.base,
+              color: COLORS.primary.text,
+              fontWeight: TYPOGRAPHY.fontWeight.bold,
+            }}>
+              {totalGenieDollars}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -234,81 +269,6 @@ export default function ExamMenuPage() {
           }}>
             Grade {exam.grade} • {exam.total_questions} questions
           </p>
-        </div>
-
-        {/* Genie Dollars Card */}
-        <div style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          borderRadius: RADIUS.lg,
-          boxShadow: SHADOWS.card,
-          padding: SPACING.md,
-          marginBottom: SPACING.md,
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: SPACING.md,
-            }}>
-              <div style={{
-                fontSize: '32px',
-                lineHeight: 1,
-              }}>
-                💵
-              </div>
-              <div>
-                <h3 style={{
-                  fontSize: TYPOGRAPHY.fontSize.lg,
-                  fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                  color: '#FFFFFF',
-                  margin: 0,
-                  lineHeight: TYPOGRAPHY.lineHeight.normal,
-                }}>
-                  Genie Dollars
-                </h3>
-                <p style={{
-                  fontSize: TYPOGRAPHY.fontSize.sm,
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  margin: 0,
-                  marginTop: '2px',
-                  lineHeight: TYPOGRAPHY.lineHeight.normal,
-                }}>
-                  Earn rewards for learning
-                </p>
-              </div>
-            </div>
-            <div style={{
-              fontSize: TYPOGRAPHY.fontSize['2xl'],
-              fontWeight: TYPOGRAPHY.fontWeight.bold,
-              color: '#FFFFFF',
-            }}>
-              {totalGenieDollars}
-            </div>
-          </div>
-          {/* Show earning opportunities */}
-          {(!completionStatus.audioEarned || !completionStatus.examEarned) && (
-            <div style={{
-              marginTop: SPACING.md,
-              paddingTop: SPACING.md,
-              borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-            }}>
-              <p style={{
-                fontSize: TYPOGRAPHY.fontSize.xs,
-                color: 'rgba(255, 255, 255, 0.9)',
-                margin: 0,
-                lineHeight: TYPOGRAPHY.lineHeight.normal,
-              }}>
-                Available to earn:{' '}
-                {!completionStatus.audioEarned && 'Audio (+5)'}{' '}
-                {!completionStatus.audioEarned && !completionStatus.examEarned && '• '}{' '}
-                {!completionStatus.examEarned && 'Exam (+10)'}
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Audio Summary Card */}
