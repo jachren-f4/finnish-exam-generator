@@ -6,10 +6,11 @@
  * - 10 Genie Dollars for completing exam
  *
  * Storage: Browser localStorage (per-device)
- * Earning: Once per exam per activity
+ * Earning: Once per exam per activity, repeatable every 12 hours
  */
 
 const STORAGE_KEY = 'examgenie_dollars'
+const HOURS_BETWEEN_REWARDS = 12
 
 export const GENIE_DOLLAR_REWARDS = {
   AUDIO: 5,
@@ -22,6 +23,8 @@ interface GenieDollarsData {
     [examId: string]: {
       audioEarned: boolean
       examEarned: boolean
+      audioLastEarnedAt?: number // timestamp in ms
+      examLastEarnedAt?: number // timestamp in ms
     }
   }
 }
@@ -83,21 +86,93 @@ export function hasEarnedExamReward(examId: string): boolean {
 }
 
 /**
+ * Check if audio reward is currently eligible (never earned or 12 hours passed)
+ */
+export function isAudioRewardEligible(examId: string): boolean {
+  const data = getGenieDollarsData()
+  const completion = data.completions[examId]
+
+  if (!completion || !completion.audioLastEarnedAt) {
+    return true // Never earned, eligible
+  }
+
+  const now = Date.now()
+  const hoursSinceLastEarned = (now - completion.audioLastEarnedAt) / (1000 * 60 * 60)
+  return hoursSinceLastEarned >= HOURS_BETWEEN_REWARDS
+}
+
+/**
+ * Check if exam reward is currently eligible (never earned or 12 hours passed)
+ */
+export function isExamRewardEligible(examId: string): boolean {
+  const data = getGenieDollarsData()
+  const completion = data.completions[examId]
+
+  if (!completion || !completion.examLastEarnedAt) {
+    return true // Never earned, eligible
+  }
+
+  const now = Date.now()
+  const hoursSinceLastEarned = (now - completion.examLastEarnedAt) / (1000 * 60 * 60)
+  return hoursSinceLastEarned >= HOURS_BETWEEN_REWARDS
+}
+
+/**
+ * Get hours remaining until audio reward is eligible again
+ * Returns 0 if eligible now
+ */
+export function getAudioRewardHoursRemaining(examId: string): number {
+  const data = getGenieDollarsData()
+  const completion = data.completions[examId]
+
+  if (!completion || !completion.audioLastEarnedAt) {
+    return 0 // Eligible now
+  }
+
+  const now = Date.now()
+  const hoursSinceLastEarned = (now - completion.audioLastEarnedAt) / (1000 * 60 * 60)
+  const remaining = HOURS_BETWEEN_REWARDS - hoursSinceLastEarned
+
+  return remaining > 0 ? remaining : 0
+}
+
+/**
+ * Get hours remaining until exam reward is eligible again
+ * Returns 0 if eligible now
+ */
+export function getExamRewardHoursRemaining(examId: string): number {
+  const data = getGenieDollarsData()
+  const completion = data.completions[examId]
+
+  if (!completion || !completion.examLastEarnedAt) {
+    return 0 // Eligible now
+  }
+
+  const now = Date.now()
+  const hoursSinceLastEarned = (now - completion.examLastEarnedAt) / (1000 * 60 * 60)
+  const remaining = HOURS_BETWEEN_REWARDS - hoursSinceLastEarned
+
+  return remaining > 0 ? remaining : 0
+}
+
+/**
  * Award Genie Dollars for completing audio summary
- * Returns the amount awarded (0 if already earned)
+ * Returns the amount awarded (0 if not eligible)
  */
 export function awardAudioDollars(examId: string): number {
-  if (hasEarnedAudioReward(examId)) {
+  if (!isAudioRewardEligible(examId)) {
     return 0
   }
 
   const data = getGenieDollarsData()
+  const now = Date.now()
 
   if (!data.completions[examId]) {
     data.completions[examId] = { audioEarned: false, examEarned: false }
   }
 
   data.completions[examId].audioEarned = true
+  data.completions[examId].audioLastEarnedAt = now
   data.totalDollars += GENIE_DOLLAR_REWARDS.AUDIO
 
   saveGenieDollarsData(data)
@@ -106,24 +181,40 @@ export function awardAudioDollars(examId: string): number {
 
 /**
  * Award Genie Dollars for completing exam
- * Returns the amount awarded (0 if already earned)
+ * Returns the amount awarded (0 if not eligible)
  */
 export function awardExamDollars(examId: string): number {
-  if (hasEarnedExamReward(examId)) {
+  if (!isExamRewardEligible(examId)) {
     return 0
   }
 
   const data = getGenieDollarsData()
+  const now = Date.now()
 
   if (!data.completions[examId]) {
     data.completions[examId] = { audioEarned: false, examEarned: false }
   }
 
   data.completions[examId].examEarned = true
+  data.completions[examId].examLastEarnedAt = now
   data.totalDollars += GENIE_DOLLAR_REWARDS.EXAM
 
   saveGenieDollarsData(data)
   return GENIE_DOLLAR_REWARDS.EXAM
+}
+
+/**
+ * Format hours remaining as human-readable string
+ */
+export function formatHoursRemaining(hours: number): string {
+  if (hours <= 0) return ''
+
+  if (hours >= 1) {
+    return `${Math.ceil(hours)}h`
+  } else {
+    const minutes = Math.ceil(hours * 60)
+    return `${minutes}m`
+  }
 }
 
 /**
@@ -134,5 +225,9 @@ export function getExamCompletionStatus(examId: string) {
   return {
     audioEarned: data.completions[examId]?.audioEarned ?? false,
     examEarned: data.completions[examId]?.examEarned ?? false,
+    audioEligible: isAudioRewardEligible(examId),
+    examEligible: isExamRewardEligible(examId),
+    audioHoursRemaining: getAudioRewardHoursRemaining(examId),
+    examHoursRemaining: getExamRewardHoursRemaining(examId),
   }
 }

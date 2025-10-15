@@ -6,7 +6,7 @@ import type { ExamData } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
 import { ICONS } from '@/constants/exam-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
-import { getTotalGenieDollars, getExamCompletionStatus } from '@/lib/utils/genie-dollars'
+import { getTotalGenieDollars, getExamCompletionStatus, GENIE_DOLLAR_REWARDS, formatHoursRemaining } from '@/lib/utils/genie-dollars'
 
 interface ExamMenuState extends ExamData {
   canReuse: boolean
@@ -25,14 +25,21 @@ export default function ExamMenuPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [totalGenieDollars, setTotalGenieDollars] = useState(0)
-  const [completionStatus, setCompletionStatus] = useState({ audioEarned: false, examEarned: false })
+  const [rewardStatus, setRewardStatus] = useState({
+    audioEarned: false,
+    examEarned: false,
+    audioEligible: true,
+    examEligible: true,
+    audioHoursRemaining: 0,
+    examHoursRemaining: 0,
+  })
 
   useEffect(() => {
     if (examId) {
       fetchExam()
-      // Load Genie Dollars
+      // Load Genie Dollars and reward status
       setTotalGenieDollars(getTotalGenieDollars())
-      setCompletionStatus(getExamCompletionStatus(examId))
+      setRewardStatus(getExamCompletionStatus(examId))
     }
   }, [examId])
 
@@ -309,23 +316,54 @@ export default function ExamMenuPage() {
                 }}>
                   Listen to an overview of the material before taking the exam
                 </p>
-                <button
-                  onClick={handleListenAudio}
-                  style={{
-                    background: BUTTONS.secondary.background,
-                    color: BUTTONS.secondary.text,
-                    padding: BUTTONS.secondary.padding,
-                    borderRadius: BUTTONS.secondary.radius,
-                    border: `2px solid ${COLORS.border.medium}`,
-                    fontSize: TYPOGRAPHY.fontSize.base,
-                    fontWeight: TYPOGRAPHY.fontWeight.medium,
-                    cursor: 'pointer',
-                    transition: TRANSITIONS.normal,
-                    minHeight: TOUCH_TARGETS.comfortable,
-                  }}
-                >
-                  Listen Now
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.sm }}>
+                  <button
+                    onClick={handleListenAudio}
+                    style={{
+                      background: BUTTONS.secondary.background,
+                      color: BUTTONS.secondary.text,
+                      padding: BUTTONS.secondary.padding,
+                      borderRadius: BUTTONS.secondary.radius,
+                      border: `2px solid ${COLORS.border.medium}`,
+                      fontSize: TYPOGRAPHY.fontSize.base,
+                      fontWeight: TYPOGRAPHY.fontWeight.medium,
+                      cursor: 'pointer',
+                      transition: TRANSITIONS.normal,
+                      minHeight: TOUCH_TARGETS.comfortable,
+                    }}
+                  >
+                    Listen Now
+                  </button>
+                  {rewardStatus.audioEligible ? (
+                    <div style={{
+                      background: '#fef3c7',
+                      color: '#92400e',
+                      padding: `${SPACING.xs} ${SPACING.sm}`,
+                      borderRadius: '12px',
+                      fontSize: TYPOGRAPHY.fontSize.sm,
+                      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: SPACING.xs,
+                    }}>
+                      💵 +{GENIE_DOLLAR_REWARDS.AUDIO}
+                    </div>
+                  ) : (
+                    <div style={{
+                      background: '#d1fae5',
+                      color: '#065f46',
+                      padding: `${SPACING.xs} ${SPACING.sm}`,
+                      borderRadius: '12px',
+                      fontSize: TYPOGRAPHY.fontSize.sm,
+                      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: SPACING.xs,
+                    }}>
+                      ✓ {rewardStatus.audioHoursRemaining > 0 && `${formatHoursRemaining(rewardStatus.audioHoursRemaining)}`}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -371,23 +409,54 @@ export default function ExamMenuPage() {
                   : `${exam.total_questions} questions • Estimated time: ${Math.ceil(exam.total_questions * 1.5)} minutes`
                 }
               </p>
-              <button
-                onClick={handleStartExam}
-                style={{
-                  background: BUTTONS.primary.background,
-                  color: BUTTONS.primary.text,
-                  padding: BUTTONS.primary.padding,
-                  borderRadius: BUTTONS.primary.radius,
-                  border: 'none',
-                  fontSize: TYPOGRAPHY.fontSize.base,
-                  fontWeight: TYPOGRAPHY.fontWeight.medium,
-                  minHeight: TOUCH_TARGETS.comfortable,
-                  cursor: 'pointer',
-                  transition: TRANSITIONS.normal,
-                }}
-              >
-                {isCompleted ? (exam.canReuse ? 'Retake Exam' : 'Review Exam') : 'Start Exam'}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.sm }}>
+                <button
+                  onClick={handleStartExam}
+                  style={{
+                    background: BUTTONS.primary.background,
+                    color: BUTTONS.primary.text,
+                    padding: BUTTONS.primary.padding,
+                    borderRadius: BUTTONS.primary.radius,
+                    border: 'none',
+                    fontSize: TYPOGRAPHY.fontSize.base,
+                    fontWeight: TYPOGRAPHY.fontWeight.medium,
+                    minHeight: TOUCH_TARGETS.comfortable,
+                    cursor: 'pointer',
+                    transition: TRANSITIONS.normal,
+                  }}
+                >
+                  {isCompleted ? (exam.canReuse ? 'Retake Exam' : 'Review Exam') : 'Start Exam'}
+                </button>
+                {rewardStatus.examEligible ? (
+                  <div style={{
+                    background: '#fef3c7',
+                    color: '#92400e',
+                    padding: `${SPACING.xs} ${SPACING.sm}`,
+                    borderRadius: '12px',
+                    fontSize: TYPOGRAPHY.fontSize.sm,
+                    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: SPACING.xs,
+                  }}>
+                    💵 +{GENIE_DOLLAR_REWARDS.EXAM}
+                  </div>
+                ) : (
+                  <div style={{
+                    background: '#d1fae5',
+                    color: '#065f46',
+                    padding: `${SPACING.xs} ${SPACING.sm}`,
+                    borderRadius: '12px',
+                    fontSize: TYPOGRAPHY.fontSize.sm,
+                    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: SPACING.xs,
+                  }}>
+                    ✓ {rewardStatus.examHoursRemaining > 0 && `${formatHoursRemaining(rewardStatus.examHoursRemaining)}`}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
