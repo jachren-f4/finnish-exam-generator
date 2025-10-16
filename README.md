@@ -43,7 +43,7 @@ An AI-powered educational platform that transforms textbook images into exam que
 - Supports 12+ languages (Finnish, Swedish, English, Spanish, German, French, etc.)
 - Serves both web and mobile (Flutter) applications
 
-**Production URL:** https://exam-generator.vercel.app
+**Production URL:** https://examgenie.app
 
 ## Tech Stack
 
@@ -89,7 +89,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_key
 
 # Required - Application URL
-NEXT_PUBLIC_APP_URL=https://exam-generator.vercel.app  # Production
+NEXT_PUBLIC_APP_URL=https://examgenie.app  # Production
 # NEXT_PUBLIC_APP_URL=http://localhost:3001  # Local development
 
 # Required - Google Cloud TTS (for audio summaries)
@@ -278,12 +278,44 @@ curl -X POST https://exam-generator-staging.vercel.app/api/mobile/exam-questions
 | **Validation** | 3-level system (90+ threshold) | Basic JSON structure validation |
 | **Temperature** | Retry strategy: 0 → 0.3 → 0.5 | Fixed: 0 (deterministic) |
 | **Output Format** | LaTeX notation (`$x^2$`, `\frac{a}{b}`) | Plain text |
-| **Rendering** | KaTeX 0.16.9 with `useLayoutEffect` | No special rendering |
+| **Rendering** | KaTeX 0.16.9 in root layout | No special rendering |
 | **Quality Control** | 135+ validation scores typical | Standard Gemini output |
 
 **Example outputs:**
 - **Math**: "Laske $10^1 + 10^0$" (renders as: 10¹ + 10⁰)
 - **Core Studies**: "Mikä on Suomen pääkaupunki?" (plain text)
+
+#### KaTeX LaTeX Rendering Implementation
+
+**Architecture:**
+- **Scripts:** Loaded globally in `/src/app/layout.tsx` with `strategy="beforeInteractive"`
+- **CSS:** Loaded in layout `<head>` (KaTeX 0.16.9 CDN)
+- **Rendering:** Client-side via `useEffect` hook in exam taking page after data loads
+- **Delimiters:** `$...$` (inline math), `$$...$$` (block math)
+
+**Why Global Loading:**
+The KaTeX scripts must be available BEFORE client-side navigation occurs. Loading them in the root layout ensures:
+1. Scripts download once at app initialization
+2. Available immediately for all client-side navigation (menu → exam page)
+3. No race conditions between script loading and exam data fetching
+
+**Previous Bug (Fixed Oct 2025):**
+Script components were inside the exam page's return statement, AFTER early returns for loading states. This meant scripts only started downloading AFTER exam data loaded, creating a race condition where `renderMathInElement()` would run before scripts were ready.
+
+**Current Implementation:**
+```typescript
+// layout.tsx - Scripts load before React hydration
+<Script src="katex.min.js" strategy="beforeInteractive" />
+<Script src="auto-render.min.js" strategy="beforeInteractive" />
+
+// take/page.tsx - Rendering triggered after exam data loads
+useEffect(() => {
+  if (isLoading || !exam) return  // Guard condition
+  renderMathInElement(document.body, { delimiters: [...] })
+}, [isLoading, exam, currentQuestion])
+```
+
+**Result:** LaTeX equations like `$\sin(x) = \frac{1}{2}$` render instantly as beautiful mathematical notation when navigating from menu to exam page.
 
 ### 7. Audio Summary Generation
 - **TTS Service:** Google Cloud TTS API with 0.8 speaking rate for educational clarity
@@ -430,7 +462,7 @@ vercel logs       # Production logs
 
 ## Current Status (October 2025)
 
-✅ **Production Active:** https://exam-generator.vercel.app
+✅ **Production Active:** https://examgenie.app
 ✅ **Genie Dollars System:** Gamification with 12-hour spaced repetition rewards
 ✅ **Audio Listening Validation:** 80% threshold prevents gaming the reward system
 ✅ **Reward Badge Display:** Visual feedback on main menu (eligible/earned/countdown)
@@ -455,4 +487,4 @@ Proprietary - All rights reserved
 
 **Last Updated:** October 2025
 **Repository:** https://github.com/jachren-f4/finnish-exam-generator.git
-**Production:** https://exam-generator.vercel.app
+**Production:** https://examgenie.app
