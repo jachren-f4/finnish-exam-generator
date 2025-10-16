@@ -27,6 +27,23 @@ export interface MathQuestion {
   explanation: string  // Max 500 chars
 }
 
+export interface GuidedReflection {
+  question: string
+  pause_seconds: number
+  short_answer: string
+}
+
+export interface AudioSummary {
+  overview: string
+  key_ideas: string
+  applications: string
+  common_mistakes: string
+  guided_reflections: GuidedReflection[]
+  total_word_count: number
+  estimated_duration_seconds: number
+  language: string  // ISO 639-1 code
+}
+
 export interface MathExamGenerationOptions {
   images: ImagePart[]  // Base64 encoded images
   grade: number  // 1-9 (Finnish grades)
@@ -40,6 +57,7 @@ export interface MathExamResult {
   // Success fields
   rawText?: string  // JSON response from Gemini
   questions?: MathQuestion[]
+  audioSummary?: AudioSummary  // NEW: Audio summary for TTS
   topic?: string
   grade?: number
   processingTime?: number
@@ -121,7 +139,12 @@ export class MathExamService {
         }
       }
 
-      const examData = parseResult.data as { questions: MathQuestion[]; topic?: string; grade?: number }
+      const examData = parseResult.data as {
+        questions: MathQuestion[]
+        audio_summary?: AudioSummary
+        topic?: string
+        grade?: number
+      }
 
       if (!examData.questions || examData.questions.length === 0) {
         return {
@@ -159,6 +182,7 @@ export class MathExamService {
         success: true,
         rawText: JSON.stringify(examData, null, 2),
         questions: examData.questions,
+        audioSummary: examData.audio_summary,  // NEW: Include audio summary if present
         topic: examData.topic,
         grade: examData.grade || grade,
         processingTime: geminiResult.processingTime,

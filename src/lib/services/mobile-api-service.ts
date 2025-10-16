@@ -218,15 +218,18 @@ export class MobileApiService {
       console.log(`⏱️  [MATH-SERVICE] Temperature used: ${mathResult.temperatureUsed}`)
       console.log(`⏱️  [MATH-SERVICE] Validation score: ${mathResult.validationScore}/100`)
       console.log(`⏱️  [MATH-SERVICE] Questions generated: ${mathResult.questions?.length || 0}`)
+      console.log(`⏱️  [MATH-SERVICE] Audio summary present: ${mathResult.audioSummary ? 'YES' : 'NO'}`)
 
       // Format result to match expected structure
       const formattedData = {
         rawText: JSON.stringify({
           questions: mathResult.questions,
+          audio_summary: mathResult.audioSummary,  // NEW: Include audio summary
           topic: mathResult.topic,
           difficulty: 'medium' // Math exams don't have difficulty in the same way
         }),
-        geminiUsage: mathResult.geminiUsage
+        geminiUsage: mathResult.geminiUsage,
+        audioSummary: mathResult.audioSummary  // NEW: Pass audio summary for TTS generation
       }
 
       return {
@@ -418,6 +421,7 @@ export class MobileApiService {
       let parsedQuestions = []
       let summaryData: any = null
       let summaryText: string | null = null
+      let audioSummaryData: any = null  // NEW: For math audio summaries
 
       // Use safeJsonParse to handle markdown code fences (```json ... ```)
       const parseResult = safeJsonParse(geminiData.rawText)
@@ -434,8 +438,16 @@ export class MobileApiService {
       const parsedResult = parseResult.data
       parsedQuestions = parsedResult.questions || []
 
-      // Extract summary if present
-      if (parsedResult.summary) {
+      // NEW: Check for math audio_summary (from Math Service)
+      if (geminiData.audioSummary || parsedResult.audio_summary) {
+        audioSummaryData = geminiData.audioSummary || parsedResult.audio_summary
+        console.log('=== MATH AUDIO SUMMARY EXTRACTED ===')
+        console.log('Language:', audioSummaryData.language || 'not specified')
+        console.log('Word count:', audioSummaryData.total_word_count || 'not specified')
+        console.log('Reflections:', audioSummaryData.guided_reflections?.length || 0)
+      }
+      // Extract summary if present (core_academics format)
+      else if (parsedResult.summary) {
         summaryData = parsedResult.summary
         console.log('=== SUMMARY EXTRACTED ===')
         console.log('Summary language:', summaryData.language || 'not specified')
@@ -637,8 +649,12 @@ export class MobileApiService {
       timer.endPhase('ExamGenie Exam Creation')
       console.log(`⏱️  [TIMER] ExamGenie exam creation: ${Date.now() - examCreationStartTime}ms`)
 
-      // Generate audio summary if available (synchronous to ensure completion)
-      if (summaryText && summaryData?.language) {
+      // Generate audio summary if available
+      // NEW: Handle both math audio summaries and core_academics summaries
+      if (audioSummaryData && audioSummaryData.language) {
+        console.log('=== GENERATING MATH AUDIO SUMMARY ===')
+        await this.generateMathAudioSummaryAsync(examId, audioSummaryData)
+      } else if (summaryText && summaryData?.language) {
         console.log('=== GENERATING AUDIO SUMMARY ===')
         await this.generateAudioSummaryAsync(examId, summaryText, summaryData.language)
       } else {
@@ -774,6 +790,140 @@ export class MobileApiService {
       }
 
       // Don't throw - this is a background operation that shouldn't block exam creation
+    }
+  }
+
+  /**
+   * Generate math audio summary asynchronously (non-blocking)
+   * Handles math-specific audio with 5 sections + guided reflections
+   * @param examId - Exam ID to update
+   * @param audioSummary - Math audio summary data from MathExamService
+   */
+  static async generateMathAudioSummaryAsync(
+    examId: string,
+    audioSummary: any
+  ): Promise<void> {
+    console.log('[Math Audio] Starting async math audio generation for exam:', examId)
+    console.log('[Math Audio] Language:', audioSummary.language)
+    console.log('[Math Audio] Estimated duration:', audioSummary.estimated_duration_seconds, 'seconds')
+
+    try {
+      // Step 1: Concatenate all audio sections (Option A: simple concatenation)
+      const sections = [
+        audioSummary.overview || '',
+        audioSummary.key_ideas || '',
+        audioSummary.applications || '',
+        audioSummary.common_mistakes || ''
+      ].filter(s => s.trim())
+
+      // Step 2: Add guided reflections (question + answer, ignore pause_seconds)
+      if (audioSummary.guided_reflections && audioSummary.guided_reflections.length > 0) {
+        console.log('[Math Audio] Adding', audioSummary.guided_reflections.length, 'guided reflections')
+
+        audioSummary.guided_reflections.forEach((reflection: any, index: number) => {
+          sections.push(`${reflection.question || ''} ${reflection.short_answer || ''}`)
+        })
+      }
+
+      const fullAudioText = sections.join('\n\n')
+      console.log('[Math Audio] Total audio text length:', fullAudioText.length, 'characters')
+
+      // Import TTS service
+      const { ttsService, TTSService } = await import('./tts-service')
+
+      // Convert ISO 639-1 code to Google Cloud language code
+      const ttsLanguageCode = TTSService.getLanguageCodeForTTS(audioSummary.language)
+      console.log('[Math Audio] TTS language code:', ttsLanguageCode)
+
+      // Truncate to fit within 5000 bytes (Google Cloud TTS limit)
+      const MAX_TTS_BYTES = 4900 // Use 4900 to be safe (leave 100 bytes buffer)
+      let processedAudioText = fullAudioText
+      const originalByteLength = Buffer.byteLength(fullAudioText, 'utf8')
+
+      if (originalByteLength > MAX_TTS_BYTES) {
+        // Truncate by bytes, not characters
+        let truncated = fullAudioText
+        while (Buffer.byteLength(truncated, 'utf8') > MAX_TTS_BYTES) {
+          truncated = truncated.substring(0, truncated.length - 100) // Remove 100 chars at a time
+        }
+        processedAudioText = truncated
+        console.log('[Math Audio] ⚠️  Audio text truncated from', originalByteLength, 'bytes to', Buffer.byteLength(processedAudioText, 'utf8'), 'bytes')
+        console.log('[Math Audio] Character count:', fullAudioText.length, '→', processedAudioText.length)
+        console.log('[Math Audio] Truncation reason: Google Cloud TTS 5000-byte limit')
+      } else {
+        console.log('[Math Audio] Audio text size within TTS limit:', originalByteLength, 'bytes')
+      }
+
+      // Generate audio using TTS service
+      const audioResult = await ttsService.generateAudio(processedAudioText, {
+        languageCode: ttsLanguageCode,
+        audioEncoding: 'MP3',
+        speakingRate: 0.8, // 20% slower for better educational clarity
+        pitch: 0.0,
+      })
+
+      console.log('[Math Audio] Audio generated, size:', audioResult.audioBuffer.length, 'bytes')
+
+      // Upload audio to Supabase Storage
+      const uploadResult = await SupabaseStorageManager.uploadAudioSummary(
+        audioResult.audioBuffer,
+        examId,
+        audioSummary.language
+      )
+
+      if (uploadResult.error || !uploadResult.url) {
+        console.error('[Math Audio] Upload failed:', uploadResult.error)
+        return
+      }
+
+      console.log('[Math Audio] Audio uploaded:', uploadResult.url)
+
+      // Update exam record with audio URL and metadata
+      if (!supabaseAdmin) {
+        console.error('[Math Audio] Supabase admin client not available')
+        return
+      }
+
+      const audioMetadata = {
+        durationSeconds: audioResult.metadata.durationSeconds,
+        fileSizeBytes: audioResult.metadata.fileSizeBytes,
+        voiceUsed: audioResult.metadata.voiceUsed,
+        languageCode: audioResult.metadata.languageCode,
+        generatedAt: audioResult.metadata.generatedAt,
+        audioType: 'math_summary', // NEW: Identify this as math audio summary
+        reflectionsCount: audioSummary.guided_reflections?.length || 0
+      }
+
+      const { error: updateError } = await supabaseAdmin
+        .from('examgenie_exams')
+        .update({
+          audio_url: uploadResult.url,
+          audio_metadata: audioMetadata,
+        })
+        .eq('id', examId)
+
+      if (updateError) {
+        console.error('[Math Audio] Failed to update exam with audio URL:', updateError)
+        // Clean up uploaded file
+        await SupabaseStorageManager.deleteAudioSummary(uploadResult.url)
+        return
+      }
+
+      console.log('[Math Audio] Exam updated with audio URL successfully')
+      console.log('[Math Audio] Math audio summary generation complete for exam:', examId)
+
+    } catch (error) {
+      console.error('[Math Audio] Failed to generate math audio summary')
+      console.error('[Math Audio] Error type:', error?.constructor?.name)
+      console.error('[Math Audio] Error message:', error instanceof Error ? error.message : String(error))
+      console.error('[Math Audio] Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+
+      if (error && typeof error === 'object' && 'code' in error) {
+        console.error('[Math Audio] Error code:', (error as any).code)
+      }
+
+      // Don't throw - this is a background operation that shouldn't block exam creation
+      // Per user's instruction: "Just skip audio" on failure
     }
   }
 

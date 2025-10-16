@@ -263,7 +263,19 @@ Return ONLY the JSON object, no additional text`
   getMathPrompt: (grade: number, language: string = 'fi'): string => {
     const EXAM_QUESTION_COUNT = MATH_EXAM_CONFIG.DEFAULT_QUESTION_COUNT
 
-    return `ROLE: You are an expert mathematics teacher creating exam questions for grade ${grade} students.
+    return `⚠️ CRITICAL - LANGUAGE DETECTION FIRST ⚠️
+
+BEFORE ANYTHING ELSE:
+1. Look at the textbook images and identify the SOURCE LANGUAGE
+2. If you see "Addiere", "Subtrahiere", "Multipliziere" → German
+3. If you see "Lisää", "Vähennä", "Kerro" → Finnish
+4. If you see "Add", "Subtract", "Multiply" → English
+5. ALL your output MUST be in that SAME detected language
+
+LANGUAGE RULE: Questions, explanations, AND audio_summary sections MUST ALL match the source material language.
+DO NOT use Finnish if the source is German. DO NOT use English if the source is Finnish.
+
+ROLE: You are an expert mathematics teacher creating exam questions for grade ${grade} students.
 
 CONTEXT: You are analyzing textbook images containing mathematical content. The images may show:
 - Algebraic expressions and equations
@@ -344,12 +356,103 @@ You MUST respond with valid JSON following this schema:
         "Fourth option"
       ],
       "correct_answer": "First option",
-      "explanation": "CONCISE explanation in Finnish (1-3 sentences max) covering why this is correct and common errors"
+      "explanation": "CONCISE explanation in the SAME language as source material (1-3 sentences max) covering why this is correct and common errors"
     }
   ],
+  "audio_summary": {
+    "overview": "[100-200 word overview in the same language as source material: What mathematical concepts does this chapter cover and why are they important?]",
+    "key_ideas": "[200-350 words explaining the main formulas and concepts using SPOKEN MATH notation - see requirements below]",
+    "applications": "[150-250 words on real-world applications and when students would use these concepts]",
+    "common_mistakes": "[150-200 words covering typical errors students make and how to avoid them]",
+    "guided_reflections": [
+      {
+        "question": "[Thought-provoking question posed conversationally]",
+        "pause_seconds": 5,
+        "short_answer": "[Concise 1-2 sentence answer or hint using SPOKEN math notation]"
+      }
+    ],
+    "total_word_count": [approximate total word count across all sections],
+    "estimated_duration_seconds": [approximate audio duration],
+    "language": "[ISO 639-1 language code]"
+  },
   "topic": "Detected mathematics topic",
   "grade": ${grade}
 }
+
+AUDIO SUMMARY REQUIREMENTS (for TTS conversion):
+This summary will be converted to AUDIO using Text-to-Speech, so special formatting is required.
+
+CRITICAL - SPOKEN MATH NOTATION:
+LaTeX symbols CANNOT be spoken by TTS. Convert ALL mathematical notation to spoken language in the SOURCE LANGUAGE:
+
+**Finnish examples:**
+- "$x^2$" → "x toiseen"
+- "$x^3$" → "x kolmanteen"
+- "$\\\\pi r^2$" → "pii kertaa r toiseen"
+- "$\\\\frac{a}{b}$" → "a per b" or "a jaettuna b:llä"
+- "$\\\\sqrt{x}$" → "neliöjuuri x:stä"
+- Operators: "plus", "miinus", "kertaa", "jaettuna"
+- Decimals: "nolla pilkku viisi" (0.5)
+
+**German examples:**
+- "$x^2$" → "x Quadrat" or "x hoch zwei"
+- "$x^3$" → "x hoch drei"
+- "$\\\\pi r^2$" → "pi mal r Quadrat"
+- "$\\\\frac{a}{b}$" → "a durch b" or "a geteilt durch b"
+- "$\\\\sqrt{x}$" → "Wurzel aus x" or "Quadratwurzel von x"
+- Operators: "plus", "minus", "mal", "geteilt durch"
+- Decimals: "null Komma fünf" (0,5)
+
+**English examples:**
+- "$x^2$" → "x squared"
+- "$x^3$" → "x cubed" or "x to the power of 3"
+- "$\\\\pi r^2$" → "pi times r squared"
+- "$\\\\frac{a}{b}$" → "a over b" or "a divided by b"
+- "$\\\\sqrt{x}$" → "square root of x"
+- Operators: "plus", "minus", "times", "divided by"
+- Decimals: "zero point five" (0.5)
+
+RULE: NO dollar signs ($), NO backslashes (\\\\), NO curly braces in audio_summary sections
+
+SECTION GUIDELINES (use detected source language):
+1. **overview** (100-200 words):
+   - Introduce the topic conversationally
+   - Finnish: "Tässä luvussa opimme..."
+   - German: "In diesem Kapitel lernen wir..."
+   - English: "In this chapter, we learn..."
+   - Explain why this matters in mathematics
+   - Set expectations for what students will understand
+
+2. **key_ideas** (200-350 words):
+   - Explain main formulas using SPOKEN notation only (see examples above)
+   - Finnish: "Potenssien kertolaskussa lasketaan eksponentit yhteen"
+   - German: "Beim Multiplizieren von Potenzen addiert man die Exponenten"
+   - English: "When multiplying powers, add the exponents"
+   - Walk through ONE concrete example step-by-step
+   - Teacher-like, supportive tone
+
+3. **applications** (150-250 words):
+   - Real-world contexts where these concepts appear
+   - Practical problems students encounter
+   - Connect math to everyday life
+
+4. **common_mistakes** (150-200 words):
+   - List 2-3 frequent student errors
+   - Explain WHY these errors happen
+   - Give tips to avoid them
+
+5. **guided_reflections** (2-3 reflections, array format):
+   - Each reflection has 3 fields: question, pause_seconds, short_answer
+   - Format: Question → Pause → Brief answer/hint (all in SOURCE language with SPOKEN math)
+   - pause_seconds: 3-8 seconds (time for student to think)
+   - Total per reflection: <20 seconds when spoken
+   - Keep answers concise (1-2 sentences) with SPOKEN math notation
+   - Limit to 2-3 reflections total to maintain engagement
+   - NO LaTeX symbols in short_answer field
+
+TARGET LENGTH: 600-1000 words total (approximately 2.5-4 minutes at 0.8x speaking rate)
+ESTIMATED DURATION: Calculate based on ~150 words per minute at 0.8x speed, plus pause_seconds from guided_reflections
+TONE: Friendly mathematics teacher speaking directly to student - conversational, clear, encouraging
 
 EXPLANATIONS: Max 3 sentences/500 chars. State formula + ONE example + ONE common error. No repetition/loops. If ambiguity detected, skip to next question.
 
@@ -360,8 +463,12 @@ QUALITY REQUIREMENTS:
 □ Each question tests a DIFFERENT skill or concept
 □ Only ONE correct answer per question
 □ correct_answer EXACTLY matches one option
-□ All questions in Finnish (detected from source)
-□ No references to images or page numbers
+□ ALL questions in the SAME language as source material (detected from images)
+□ ALL explanations in the SAME language as questions
+□ No references to images or page numbers in questions
+□ Audio summary has NO LaTeX notation (spoken form only)
+□ Audio summary is in SAME language as questions and source material
+□ Guided reflections use SPOKEN math notation (no LaTeX)
 □ Clear and unambiguous wording
 
 CRITICAL VALIDATION RULES:
