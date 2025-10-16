@@ -317,6 +317,36 @@ useEffect(() => {
 
 **Result:** LaTeX equations like `$\sin(x) = \frac{1}{2}$` render instantly as beautiful mathematical notation when navigating from menu to exam page.
 
+#### Math Audio Summaries (Spoken Notation)
+
+**Overview:**
+Mathematics exams now include specialized audio summaries designed for spaced repetition learning. Students can listen to mathematical concepts with proper spoken notation (e.g., "x squared" instead of raw LaTeX) while commuting, before sleep, or during walks.
+
+**Audio Structure:**
+1. **Overview** (100-200 words) - What the mathematical chapter covers
+2. **Key Ideas** (200-350 words) - Main formulas and concepts in spoken form
+3. **Applications** (150-250 words) - Real-world examples and use cases
+4. **Common Mistakes** (150-200 words) - Typical errors students make
+5. **Guided Reflections** (2-3 questions) - Thought-provoking questions with pauses for reflection
+
+**Technical Details:**
+- **Language Auto-Detection:** Automatically detects source language from textbook images (Finnish, German, English, Swedish, etc.)
+- **Spoken Math Notation:** Converts LaTeX to spoken form:
+  - `$x^2$` → "x toiseen" (Finnish) / "x squared" (English) / "x Quadrat" (German)
+  - `$\frac{a}{b}$` → "a jaettuna b:llä" (Finnish) / "a divided by b" (English)
+- **TTS Generation:** Google Cloud TTS with 0.8 speaking rate for educational clarity
+- **Async Processing:** Audio generation runs in background without blocking exam creation
+- **Duration:** Typically 2-3 minutes per exam
+- **Format:** MP3 files stored in Supabase Storage
+
+**Quality Assurance:**
+- No LaTeX symbols in audio (human-readable spoken notation only)
+- Multi-language support with appropriate TTS voices
+- Byte-based truncation respects 5000-byte Google Cloud TTS limit
+- Graceful failure handling (skips audio if generation fails, doesn't block exam creation)
+
+**Implementation:** Integrated in `math-exam-service.ts` and `mobile-api-service.ts:generateMathAudioSummaryAsync()`
+
 ### 7. Audio Summary Generation
 - **TTS Service:** Google Cloud TTS API with 0.8 speaking rate for educational clarity
 - **Languages:** 12+ languages including German (de-DE-Neural2-B), Finnish (fi-FI-Standard-B), English, Swedish, Spanish, French
@@ -463,6 +493,7 @@ vercel logs       # Production logs
 ## Current Status (October 2025)
 
 ✅ **Production Active:** https://examgenie.app
+✅ **Math Audio Summaries:** Spoken notation audio for mathematics exams with 5 sections + guided reflections
 ✅ **Genie Dollars System:** Gamification with 12-hour spaced repetition rewards
 ✅ **Audio Listening Validation:** 80% threshold prevents gaming the reward system
 ✅ **Reward Badge Display:** Visual feedback on main menu (eligible/earned/countdown)
