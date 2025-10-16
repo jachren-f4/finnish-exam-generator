@@ -19,7 +19,7 @@ export function attemptJsonRepair(text: string): string | null {
     // Extract potential JSON from markdown or raw text
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```\n([\s\S]*?)\n```/)
     let jsonText = jsonMatch ? jsonMatch[1] : text
-    
+
     // Find JSON boundaries
     if (jsonText.includes('{')) {
       const startIndex = jsonText.indexOf('{')
@@ -28,9 +28,26 @@ export function attemptJsonRepair(text: string): string | null {
         jsonText = jsonText.substring(startIndex, lastBraceIndex + 1)
       }
     }
-    
+
     // Common repair patterns
     let repaired = jsonText
+
+    // Fix 0: Fix LaTeX backslashes that aren't properly escaped
+    // This is critical for math content where Gemini may output \frac, \cdot, etc.
+    // Match backslashes that are NOT already escaped (not preceded by \)
+    // AND not part of valid JSON escape sequences
+    // Valid JSON escapes: \" \\ \/ \b \f \n \r \t \uXXXX
+    const beforeLatexFix = repaired.length
+    const beforeSample = repaired.substring(400, 450)
+    // Use negative lookbehind to avoid matching already-escaped backslashes
+    repaired = repaired.replace(/(?<!\\)\\(?!["\\/bfnrtu])/g, '\\\\')
+    const afterLatexFix = repaired.length
+    const afterSample = repaired.substring(400, 450)
+    if (afterLatexFix !== beforeLatexFix) {
+      console.log(`🔧 Applied LaTeX backslash fix: ${afterLatexFix - beforeLatexFix} chars added`)
+      console.log(`   Before (pos 400-450): ${JSON.stringify(beforeSample)}`)
+      console.log(`   After (pos 400-450): ${JSON.stringify(afterSample)}`)
+    }
     
     // Fix 1: Fix malformed field structures like "type": "fill_in_the_blank": "text"
     // This handles cases where question field is missing and embedded in type field
@@ -41,18 +58,30 @@ export function attemptJsonRepair(text: string): string | null {
     
     // Fix 2: Remove trailing commas before closing braces/brackets
     repaired = repaired.replace(/,(\s*[}\]])/g, '$1')
-    
-    // Fix 3: Fix unescaped quotes in strings
-    repaired = repaired.replace(/([^\\])"([^"]*[^\\])"([^,}\]\s])/g, '$1\\"$2\\"$3')
-    
-    // Fix 4: Add missing commas between objects
-    repaired = repaired.replace(/}\s*{/g, '},\n    {')
+
+    // Fix 3: Add missing commas between objects
+    // Only match object boundaries that are likely JSON array elements, not LaTeX
+    // Look for closing brace, optional whitespace, then opening brace at line start
+    repaired = repaired.replace(/}\s*\n\s*{/g, '},\n    {')
     
     // Try to parse the repaired JSON
-    const parsed = JSON.parse(repaired)
-    
-    return JSON.stringify(parsed, null, 2)
-    
+    try {
+      const parsed = JSON.parse(repaired)
+      return JSON.stringify(parsed, null, 2)
+    } catch (parseError) {
+      // Save the repaired JSON for debugging
+      if (typeof require !== 'undefined') {
+        try {
+          const fs = require('fs')
+          fs.writeFileSync('debug-repaired.txt', repaired)
+          console.log('💾 Saved repaired JSON to debug-repaired.txt for inspection')
+        } catch (fsError) {
+          // Ignore file system errors
+        }
+      }
+      throw parseError
+    }
+
   } catch (error) {
     return null
   }

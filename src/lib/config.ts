@@ -124,141 +124,16 @@ export const RATE_LIMIT_CONFIG = {
   ENABLED: process.env.RATE_LIMITING_ENABLED !== 'false', // Default: enabled
 } as const
 
-// Default Prompts
+/**
+ * Prompt Routing Logic:
+ * - category: 'mathematics' → getMathPrompt() (LaTeX support, specialized validation)
+ * - category: 'language_studies' → getLanguageStudiesPrompt() (auto-detect languages)
+ * - category: 'core_academics' OR default → getCategoryAwarePrompt() (with summary for TTS)
+ */
+
+// Exam Generation Prompts
 export const PROMPTS = {
-  DEFAULT_EXAM_GENERATION: `
-Extract text from the images and generate exam questions.
-
-Use the same language as the source material for all questions and explanations.
-
-Return your response as a JSON object with this exact structure:
-{
-  "questions": [
-    {
-      "id": 1,
-      "type": "multiple_choice",
-      "question": "Question text",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct_answer": "Option A",
-      "explanation": "Brief explanation"
-    }
-  ],
-  "topic": "Brief topic description",
-  "difficulty": "elementary"
-}
-
-Important: Return only the JSON object. Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions based on the image content.`,
-
-  OCR_EXTRACTION: `STEP 1: Extract text from each image separately
-- Process each image individually (numbered 0, 1, 2, etc.)
-- Preserve ALL text exactly as it appears: titles, headers, paragraphs, captions
-- Maintain page boundaries - do NOT merge or mix content between different images
-- Keep each page's content distinct and separate
-
-STEP 2: MANDATORY TOPIC ANALYSIS
-Before finalizing the output, you MUST:
-1. Examine each image/page separately and identify its main academic subject
-2. Determine if all pages belong to the same subject area (e.g., all physics, all biology, all history)
-3. If pages contain DIFFERENT academic subjects, note this clearly
-4. State your analysis: "Topic detected: [SUBJECT NAME]" or "Mixed topics detected: [LIST SUBJECTS]"
-
-STEP 3: Format output with clear page separation
-- Use "=== PAGE X ===" markers to separate different images/pages
-- Include your topic analysis in the output
-- Preserve original text structure and formatting
-
-Return your response as a JSON object with this exact structure:
-{
-  "rawText": "=== PAGE 0 ===\\n[text from first image]\\n\\n=== PAGE 1 ===\\n[text from second image]\\n\\n[Topic Analysis: ...]"
-}
-
-VALIDATION CHECK before finalizing:
-- Verify clear page boundaries are maintained
-- Confirm topic analysis is included
-- Ensure no content mixing between different pages
-
-Important: Only return the JSON object with the extracted text. Do not include any additional explanations or notes.`,
-
-
-  // ITERATION 2: Simplified Natural Language Prompt (75% size reduction)
-  getSimplifiedCategoryPrompt: (category: string, grade?: number, language: string = 'en') => {
-    const distribution = EXAM_CONFIG.QUESTION_TYPE_DISTRIBUTION(EXAM_CONFIG.DEFAULT_QUESTION_COUNT)
-    return `Read the educational content and create ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} exam questions.
-
-Use the same language as the source material for all questions and explanations.
-
-Target: Grade ${grade || '5'} students
-Subject: ${category}
-
-Generate varied question types:
-- ${distribution.multiple_choice} multiple choice
-- ${distribution.short_answer} short answer
-- ${distribution.true_false} true/false
-- ${distribution.fill_in_blank} fill-in-blank
-
-Requirements:
-- Questions must sound natural
-- Based only on text content (no image references)
-- Age-appropriate difficulty
-- Clear, simple phrasing
-
-JSON format:
-{
-  "questions": [
-    {
-      "id": 1,
-      "type": "multiple_choice",
-      "question": "question text",
-      "options": ["option A", "option B", "option C", "option D"],
-      "correct_answer": "option A",
-      "explanation": "brief explanation"
-    }
-  ]
-}
-
-Return only JSON.`
-  },
-
   getCategoryAwarePrompt: (category: string, grade?: number, language: string = 'en') => {
-    const categoryDescriptions = {
-      mathematics: 'Mathematics and logic problems',
-      core_academics: 'Science, history, geography, biology, physics, chemistry, environmental studies, or social studies',
-      language_studies: 'Foreign language learning including vocabulary, grammar, translation, and comprehension'
-    }
-
-    return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students.
-
-CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
-
-Avoid:
-- Visual references from the material, like images or page or chapter numbers
-- References to graph, table, diagram, or coordinate systems
-- Something that is factually untrue
-- Something that is impossible to answer without the images
-- Questions that aren't explicitly based on the source material
-
-TARGET: Use the same language as the source material. Subject area: core academics.
-
-TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts in the material.
-
-REQUIRED FORMAT:
-{
-  "questions": [
-    {
-      "id": 1,
-      "type": "multiple_choice",
-      "question": "[Question text in same language as source material]",
-      "options": ["[Option A]", "[Option B]", "[Option C]", "[Option D]"],
-      "correct_answer": "[Exact match from options array]",
-      "explanation": "[Brief explanation in same language]"
-    }
-  ]
-}
-
-IMPORTANT: The correct_answer field must contain the exact text from the options array.`
-  },
-
-  getCategoryAwarePromptWithSummary: (category: string, grade?: number, language: string = 'en') => {
     const categoryDescriptions = {
       mathematics: 'Mathematics and logic problems',
       core_academics: 'Science, history, geography, biology, physics, chemistry, environmental studies, or social studies',
@@ -383,6 +258,171 @@ FORBIDDEN:
 - Fill-in-the-blank or completion questions (use multiple choice instead)
 
 Return ONLY the JSON object, no additional text`
+  },
+
+  getMathPrompt: (grade: number, language: string = 'fi'): string => {
+    const EXAM_QUESTION_COUNT = MATH_EXAM_CONFIG.DEFAULT_QUESTION_COUNT
+
+    return `ROLE: You are an expert mathematics teacher creating exam questions for grade ${grade} students.
+
+CONTEXT: You are analyzing textbook images containing mathematical content. The images may show:
+- Algebraic expressions and equations
+- Rational expressions (fractions with variables)
+- Exponential expressions and powers
+- Geometric problems and measurements
+- Word problems with real-world context
+
+CRITICAL - CONTENT ANALYSIS:
+Before generating questions, analyze the material shown:
+1. **Detect the topic**: Identify the specific mathematical concepts (e.g., "rational expressions", "exponents", "linear equations", "geometry")
+2. **Assess difficulty**: Note the actual complexity level shown in the images
+3. **Identify problem types**: computational, simplification, word problems, conceptual understanding
+
+CRITICAL - DO NOT COPY EXERCISES DIRECTLY:
+The textbook shows sub-exercises labeled (a, b, c, d). DO NOT convert these directly into multiple choice questions.
+Instead, CREATE NEW ORIGINAL questions that test the SAME SKILLS at the SAME DIFFICULTY LEVEL.
+
+FORBIDDEN (poor pedagogy):
+❌ Question: "Calculate $10^1$" with answer "$10^1$" (this is nonsense - answer must be the VALUE)
+❌ Directly copying sub-parts (a, b, c, d) from textbook as separate questions
+❌ Questions where multiple options are correct
+❌ Pure mechanical calculation without understanding
+
+TASK: Generate ${EXAM_QUESTION_COUNT} exam questions following this distribution:
+
+QUESTION TYPE DISTRIBUTION:
+1. Computational questions (6): Ask for NUMERICAL VALUE answers
+   - Example: "Calculate $10^3$" → Answer: "1000" (NOT "$10^3$")
+   - For geometry: "Calculate the sector area..." → Answer: "19.8 cm²"
+
+2. Formula application / Simplification questions (4): **ADAPT TO CONTENT**
+   - For algebra/exponents: "Simplify $a^3 \\\\cdot a^5$" → Answer: "$a^8$" (wrap in $ delimiters)
+   - For division: "Simplify $\\\\frac{b^{12}}{b^4}$" → Options: "$b^8$", "$b^{16}$", "$b^3$", "$\\\\frac{1}{b^8}$"
+   - For geometry: "Apply the sector area formula to find..." → Answer: numerical result
+   - For equations: "Solve for x in..." → Answer: "$x = 5$"
+
+3. Word problems (3): Real-world applications
+   - Population growth, money/interest, technology, scientific notation
+   - For geometry: angle of view, circular arc measurements, practical applications
+   - Must require calculation, not just pattern recognition
+
+4. Conceptual questions (2): Test understanding (adapt to topic)
+   - For exponents: "Why is any number to the power of 0 equal to 1?"
+   - For fractions: "Why must fractions have a common denominator before adding?"
+   - For geometry: "Which formula correctly calculates sector area?" or "Explain the relationship between arc length and central angle"
+
+ANSWER FORMAT RULES:
+- For "Calculate" questions: Options MUST be NUMBERS
+- For "Simplify" questions: Options MUST be SIMPLIFIED expressions
+- Wrong options should represent COMMON STUDENT ERRORS
+
+GOOD DISTRACTORS (represent common student errors):
+Exponents: $(-2)^3 = -8$ → wrong: "8" (forgot sign), "-6" (multiplied not exponentiated)
+Fractions: "$\\\\frac{x}{6} - \\\\frac{5}{3}$" → wrong: "$\\\\frac{x-5}{3}$" (subtracted denominators)
+Geometry: Sector area 19,6 cm² → wrong: 39,2 cm² (forgot sector fraction), 31,4 cm² (confused with arc)
+NOTE: Wrap all \\\\frac, \\\\cdot in $...$
+
+MATHEMATICAL NOTATION:
+- Math mode ($...$) for EXPRESSIONS ONLY, not plain decimals: "8,9 m" not "$8,9 m$"
+- LaTeX commands MUST wrap in $...$: "$\\\\frac{1}{b^8}$" renders, "\\\\frac{1}{b^8}" shows raw code
+- Operators: $\\\\cdot$ (multiply), $\\\\frac{a}{b}$ (fractions), $\\\\alpha$/$\\\\beta$/$\\\\pi$ (Greek), ° (degrees)
+
+JSON ESCAPING: Double all backslashes in JSON strings. Example: LaTeX \\\\frac becomes JSON \\\\\\\\frac which renders as "$\\\\frac{1}{2}$"
+
+OUTPUT FORMAT:
+You MUST respond with valid JSON following this schema:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Clear question with LaTeX notation",
+      "options": [
+        "First option",
+        "Second option",
+        "Third option",
+        "Fourth option"
+      ],
+      "correct_answer": "First option",
+      "explanation": "CONCISE explanation in Finnish (1-3 sentences max) covering why this is correct and common errors"
+    }
+  ],
+  "topic": "Detected mathematics topic",
+  "grade": ${grade}
+}
+
+EXPLANATIONS: Max 3 sentences/500 chars. State formula + ONE example + ONE common error. No repetition/loops. If ambiguity detected, skip to next question.
+
+QUALITY REQUIREMENTS:
+□ Questions test understanding, not just memorization
+□ Mix of computational and conceptual questions
+□ Progressive difficulty (easy → medium → hard)
+□ Each question tests a DIFFERENT skill or concept
+□ Only ONE correct answer per question
+□ correct_answer EXACTLY matches one option
+□ All questions in Finnish (detected from source)
+□ No references to images or page numbers
+□ Clear and unambiguous wording
+
+CRITICAL VALIDATION RULES:
+These errors will cause AUTOMATIC REJECTION - verify before finalizing each question:
+
+❌ FORBIDDEN ERROR 1: Duplicate options
+   - Bad: options = ["$y^{37}$", "$y^{31 \\\\cdot 6}$", "$y^0$", "$y^{37}$"]
+   - Fix: Verify all 4 options are UNIQUE strings
+
+❌ FORBIDDEN ERROR 2: "Closest answer" logic
+   - Bad explanation: "oikea vastaus on 0,25... Koska 0,5 on lähin vastaus, valitaan se"
+   - Fix: If NO option matches your calculation, SKIP the question entirely. NEVER choose "closest"
+
+❌ FORBIDDEN ERROR 3: Wrong formula calculations (STEP-BY-STEP VERIFICATION REQUIRED)
+
+   Geometry sector area: MUST use (angle/360) × π × r²
+   Geometry arc length: MUST use (angle/360) × 2π × r
+
+   CRITICAL: After stating the formula, verify EACH ARITHMETIC STEP:
+
+   ✅ CORRECT EXAMPLE (r=87cm, angle=90°):
+   Formula: (90/360) × π × 87²
+   Step 1: 87² = 7569 ✓
+   Step 2: 90/360 = 0.25 ✓
+   Step 3: 0.25 × π = 0.7854 ✓
+   Step 4: 0.7854 × 7569 = 5944.7 cm² ✓
+
+   ❌ WRONG (this error appears in failed exams):
+   Formula: (90/360) × π × 87² = (1/4) × π × 7569 ≈ 18960 cm² ← INCORRECT ARITHMETIC
+
+   VERIFICATION RULE:
+   Before finalizing ANY geometry answer, manually verify:
+   - For r=87, angle=90°: answer MUST be ~5945 cm² (NOT 18960)
+   - For r=5.3, angle=56°: answer MUST be ~13.7 cm² (NOT 19.8)
+   - If your calculated value is 3× expected, STOP and recalculate
+
+❌ FORBIDDEN ERROR 4: Visual references
+   - Never write: "kuva", "sivu", "taulukko", "kaavio" in questions
+
+SELF-VALIDATION CHECKLIST:
+After generating EACH question, complete this checklist:
+
+□ Step 1: Calculate answer independently and verify it's mathematically correct
+□ Step 2: For geometry sector problems, verify EACH arithmetic step:
+   - Compute r² correctly
+   - Compute angle/360 as decimal
+   - Multiply step-by-step: (angle/360) × π × r²
+   - If r=87 and angle=90°, answer MUST be ~5945, verify this explicitly
+□ Step 3: Verify correct_answer EXACTLY matches one option (character-for-character)
+□ Step 4: Confirm all 4 options are UNIQUE (no duplicates)
+□ Step 5: Ensure ONLY ONE option is mathematically correct
+□ Step 6: Check explanation does NOT contain: "oikea vastaus", "lähin vastaus", "valitaan"
+□ Step 7: Verify no visual references in question text
+□ Step 8: If calculated value seems too large (3×+ expected), RECALCULATE before finalizing
+
+IF ANY VALIDATION FAILS:
+- STOP generation of that question immediately
+- Move to next question
+- DO NOT try to "fix" by choosing wrong answer
+
+Begin generating the pedagogically sound exam now.`
   }
 } as const
 

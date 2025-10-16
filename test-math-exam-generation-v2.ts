@@ -1,5 +1,5 @@
 /**
- * Math Exam Generation Test Script
+ * Math Exam Generation Test Script - V2 (Professional Optimized Prompt)
  * Tests Gemini with math textbook images and generates styled HTML preview
  */
 
@@ -23,170 +23,197 @@ if (!GEMINI_API_KEY) {
   process.exit(1);
 }
 
-// Math-specific exam generation prompt
+// Math-specific exam generation prompt - V2 (Professional Optimized)
 const EXAM_QUESTION_COUNT = 15;
 const grade = 8;
 
-const mathPrompt = `ROLE: You are an expert mathematics teacher creating exam questions for grade ${grade} students.
+const mathPrompt = `# 🧮 ExamGenie – Math Exam Generation (v2)
 
-CONTEXT: You are analyzing textbook images containing mathematical content. The images may show:
+## ROLE
+You are an **expert mathematics teacher** creating *original* exam questions for **Grade ${grade} students** in Finnish.
+Your goal: produce clear, pedagogically sound multiple-choice questions that test true understanding.
+
+---
+
+## CONTEXT
+You are analyzing textbook images showing mathematical material.
+The content may include:
 - Algebraic expressions and equations
 - Rational expressions (fractions with variables)
-- Exponential expressions and powers
-- Geometric problems and measurements
+- Exponents and powers
+- Geometry and measurement
 - Word problems with real-world context
 
-CRITICAL - CONTENT ANALYSIS:
-Before generating questions, analyze the material shown:
-1. **Detect the topic**: Identify the specific mathematical concepts (e.g., "rational expressions", "exponents", "linear equations", "geometry")
-2. **Assess difficulty**: Note the actual complexity level shown in the images
-3. **Identify problem types**: computational, simplification, word problems, conceptual understanding
+---
 
-CRITICAL - DO NOT COPY EXERCISES DIRECTLY:
-The textbook shows sub-exercises labeled (a, b, c, d). DO NOT convert these directly into multiple choice questions.
-Instead, CREATE NEW ORIGINAL questions that test the SAME SKILLS at the SAME DIFFICULTY LEVEL.
+## 🧠 STAGE 1 – Content Analysis
+Before creating questions, perform an **internal analysis** of the images.
 
-FORBIDDEN (poor pedagogy):
-❌ Question: "Calculate $10^1$" with answer "$10^1$" (this is nonsense - answer must be the VALUE)
-❌ Directly copying sub-parts (a, b, c, d) from textbook as separate questions
-❌ Questions where multiple options are correct
-❌ Pure mechanical calculation without understanding
+1. **Detect topic:** Identify the specific mathematical area (e.g. "rational expressions", "exponents", "geometry").
+2. **Assess difficulty:** Estimate the real difficulty level (easy / medium / hard).
+3. **Identify problem type:** computational / simplification / word / conceptual.
+4. **Remember:** *You are not copying exercises*, only understanding what they teach.
 
-TASK: Generate ${EXAM_QUESTION_COUNT} exam questions following this distribution:
+---
 
-QUESTION TYPE DISTRIBUTION:
-1. Computational questions (6): Ask for NUMERICAL VALUE answers
-   - Example: "Calculate $10^3$" → Answer: "1000" (NOT "$10^3$")
-   - For geometry: "Calculate the sector area..." → Answer: "19.8 cm²"
+## 🚫 DO NOT COPY
+Never reproduce textbook sub-exercises (a, b, c, d).
+Instead, **create new, original questions** testing the *same skill at the same difficulty*.
 
-2. Formula application / Simplification questions (4): **ADAPT TO CONTENT**
-   - For algebra/exponents: "Simplify $a^3 \\\\cdot a^5$" → Answer: "$a^8$" (wrap in $ delimiters)
-   - For division: "Simplify $\\\\frac{b^{12}}{b^4}$" → Options: "$b^8$", "$b^{16}$", "$b^3$", "$\\\\frac{1}{b^8}$"
-   - For geometry: "Apply the sector area formula to find..." → Answer: numerical result
-   - For equations: "Solve for x in..." → Answer: "$x = 5$"
+**Avoid:**
+- Purely mechanical calculations with no reasoning
+- Multiple-correct-answer items
+- Questions where formula syntax equals the answer (e.g. "Calculate $10^1$")
 
-3. Word problems (3): Real-world applications
-   - Population growth, money/interest, technology, scientific notation
-   - For geometry: angle of view, circular arc measurements, practical applications
-   - Must require calculation, not just pattern recognition
+---
 
-4. Conceptual questions (2): Test understanding (adapt to topic)
-   - For exponents: "Why is any number to the power of 0 equal to 1?"
-   - For fractions: "Why must fractions have a common denominator before adding?"
-   - For geometry: "Which formula correctly calculates sector area?" or "Explain the relationship between arc length and central angle"
+## 🧩 STAGE 2 – Question Generation
+Produce **${EXAM_QUESTION_COUNT} questions total** in these categories:
 
-ANSWER FORMAT RULES:
-- For "Calculate" questions: Options MUST be NUMBERS
-- For "Simplify" questions: Options MUST be SIMPLIFIED expressions
-- Wrong options should represent COMMON STUDENT ERRORS
+| Type | Count | Purpose | Example |
+|------|--------|----------|---------|
+| **Computational** | 6 | Pure numerical calculation | "Laske $10^3$ → 1000" |
+| **Formula/Simplification** | 4 | Apply or simplify correctly | "Yksinkertaista $\\\\frac{b^{12}}{b^4}$ → $b^8$" |
+| **Word Problems** | 3 | Realistic numeric applications | Money, growth, geometry, etc. |
+| **Conceptual** | 2 | Reasoning or understanding | "Miksi $a^0 = 1$?" |
 
-GOOD DISTRACTORS (represent common student errors):
-Exponents: $(-2)^3 = -8$ → wrong: "8" (forgot sign), "-6" (multiplied not exponentiated)
-Fractions: "$\\\\frac{x}{6} - \\\\frac{5}{3}$" → wrong: "$\\\\frac{x-5}{3}$" (subtracted denominators)
-Geometry: Sector area 19,6 cm² → wrong: 39,2 cm² (forgot sector fraction), 31,4 cm² (confused with arc)
-NOTE: Wrap all \\\\frac, \\\\cdot in $...$
+**Within each category:**
+- Vary sentence structure and examples.
+- Do not start every explanation with the same phrase.
+- Use different everyday contexts when possible.
 
-MATHEMATICAL NOTATION:
-- Math mode ($...$) for EXPRESSIONS ONLY, not plain decimals: "8,9 m" not "$8,9 m$"
-- LaTeX commands MUST wrap in $...$: "$\\\\frac{1}{b^8}$" renders, "\\\\frac{1}{b^8}" shows raw code
-- Operators: $\\\\cdot$ (multiply), $\\\\frac{a}{b}$ (fractions), $\\\\alpha$/$\\\\beta$/$\\\\pi$ (Greek), ° (degrees)
+---
 
-JSON ESCAPING: Double all backslashes in JSON strings. Example: LaTeX \\\\frac becomes JSON \\\\\\\\frac which renders as "$\\\\frac{1}{2}$"
+## ✍️ FORMATTING RULES
 
-OUTPUT FORMAT:
-You MUST respond with valid JSON following this schema:
+### Mathematical Notation
+- Use \`$...$\` only for mathematical expressions.
+- Plain numbers and units stay outside math mode (e.g. \`8,9 m\`).
+- LaTeX rules:
+  - \`$\\\\cdot$\` for multiplication
+  - \`$\\\\frac{a}{b}$\` for fractions
+  - \`$\\\\pi$\`, \`$\\\\alpha$\`, \`$\\\\beta$\` for Greek letters
+  - \`°\` for degrees
+- In JSON strings, **escape backslashes twice** (\`\\\\frac\` → \`\\\\\\\\frac\`).
+
+---
+
+## 🎯 ANSWER & DISTRACTOR DESIGN
+
+- "Calculate" → numeric options
+- "Simplify" → simplified expressions
+- Only **one correct option**
+- Wrong options = *common student errors*
+
+**Examples**
+- Exponents: \`$(-2)^3 = -8$\` → wrong "8", "−6"
+- Fractions: \`$\\\\frac{x}{6} - \\\\frac{5}{3}$\` → wrong \`$\\\\frac{x-5}{3}$\`
+- Geometry: forgetting to divide by 360 or using the wrong formula
+
+---
+
+## 🧩 EXPLANATIONS
+Each explanation = **1–3 sentences / max 500 chars**.
+Structure every explanation as:
+
+> Formula + one short example + one common error
+
+Add stylistic variation (e.g., "Tässä käytetään…", "Oikea kaava on…", "Yleinen virhe on…").
+
+If ambiguity or uncertainty is detected → **skip that question**.
+
+---
+
+## ✅ OUTPUT FORMAT
+
+Return **valid JSON**:
+
+\`\`\`json
 {
   "questions": [
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "Clear question with LaTeX notation",
+      "question": "Selkeä kysymys LaTeX-notaatiolla",
       "options": [
-        "First option",
-        "Second option",
-        "Third option",
-        "Fourth option"
+        "Ensimmäinen vaihtoehto",
+        "Toinen vaihtoehto",
+        "Kolmas vaihtoehto",
+        "Neljäs vaihtoehto"
       ],
-      "correct_answer": "First option",
-      "explanation": "CONCISE explanation in Finnish (1-3 sentences max) covering why this is correct and common errors"
+      "correct_answer": "Ensimmäinen vaihtoehto",
+      "explanation": "Tiivis selitys suomeksi (1–3 virkettä)."
     }
   ],
-  "topic": "Detected mathematics topic",
+  "topic": "Havaittu aihe",
   "grade": ${grade}
 }
+\`\`\`
 
-EXPLANATIONS: Max 3 sentences/500 chars. State formula + ONE example + ONE common error. No repetition/loops. If ambiguity detected, skip to next question.
+---
 
-QUALITY REQUIREMENTS:
-□ Questions test understanding, not just memorization
-□ Mix of computational and conceptual questions
-□ Progressive difficulty (easy → medium → hard)
-□ Each question tests a DIFFERENT skill or concept
-□ Only ONE correct answer per question
-□ correct_answer EXACTLY matches one option
-□ All questions in Finnish (detected from source)
-□ No references to images or page numbers
-□ Clear and unambiguous wording
+## 🔍 VALIDATION & QUALITY CHECKLIST
 
-CRITICAL VALIDATION RULES:
-These errors will cause AUTOMATIC REJECTION - verify before finalizing each question:
+| Rule | Description |
+|------|--------------|
+| ✅ Unique options | No duplicates in the list |
+| ✅ Single correct answer | One option only |
+| ✅ Mathematically valid | Verify each step |
+| ✅ No visual references | Don't mention "kuva", "sivu", "taulukko" |
+| ✅ Progressive difficulty | Mix of easy → medium → hard |
+| ✅ Finnish language | All text and explanations in Finnish |
 
-❌ FORBIDDEN ERROR 1: Duplicate options
-   - Bad: options = ["$y^{37}$", "$y^{31 \\\\cdot 6}$", "$y^0$", "$y^{37}$"]
-   - Fix: Verify all 4 options are UNIQUE strings
+---
 
-❌ FORBIDDEN ERROR 2: "Closest answer" logic
-   - Bad explanation: "oikea vastaus on 0,25... Koska 0,5 on lähin vastaus, valitaan se"
-   - Fix: If NO option matches your calculation, SKIP the question entirely. NEVER choose "closest"
+## 🧮 GEOMETRY VERIFICATION EXAMPLES
 
-❌ FORBIDDEN ERROR 3: Wrong formula calculations (STEP-BY-STEP VERIFICATION REQUIRED)
+For sector area problems, **manually confirm steps**:
 
-   Geometry sector area: MUST use (angle/360) × π × r²
-   Geometry arc length: MUST use (angle/360) × 2π × r
+\`\`\`
+Formula: (angle/360) × π × r²
+Example: r = 87 cm, angle = 90°
+Step 1: 87² = 7569
+Step 2: 90/360 = 0.25
+Step 3: 0.25 × π = 0.7854
+Step 4: 0.7854 × 7569 = 5944.7 cm² ✅
+\`\`\`
+If the final value deviates > 3× expected → **recalculate**.
 
-   CRITICAL: After stating the formula, verify EACH ARITHMETIC STEP:
+---
 
-   ✅ CORRECT EXAMPLE (r=87cm, angle=90°):
-   Formula: (90/360) × π × 87²
-   Step 1: 87² = 7569 ✓
-   Step 2: 90/360 = 0.25 ✓
-   Step 3: 0.25 × π = 0.7854 ✓
-   Step 4: 0.7854 × 7569 = 5944.7 cm² ✓
+## 🧠 SELF-CHECK AFTER EACH QUESTION
+- [ ] Computation verified independently
+- [ ] One correct answer, three distractors
+- [ ] Explanation under 500 chars
+- [ ] No repetition in wording
+- [ ] No "closest answer" logic
+- [ ] No visual references
+- [ ] JSON syntax valid
 
-   ❌ WRONG (this error appears in failed exams):
-   Formula: (90/360) × π × 87² = (1/4) × π × 7569 ≈ 18960 cm² ← INCORRECT ARITHMETIC
+---
 
-   VERIFICATION RULE:
-   Before finalizing ANY geometry answer, manually verify:
-   - For r=87, angle=90°: answer MUST be ~5945 cm² (NOT 18960)
-   - For r=5.3, angle=56°: answer MUST be ~13.7 cm² (NOT 19.8)
-   - If your calculated value is 3× expected, STOP and recalculate
+## 🧩 FAIL-SAFE RULES
+If any validation step fails:
+- Stop generating that question.
+- Skip and move to the next one.
+- Never adjust by choosing an incorrect answer.
 
-❌ FORBIDDEN ERROR 4: Visual references
-   - Never write: "kuva", "sivu", "taulukko", "kaavio" in questions
+---
 
-SELF-VALIDATION CHECKLIST:
-After generating EACH question, complete this checklist:
+## 🪄 STYLE VARIATION HINT (Prevents Repetition)
+Use alternating phrasing in Finnish explanations and questions:
+- "Tässä käytetään kaavaa…"
+- "Sovelletaan periaatetta…"
+- "Koska kulma on puolet täyskulmasta…"
+- "Tyypillinen virhe on unohtaa…"
 
-□ Step 1: Calculate answer independently and verify it's mathematically correct
-□ Step 2: For geometry sector problems, verify EACH arithmetic step:
-   - Compute r² correctly
-   - Compute angle/360 as decimal
-   - Multiply step-by-step: (angle/360) × π × r²
-   - If r=87 and angle=90°, answer MUST be ~5945, verify this explicitly
-□ Step 3: Verify correct_answer EXACTLY matches one option (character-for-character)
-□ Step 4: Confirm all 4 options are UNIQUE (no duplicates)
-□ Step 5: Ensure ONLY ONE option is mathematically correct
-□ Step 6: Check explanation does NOT contain: "oikea vastaus", "lähin vastaus", "valitaan"
-□ Step 7: Verify no visual references in question text
-□ Step 8: If calculated value seems too large (3×+ expected), RECALCULATE before finalizing
+This stylistic diversity prevents loop behavior and keeps the model stable even at low temperatures.
 
-IF ANY VALIDATION FAILS:
-- STOP generation of that question immediately
-- Move to next question
-- DO NOT try to "fix" by choosing wrong answer
+---
 
-Begin generating the pedagogically sound exam now.`;
+## 🔚 FINAL INSTRUCTION
+Generate the **complete ${EXAM_QUESTION_COUNT}-question JSON output** now, strictly following all schema and validation rules,
+while maintaining **variation in structure, tone, and phrasing** between questions.`;
 
 interface MathQuestion {
   id: number;
@@ -239,7 +266,7 @@ function detectInfiniteLoop(text: string): boolean {
 }
 
 async function testMathExamGeneration() {
-  console.log('🔧 Initializing Gemini API for math exam generation...');
+  console.log('🔧 Initializing Gemini API for math exam generation (V2)...');
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY!);
 
   // Load math textbook image (from CLI argument or default)
@@ -248,7 +275,7 @@ async function testMathExamGeneration() {
 
   if (!fs.existsSync(imagePath)) {
     console.error(`❌ Test image not found: ${imagePath}`);
-    console.error(`Usage: npx tsx test-math-exam-generation.ts [image-filename]`);
+    console.error(`Usage: npx tsx test-math-exam-generation-v2.ts [image-filename]`);
     process.exit(1);
   }
 
@@ -263,7 +290,7 @@ async function testMathExamGeneration() {
     }
   };
 
-  console.log('\n📝 Math Exam Prompt:');
+  console.log('\n📝 Math Exam Prompt (V2 - Professional Optimized):');
   console.log('─'.repeat(80));
   console.log(mathPrompt);
   console.log('─'.repeat(80));
@@ -305,7 +332,7 @@ async function testMathExamGeneration() {
           console.log(`🔄 Retrying with temperature ${temperatures[attempt + 1]}...`);
           continue;
         } else {
-          fs.writeFileSync('debug-response.txt', text);
+          fs.writeFileSync('debug-response-v2.txt', text);
           throw new Error('All retry attempts failed due to infinite loops');
         }
       }
@@ -327,8 +354,8 @@ async function testMathExamGeneration() {
           continue;
         }
         // Save debug on final failure
-        console.log('\n⚠️  Saving full response to debug-response.txt for inspection...');
-        fs.writeFileSync('debug-response.txt', text);
+        console.log('\n⚠️  Saving full response to debug-response-v2.txt for inspection...');
+        fs.writeFileSync('debug-response-v2.txt', text);
         console.log('✅ Debug file saved');
         throw new Error('Failed to parse JSON after all attempts');
       }
@@ -356,10 +383,10 @@ async function testMathExamGeneration() {
     const stats = validateMathQuestions(parsed.questions);
     printStatistics(stats);
 
-    // Generate output filenames based on input image
+    // Generate output filenames based on input image with v2 suffix
     const baseName = path.basename(imagePath, path.extname(imagePath));
-    const htmlFileName = `math-exam-preview-${baseName}-optimized.html`;
-    const jsonFileName = `math-exam-output-${baseName}-optimized.json`;
+    const htmlFileName = `math-exam-preview-${baseName}-v2.html`;
+    const jsonFileName = `math-exam-output-${baseName}-v2.json`;
 
     // Generate HTML preview
     const htmlContent = generateHTML(parsed);
@@ -489,7 +516,7 @@ function generateHTML(examData: MathExamResponse): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Math Exam Preview - ExamGenie</title>
+  <title>Math Exam Preview V2 - ExamGenie</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
@@ -686,14 +713,14 @@ function generateHTML(examData: MathExamResponse): string {
   <div class="header">
     <h1>
       <span class="logo">🎓</span>
-      ExamGenie - Matematiikan Koe
+      ExamGenie - Matematiikan Koe (V2)
     </h1>
   </div>
 
   ${questionsHTML}
 
   <div class="footer">
-    Generated by ExamGenie Math Exam Test Script<br>
+    Generated by ExamGenie Math Exam Test Script V2 (Professional Optimized Prompt)<br>
     Topic: ${examData.topic || 'Mathematics'} | Grade: ${examData.grade || 8}
   </div>
 

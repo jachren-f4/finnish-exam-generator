@@ -2,14 +2,15 @@ import { v4 as uuidv4 } from 'uuid'
 import { FileProcessor, ProcessedFile } from '../utils/file-handler'
 import { OperationTimer } from '../utils/performance-logger'
 import { SupabaseStorageManager } from '../storage'
-import { PROMPTS } from '../config'
-import { processImagesWithGemini } from '../gemini'
+import { PROMPTS, GEMINI_CONFIG, getGeminiApiKey } from '../config'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 // Import ExamGenie services instead of old exam service
 import { supabaseAdmin } from '../supabase'
 import { PromptLogger, ImageReference } from '../utils/prompt-logger'
 import { shuffleQuestionsOptions, getShuffleStats } from '../utils/question-shuffler'
 import { getConfiguredProviderType } from './ai-providers/provider-factory'
 import { MathExamService } from './math-exam-service'
+import { createUsageMetadata } from '../utils/cost-calculator'
 
 export interface MobileApiRequest {
   images: File[]
@@ -149,65 +150,15 @@ export class MobileApiService {
 
   /**
    * Handle diagnostic mode processing if enabled
+   * NOTE: Diagnostic mode is disabled in config (DIAGNOSTIC_MODE_ENABLED: false)
+   * This method always returns undefined
    */
   private static async handleDiagnosticMode(
     fileMetadataList: any[],
     timer: OperationTimer
   ): Promise<DiagnosticData | undefined> {
-    const diagnosticModeEnabled = SupabaseStorageManager.isDiagnosticModeEnabled()
-    
-    if (!diagnosticModeEnabled) {
-      return undefined
-    }
-
-    console.log('=== DIAGNOSTIC MODE ENABLED ===')
-    const diagnosticStartTime = Date.now()
-    let diagnosticImageUrls: string[] = []
-    let rawOcrText: string = ''
-
-    try {
-      const examId = uuidv4()
-      console.log('Generated exam ID for diagnostic:', examId)
-
-      // Note: Diagnostic image uploads are disabled to save storage costs
-      console.log('Diagnostic image uploads disabled - keeping OCR text only')
-
-      // Extract raw OCR text separately
-      const fs = require('fs').promises
-      const path = require('path')
-      const imageParts = []
-      
-      for (const fileMetadata of fileMetadataList) {
-        const filePath = path.join('/tmp', `${fileMetadata.id}${path.extname(fileMetadata.filename)}`)
-        const buffer = await fs.readFile(filePath)
-        const base64Data = buffer.toString('base64')
-        
-        imageParts.push({
-          inlineData: {
-            data: base64Data,
-            mimeType: fileMetadata.mimeType
-          }
-        })
-      }
-      
-      const { extractRawTextFromImages } = await import('../gemini')
-      const ocrResult = await extractRawTextFromImages(imageParts)
-      rawOcrText = ocrResult.rawText
-      
-      console.log('Raw OCR text length:', rawOcrText.length)
-      console.log('Raw OCR preview:', rawOcrText.substring(0, 300))
-      console.log(`⏱️  [TIMER] Diagnostic processing: ${Date.now() - diagnosticStartTime}ms`)
-      
-      return {
-        imageUrls: diagnosticImageUrls,
-        rawOcrText,
-        diagnosticEnabled: true
-      }
-      
-    } catch (diagnosticError) {
-      console.error('Diagnostic mode error:', diagnosticError)
-      return undefined
-    }
+    // Diagnostic mode is permanently disabled
+    return undefined
   }
 
   /**
@@ -332,13 +283,13 @@ export class MobileApiService {
           promptToUse = PROMPTS.getLanguageStudiesPrompt(grade, language)
           promptType = `LANGUAGE_STUDIES(grade-${grade || 'auto'}, student-lang-${language})`
         } else {
-          promptToUse = PROMPTS.getCategoryAwarePromptWithSummary(category, grade, language)
-          promptType = `CATEGORY_AWARE_WITH_SUMMARY(${category}, grade-${grade || 'auto'}, lang-${language})`
+          promptToUse = PROMPTS.getCategoryAwarePrompt(category, grade, language)
+          promptType = `CATEGORY_AWARE_PROMPT(${category}, grade-${grade || 'auto'}, lang-${language})`
         }
       } else {
         // Always use category-aware prompt with summary and core_academics as default
-        promptToUse = PROMPTS.getCategoryAwarePromptWithSummary('core_academics', grade, language)
-        promptType = `CATEGORY_AWARE_WITH_SUMMARY(core_academics, grade-${grade || 'auto'}, lang-${language})`
+        promptToUse = PROMPTS.getCategoryAwarePrompt('core_academics', grade, language)
+        promptType = `CATEGORY_AWARE_PROMPT(core_academics, grade-${grade || 'auto'}, lang-${language})`
       }
 
       console.log('Using prompt type:', promptType)
@@ -349,26 +300,58 @@ export class MobileApiService {
       console.log('=== END PROMPT ===')
       console.log('Prompt length:', promptToUse.length, 'characters')
 
-      // Note: File logging disabled - prompts are now saved to database (generation_prompt field)
-      // Legacy logPromptToFile() call removed to prevent filesystem errors on Vercel
-
       console.log('Starting Gemini processing...')
-      console.log('=== USING LEGACY MODE ===')
       const geminiStartTime = Date.now()
       console.log(`⏱️  [TIMER] Gemini processing started with prompt length: ${promptToUse.length} chars`)
 
-      // Use legacy processing method
-      const geminiResults = await processImagesWithGemini(fileMetadataList, promptToUse)
-      const result = geminiResults[0] // Take first result since we process all images together
+      // Load images from temporary files and prepare for Gemini API
+      const fs = require('fs').promises
+      const path = require('path')
+      const imageParts = []
+
+      for (const fileMetadata of fileMetadataList) {
+        const filePath = path.join('/tmp', `${fileMetadata.id}${path.extname(fileMetadata.filename)}`)
+        const buffer = await fs.readFile(filePath)
+        const base64Data = buffer.toString('base64')
+
+        imageParts.push({
+          inlineData: {
+            data: base64Data,
+            mimeType: fileMetadata.mimeType
+          }
+        })
+      }
+
+      // Call Gemini API directly
+      const genAI = new GoogleGenerativeAI(getGeminiApiKey())
+      const model = genAI.getGenerativeModel({
+        model: GEMINI_CONFIG.MODEL_NAME,
+        generationConfig: GEMINI_CONFIG.GENERATION_CONFIG
+      })
+
+      const result = await model.generateContent([promptToUse, ...imageParts])
+      const response = result.response
+      const text = response.text()
+      const usageMetadata = response.usageMetadata
 
       const geminiEndTime = Date.now()
       const geminiProcessingTime = geminiEndTime - geminiStartTime
+
+      // Create usage metadata for cost tracking
+      const usage = createUsageMetadata(promptToUse, text, usageMetadata)
+
       console.log(`⏱️  [TIMER] Gemini processing completed: ${geminiProcessingTime}ms`)
-      console.log(`⏱️  [TIMER] Gemini tokens - Input: ${result.geminiUsage?.promptTokenCount}, Output: ${result.geminiUsage?.candidatesTokenCount}, Cost: $${result.geminiUsage?.estimatedCost?.toFixed(6)}`)
+      console.log(`⏱️  [TIMER] Gemini tokens - Input: ${usage.promptTokenCount}, Output: ${usage.candidatesTokenCount}, Cost: $${usage.estimatedCost.toFixed(6)}`)
+
+      // Format result in expected structure
+      const formattedResult = {
+        rawText: text,
+        geminiUsage: usage
+      }
 
       return {
         success: true,
-        data: result,
+        data: formattedResult,
         processingTime: geminiProcessingTime,
         promptUsed: promptToUse
       }

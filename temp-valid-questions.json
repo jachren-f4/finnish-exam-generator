@@ -1,0 +1,171 @@
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Laske $10^1$.",
+      "options": [
+        "10",
+        "1",
+        "0,1",
+        "0,01"
+      ],
+      "correct_answer": "10",
+      "explanation": "Potenssiin korotus tarkoittaa luvun kertomista itsellään. $10^1$ tarkoittaa 10 kerrottuna itsellään kerran, eli 10. Yleinen virhe on sekoittaa potenssiin korotus ja eksponentti."
+    },
+    {
+      "id": 2,
+      "type": "multiple_choice",
+      "question": "Laske $(-13)^0$.",
+      "options": [
+        "1",
+        "-13",
+        "0",
+        "13"
+      ],
+      "correct_answer": "1",
+      "explanation": "Mikä tahansa luku (paitsi 0) potenssiin 0 on aina 1. Tämä johtuu potenssien jakolaskusäännöstä. Yleinen virhe on ajatella, että vastaus olisi 0 tai itse luku."
+    },
+    {
+      "id": 3,
+      "type": "multiple_choice",
+      "question": "Laske $7^{-2}$.",
+      "options": [
+        "49",
+        "14",
+        "$\\frac{1}{49}$",
+        "$\\frac{1}{14}$"
+      ],
+      "correct_answer": "$\\frac{1}{49}$",
+      "explanation": "Negatiivinen eksponentti tarkoittaa käänteislukua. $a^{-n} = \\frac{1}{a^n}$. Tässä tapauksessa $7^{-2} = \\frac{1}{7^2} = \\frac{1}{49}$. Yleinen virhe on laskea $7 \\cdot (-2)$ tai unohtaa murtolauseke."
+    },
+    {
+      "id": 4,
+      "type": "multiple_choice",
+      "question": "Laske $9^0 + 9^1$.",
+      "options": [
+        "10",
+        "18",
+        "9",
+        "1"
+      ],
+      "correct_answer": "10",
+      "explanation": "Potenssiin 0 korotettu luku on 1 ja potenssiin 1 korotettu luku on luku itse. Siksi $9^0 + 9^1 = 1 + 9 = 10$. Yleinen virhe on laskea $9^1$ väärin tai unohtaa $9^0$ olevan 1."
+    },
+    {
+      "id": 5,
+      "type": "multiple_choice",
+      "question": "Laske $\\frac{5^0}{5^2}$.",
+      "options": [
+        "1",
+        "$\\frac{1}{25}$",
+        "0",
+        "25"
+      ],
+      "correct_answer": "$\\frac{1}{25}$",
+      "explanation": "Potenssiin 0 korotettu luku on 1. Siksi lauseke on $\\frac{1}{5^2} = \\frac{1}{25}$. Yleinen virhe on ajatella, että koko lauseke olisi 0, koska osoittajassa on $5^0$."
+    },
+    {
+      "id": 6,
+      "type": "multiple_choice",
+      "question": "Laske $\\left(\\frac{4}{7}\\right)^{-2}$.",
+      "options": [
+        "$\\frac{16}{49}$",
+        "$\\frac{49}{16}$",
+        "$\\frac{8}{14}$",
+        "$\\frac{14}{8}$"
+      ],
+      "correct_answer": "$\\frac{49}{16}$",
+      "explanation": "Negatiivinen eksponentti tarkoittaa käänteislukua. $\\left(\\frac{a}{b}\\right)^{-n} = \\left(\\frac{b}{a}\\right)^{n}$. Tässä tapauksessa $\\left(\\frac{4}{7}\\right)^{-2} = \\left(\\frac{7}{4}\\right)^{2} = \\frac{7^2}{4^2} = \\frac{49}{16}$. Yleinen virhe on unohtaa kääntää murtoluku tai laskea eksponentti väärin."
+    },
+    {
+      "id": 7,
+      "type": "multiple_choice",
+      "question": "Sievennä $k^{-1} \\cdot k^{-5}$.",
+      "options": [
+        "$k^{-6}$",
+        "$k^5$",
+        "$k^{-4}$",
+        "$\\frac{1}{k^6}$"
+      ],
+      "correct_answer": "$k^{-6}$",
+      "explanation": "Kun kerrotaan saman kantaluvun potensseja, eksponentit lasketaan yhteen: $a^m \\cdot a^n = a^{m+n}$. Tässä tapauksessa $k^{-1} \\cdot k^{-5} = k^{-1+(-5)} = k^{-6}$. Yleinen virhe on kertoa eksponentit tai laskea ne väärin yhteen."
+    },
+    {
+      "id": 8,
+      "type": "multiple_choice",
+      "question": "Sievennä $\\frac{x^{27}}{x^{29}}$.",
+      "options": [
+        "$x^2$",
+        "$x^{-2}$",
+        "$\\frac{1}{x^2}$",
+        "$\\frac{1}{x^{-2}}$"
+      ],
+      "correct_answer": "$\\frac{1}{x^2}$",
+      "explanation": "Kun jaetaan saman kantaluvun potensseja, eksponentit vähennetään: $\\frac{a^m}{a^n} = a^{m-n}$. Tässä tapauksessa $\\frac{x^{27}}{x^{29}} = x^{27-29} = x^{-2}$. Koska negatiivinen eksponentti tarkoittaa käänteislukua, $x^{-2} = \\frac{1}{x^2}$. Yleinen virhe on vähentää eksponentit väärässä järjestyksessä tai unohtaa muuttaa negatiivinen eksponentti murtolausekkeeksi."
+    },
+    {
+      "id": 9,
+      "type": "multiple_choice",
+      "question": "Sievennä $a^3 \\cdot a^9$.",
+      "options": [
+        "$a^{27}$",
+        "$a^{12}$",
+        "$a^6$",
+        "$a^3$"
+      ],
+      "correct_answer": "$a^{12}$",
+      "explanation": "Kun kerrotaan saman kantaluvun potensseja, eksponentit lasketaan yhteen: $a^m \\cdot a^n = a^{m+n}$. Tässä tapauksessa $a^3 \\cdot a^9 = a^{3+9} = a^{12}$. Yleinen virhe on kertoa eksponentit sen sijaan, että ne laskettaisiin yhteen."
+    },
+    {
+      "id": 10,
+      "type": "multiple_choice",
+      "question": "Sievennä $\\frac{a^{17}}{a^9}$.",
+      "options": [
+        "$a^8$",
+        "$a^{17/9}$",
+        "$a^2$",
+        "$\\frac{1}{a^8}$"
+      ],
+      "correct_answer": "$a^8$",
+      "explanation": "Kun jaetaan saman kantaluvun potensseja, eksponentit vähennetään: $\\frac{a^m}{a^n} = a^{m-n}$. Tässä tapauksessa $\\frac{a^{17}}{a^9} = a^{17-9} = a^8$. Yleinen virhe on vähentää eksponentit väärässä järjestyksessä tai sekoittaa jakolasku kertolaskuun."
+    },
+    {
+      "id": 11,
+      "type": "multiple_choice",
+      "question": "Sievennä $y^0 \\cdot y^{31} \\cdot y^6$.",
+      "options": [
+        "$y^{37}$",
+        "$y^{31}$",
+        "$y^{25}$",
+        "$y^0$"
+      ],
+      "correct_answer": "$y^{37}$",
+      "explanation": "Kun kerrotaan saman kantaluvun potensseja, eksponentit lasketaan yhteen: $a^m \\cdot a^n = a^{m+n}$. Muista, että $y^0 = 1$. Tässä tapauksessa $y^0 \\cdot y^{31} \\cdot y^6 = 1 \\cdot y^{31} \\cdot y^6 = y^{31+6} = y^{37}$. Yleinen virhe on unohtaa, että $y^0=1$ tai laskea eksponentit väärin yhteen."
+    },
+    {
+      "id": 12,
+      "type": "multiple_choice",
+      "question": "Sievennä $\\frac{a^6 \\cdot a^3}{a^7}$.",
+      "options": [
+        "$a^2$",
+        "$a^3$",
+        "$a^1$",
+        "$a^0$"
+      ],
+      "correct_answer": "$a^2$",
+      "explanation": "Käytä potenssien kertolasku- ja jakolaskusääntöjä. Ensiksi kerrotaan osoittajassa olevat potenssit: $a^6 \\cdot a^3 = a^{6+3} = a^9$. Sitten jaetaan: $\\frac{a^9}{a^7} = a^{9-7} = a^2$. Yleinen virhe on laskea eksponentit väärin tai sekoittaa kertolasku ja jakolasku."
+    },
+    {
+      "id": 13,
+      "type": "multiple_choice",
+      "question": "Muodosta potensseista lauseke, joka on sievennettynä $a^5$.",
+      "options": [
+        "$a^{16}$",
+        "$a^{-1}$",
+        "$a^3 \\cdot a^2$",
+        "$a^8 \\div a^3$"
+      ],
+      "correct_answer": "$a^8 \\div a^3$",
+  ],
+  "topic": "Potenssilaskut",
+  "grade": 8
+}
