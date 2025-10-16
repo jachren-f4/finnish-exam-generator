@@ -79,7 +79,7 @@ export async function POST(
       )
     }
 
-    const baseUrl = 'https://exam-generator.vercel.app'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://examgenie.app'
 
     return ApiResponseBuilder.success({
       success: true,

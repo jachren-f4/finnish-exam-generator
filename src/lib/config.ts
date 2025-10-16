@@ -93,7 +93,7 @@ export const GRADING_CONFIG = {
 
 // Application URLs
 export const APP_CONFIG = {
-  BASE_URL: 'https://exam-generator.vercel.app',
+  BASE_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://examgenie.app',
   ENDPOINTS: {
     EXAM: (id: string) => `/exam/${id}`,
     GRADING: (id: string) => `/grading/${id}`,
