@@ -201,25 +201,12 @@ curl -X POST https://exam-generator-staging.vercel.app/api/mobile/exam-questions
 
 ### Flutter Mobile App Usage
 
-**Actual Parameters Sent by Production Flutter App (v1.0.20+):**
+**Key Parameters:**
+- `images` (1-10 compressed photos), `student_id` (required for rate limiting)
+- `category` - Routes to correct service: `"mathematics"` triggers LaTeX support, others use standard prompts
+- `subject`, `language` - Stored but not used in generation (Gemini auto-detects language)
 
-| Parameter | Value | Always Sent? | Notes |
-|-----------|-------|--------------|-------|
-| `images` | 1-10 compressed photos | ✅ Yes | JPG format, compressed |
-| `student_id` | User's Supabase auth ID | ✅ Yes | For rate limiting & ownership |
-| `language` | `"fi"` | ✅ Yes | Hardcoded, but backend ignores (uses Gemini auto-detect) |
-| `grade` | `"5"` | ✅ Yes | Hardcoded to grade 5 (peruskoulu) |
-| `subject` | Finnish name | ⚠️ Conditional | e.g., "Matematiikka", "Biologia" - stored in DB but not used in prompts |
-| `category` | `"mathematics"` or `null` | ⚠️ Conditional | Only set for Math, defaults to `"core_academics"` |
-| `prompt` | Custom text | ❌ No | Not currently used (no UI for custom prompts) |
-
-**Key Behaviors:**
-- **Mathematics Routing:** When subject is "Matematiikka", app sends `category: "mathematics"` → triggers specialized Math Service with LaTeX
-- **All Other Subjects:** App sends `category: null` → backend defaults to `"core_academics"` → standard prompt
-- **Language Detection:** App always sends `language: "fi"`, but backend relies on Gemini auto-detection from image content (works for any language textbook)
-- **Grade Level:** Currently fixed at grade 5, regardless of actual student grade
-
-**📚 Full API Documentation:** See `/docs/api/` directory
+**📚 Full API Documentation:** See `/docs/api/` directory for complete parameter details
 
 ## Key Features
 
@@ -271,19 +258,14 @@ curl -X POST https://exam-generator-staging.vercel.app/api/mobile/exam-questions
 
 #### How Math Exams Differ from Core Studies
 
-| Aspect | Mathematics (`category=mathematics`) | Core Studies (`category=core_academics`) |
-|--------|--------------------------------------|------------------------------------------|
-| **Service** | Specialized `math-exam-service.ts` | Standard prompt via `getCategoryAwarePrompt()` |
-| **Prompt** | `MATH_V1_PROMPT` with forbidden patterns | Generic category-aware prompt |
-| **Validation** | 3-level system (90+ threshold) | Basic JSON structure validation |
-| **Temperature** | Retry strategy: 0 → 0.3 → 0.5 | Fixed: 0 (deterministic) |
-| **Output Format** | LaTeX notation (`$x^2$`, `\frac{a}{b}`) | Plain text |
-| **Rendering** | KaTeX 0.16.9 in root layout | No special rendering |
-| **Quality Control** | 135+ validation scores typical | Standard Gemini output |
+**Mathematics** (`category=mathematics`):
+- Specialized `math-exam-service.ts` with LaTeX notation
+- 3-level validation (90+ threshold) with temperature retry (0 → 0.3 → 0.5)
+- Audio summaries with spoken notation (e.g., "x squared" not "$x^2$") • 5 sections + reflections • Stored in `summary_text` and `audio_url`
 
-**Example outputs:**
-- **Math**: "Laske $10^1 + 10^0$" (renders as: 10¹ + 10⁰)
-- **Core Studies**: "Mikä on Suomen pääkaupunki?" (plain text)
+**Core Studies** (`category=core_academics`):
+- Standard prompt via `getCategoryAwarePrompt()`
+- Plain text output, temperature fixed at 0
 
 #### KaTeX LaTeX Rendering Implementation
 
@@ -293,16 +275,7 @@ curl -X POST https://exam-generator-staging.vercel.app/api/mobile/exam-questions
 - **Rendering:** Client-side via `useEffect` hook in exam taking page after data loads
 - **Delimiters:** `$...$` (inline math), `$$...$$` (block math)
 
-**Why Global Loading:**
-The KaTeX scripts must be available BEFORE client-side navigation occurs. Loading them in the root layout ensures:
-1. Scripts download once at app initialization
-2. Available immediately for all client-side navigation (menu → exam page)
-3. No race conditions between script loading and exam data fetching
-
-**Previous Bug (Fixed Oct 2025):**
-Script components were inside the exam page's return statement, AFTER early returns for loading states. This meant scripts only started downloading AFTER exam data loaded, creating a race condition where `renderMathInElement()` would run before scripts were ready.
-
-**Current Implementation:**
+**Implementation:**
 ```typescript
 // layout.tsx - Scripts load before React hydration
 <Script src="katex.min.js" strategy="beforeInteractive" />
@@ -315,47 +288,19 @@ useEffect(() => {
 }, [isLoading, exam, currentQuestion])
 ```
 
-**Result:** LaTeX equations like `$\sin(x) = \frac{1}{2}$` render instantly as beautiful mathematical notation when navigating from menu to exam page.
-
-#### Math Audio Summaries (Spoken Notation)
-
-**Overview:**
-Mathematics exams now include specialized audio summaries designed for spaced repetition learning. Students can listen to mathematical concepts with proper spoken notation (e.g., "x squared" instead of raw LaTeX) while commuting, before sleep, or during walks.
-
-**Audio Structure:**
-1. **Overview** (100-200 words) - What the mathematical chapter covers
-2. **Key Ideas** (200-350 words) - Main formulas and concepts in spoken form
-3. **Applications** (150-250 words) - Real-world examples and use cases
-4. **Common Mistakes** (150-200 words) - Typical errors students make
-5. **Guided Reflections** (2-3 questions) - Thought-provoking questions with pauses for reflection
-
-**Technical Details:**
-- **Language Auto-Detection:** Automatically detects source language from textbook images (Finnish, German, English, Swedish, etc.)
-- **Spoken Math Notation:** Converts LaTeX to spoken form:
-  - `$x^2$` → "x toiseen" (Finnish) / "x squared" (English) / "x Quadrat" (German)
-  - `$\frac{a}{b}$` → "a jaettuna b:llä" (Finnish) / "a divided by b" (English)
-- **TTS Generation:** Google Cloud TTS with 0.8 speaking rate for educational clarity
-- **Async Processing:** Audio generation runs in background without blocking exam creation
-- **Duration:** Typically 2-3 minutes per exam
-- **Format:** MP3 files stored in Supabase Storage
-
-**Quality Assurance:**
-- No LaTeX symbols in audio (human-readable spoken notation only)
-- Multi-language support with appropriate TTS voices
-- Byte-based truncation respects 5000-byte Google Cloud TTS limit
-- Graceful failure handling (skips audio if generation fails, doesn't block exam creation)
-
-**Implementation:** Integrated in `math-exam-service.ts` and `mobile-api-service.ts:generateMathAudioSummaryAsync()`
+**Result:** LaTeX equations like `$\sin(x) = \frac{1}{2}$` render instantly as beautiful mathematical notation.
 
 ### 7. Audio Summary Generation
-- **TTS Service:** Google Cloud TTS API with 0.8 speaking rate for educational clarity
-- **Languages:** 12+ languages including German (de-DE-Neural2-B), Finnish (fi-FI-Standard-B), English, Swedish, Spanish, French
-- **Byte-Based Truncation:** Automatically truncates summaries to fit Google Cloud TTS 5000-byte limit using `Buffer.byteLength()` for accurate UTF-8 handling
-- **Multi-Byte Support:** Correctly handles languages with special characters (German: ä/ö/ü/ß, Finnish: ä/ö/å, French: é/è/ç)
-- **Truncation Logic:** Removes 100 characters iteratively until under 4900 bytes (100-byte safety buffer)
-- **Audio Storage:** MP3 files uploaded to Supabase Storage, URL stored in `audio_url` field
-- **Dedicated Player:** Custom audio page at `/exam/[id]/audio` with 120px touch-optimized controls and auto-play
-- **Implementation:** `mobile-api-service.ts:generateAudioSummaryAsync()` runs asynchronously after exam creation
+- **TTS Service:** Google Cloud TTS with 0.8 speaking rate for educational clarity
+- **Languages:** 12+ languages (Finnish, German, English, Swedish, Spanish, French, etc.)
+- **Math Audio:** Specialized spoken notation for mathematics exams (e.g., "x squared" not "$x^2$")
+- **Audio Structure:** 5 sections (Overview, Key Ideas, Applications, Common Mistakes, Guided Reflections)
+- **Language Detection:** Auto-detects source language from textbook images
+- **Byte-Based Truncation:** Respects 5000-byte Google Cloud TTS limit with `Buffer.byteLength()`
+- **Storage:** MP3 files in Supabase Storage, URL stored in `audio_url` field
+- **Player:** Custom audio page at `/exam/[id]/audio` with 120px touch controls
+- **Duration:** Typically 2-3 minutes per exam
+- **Implementation:** `mobile-api-service.ts:generateAudioSummaryAsync()` and `math-exam-service.ts`
 
 ### 8. Exam Menu Architecture
 - **Hub Page:** `/exam/[id]` serves as central menu with cards for Audio Summary, Exam, and Results
@@ -374,24 +319,11 @@ Mathematics exams now include specialized audio summaries designed for spaced re
 - **Header Display:** Total balance shown in pill-shaped badge in main menu header
 - **Implementation:** `/src/lib/utils/genie-dollars.ts`
 
-#### Spaced Repetition (12-Hour Intervals)
-- **Reset Timer:** Rewards become available again after 12 hours to encourage evidence-based spaced repetition
-- **Timestamp Tracking:** Records `audioLastEarnedAt` and `examLastEarnedAt` in localStorage
-- **Eligibility Checking:** Functions verify if 12-hour interval has passed before awarding
-- **Always Accessible:** Users can always listen to audio or take exams • Timer only affects reward eligibility
-
-#### Visual Feedback
-- **Eligible State:** Yellow badge "💵 +5" or "💵 +10" shown next to action buttons when reward can be earned
-- **Earned State:** Green badge "✓ 8h" or "✓ 45m" shows countdown until next eligibility
-- **Badge Position:** Displayed next to "Listen Now" and "Start Exam" buttons (Proposal 1 style)
-- **Real-Time Updates:** Status refreshed on menu load to show current eligibility
-
-#### Audio Listening Validation (80% Threshold)
-- **Anti-Gaming:** Prevents earning by seeking to end • Requires actual listening
-- **Tracking:** Set<number> tracks unique seconds of playback (not seeking)
-- **Threshold:** Must listen to at least 80% of audio duration to earn reward
-- **Feedback:** Shows message "⏰ Listen to at least 80% to earn Genie Dollars" if threshold not met
-- **Implementation:** `handleTimeUpdate()` records seconds only during actual playback in `/exam/[id]/audio/page.tsx`
+**Key Features:**
+- 12-hour spaced repetition intervals with visual countdown badges
+- 80% listening validation prevents gaming (must actually listen, not just seek to end)
+- Yellow badge shows eligible rewards, green badge shows time until next eligibility
+- localStorage tracking: `audioLastEarnedAt` and `examLastEarnedAt`
 
 ## Common Tasks
 
@@ -456,6 +388,7 @@ vercel logs       # Production logs
 | **localhost CURL fails** | Use staging: `https://exam-generator-staging.vercel.app` (RLS policies block localhost) |
 | **Staging "user_id required" error** | Add `-F "student_id=fc495b10-c771-4bd1-8bb4-b2c5003b9613"` to curl command |
 | **Audio not generating** | Check `GOOGLE_CLOUD_CREDENTIALS_JSON` is valid JSON • Verify service account has TTS permissions |
+| **Math audio missing** | Check `[Math Audio]` logs in Vercel • Audio fails silently to not block exams • Verify `GOOGLE_CLOUD_CREDENTIALS_JSON` |
 | **Gemini 503 errors** | Verify `GEMINI_API_KEY` • Check `/prompttests/` logs • Retry logic handles overload |
 
 ## Important Notes
@@ -481,14 +414,6 @@ vercel logs       # Production logs
 - `/assets/images/` - Test images
 - `/prompttests/` - Sample prompts and logs
 - `/assets/references/mobile2.PNG` - Mobile app UI reference
-
-## For AI Assistants
-
-**Read:** `README.md` • `/PROJECT_OVERVIEW.md` • `/CLAUDE.md`
-
-**Rules:** ✅ Run `npm run build` before commit • Use Gemini (no OCR libs) • Test with Finnish content • Maintain mobile API compatibility | ❌ Don't modify `.env.local` keys • Don't create traditional OCR
-
-**Standards:** TypeScript strict • Inline styles with design tokens • Service layer architecture • Comprehensive error handling
 
 ## Current Status (October 2025)
 
