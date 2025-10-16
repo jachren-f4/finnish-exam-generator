@@ -445,6 +445,26 @@ export class MobileApiService {
         console.log('Language:', audioSummaryData.language || 'not specified')
         console.log('Word count:', audioSummaryData.total_word_count || 'not specified')
         console.log('Reflections:', audioSummaryData.guided_reflections?.length || 0)
+
+        // Flatten audio summary sections into summaryText for database storage
+        const mathSections = [
+          audioSummaryData.overview || '',
+          audioSummaryData.key_ideas || '',
+          audioSummaryData.applications || '',
+          audioSummaryData.common_mistakes || ''
+        ].filter(s => s.trim())
+
+        // Add guided reflections to text summary
+        if (audioSummaryData.guided_reflections && audioSummaryData.guided_reflections.length > 0) {
+          audioSummaryData.guided_reflections.forEach((reflection: any) => {
+            if (reflection.question) {
+              mathSections.push(`${reflection.question} ${reflection.short_answer || ''}`)
+            }
+          })
+        }
+
+        summaryText = mathSections.join('\n\n')
+        console.log('Math summary flattened to text:', summaryText.length, 'characters')
       }
       // Extract summary if present (core_academics format)
       else if (parsedResult.summary) {
