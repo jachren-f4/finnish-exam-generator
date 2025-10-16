@@ -261,7 +261,7 @@ export default function ExamMenuPage() {
           <h2 style={{
             fontSize: TYPOGRAPHY.fontSize.lg,
             fontWeight: TYPOGRAPHY.fontWeight.bold,
-            color: COLORS.primary.text,
+            color: '#1a1a1a',
             marginBottom: '2px',
             lineHeight: TYPOGRAPHY.lineHeight.tight,
           }}>
@@ -307,7 +307,7 @@ export default function ExamMenuPage() {
               fontSize: '11px',
               fontWeight: TYPOGRAPHY.fontWeight.semibold,
               marginBottom: '2px',
-              color: COLORS.primary.text,
+              color: '#1a1a1a',
             }}>
               Audio
             </div>
@@ -378,7 +378,7 @@ export default function ExamMenuPage() {
               fontSize: '11px',
               fontWeight: TYPOGRAPHY.fontWeight.semibold,
               marginBottom: '2px',
-              color: COLORS.primary.text,
+              color: '#1a1a1a',
             }}>
               Exam
             </div>
@@ -435,7 +435,7 @@ export default function ExamMenuPage() {
               fontSize: '11px',
               fontWeight: TYPOGRAPHY.fontWeight.semibold,
               marginBottom: '2px',
-              color: COLORS.primary.text,
+              color: '#1a1a1a',
             }}>
               Results
             </div>
@@ -491,7 +491,7 @@ export default function ExamMenuPage() {
               fontSize: '11px',
               fontWeight: TYPOGRAPHY.fontWeight.semibold,
               marginBottom: '2px',
-              color: COLORS.primary.text,
+              color: '#1a1a1a',
             }}>
               Practice
             </div>
@@ -532,7 +532,7 @@ export default function ExamMenuPage() {
               fontSize: '11px',
               fontWeight: TYPOGRAPHY.fontWeight.semibold,
               marginBottom: '2px',
-              color: COLORS.primary.text,
+              color: '#1a1a1a',
             }}>
               Study
             </div>
@@ -573,7 +573,7 @@ export default function ExamMenuPage() {
               fontSize: '11px',
               fontWeight: TYPOGRAPHY.fontWeight.semibold,
               marginBottom: '2px',
-              color: COLORS.primary.text,
+              color: '#1a1a1a',
             }}>
               Ranking
             </div>
