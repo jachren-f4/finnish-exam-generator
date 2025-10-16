@@ -6,7 +6,7 @@ import type { ExamData } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
 import { ICONS } from '@/constants/exam-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
-import { getTotalGenieDollars, getExamCompletionStatus, GENIE_DOLLAR_REWARDS, formatHoursRemaining } from '@/lib/utils/genie-dollars'
+import { getTotalGenieDollars, getExamCompletionStatus, GENIE_DOLLAR_REWARDS } from '@/lib/utils/genie-dollars'
 
 interface ExamMenuState extends ExamData {
   canReuse: boolean
@@ -246,288 +246,351 @@ export default function ExamMenuPage() {
       {/* Main Content */}
       <div style={{
         flex: 1,
-        padding: SPACING.md,
+        padding: SPACING.sm,
         maxWidth: '640px',
         margin: '0 auto',
         width: '100%',
       }}>
-        {/* Title Card */}
+        {/* Title Card - More Compact */}
         <div style={{
-          background: COLORS.background.primary,
-          borderRadius: RADIUS.lg,
-          boxShadow: SHADOWS.card,
-          padding: SPACING.md,
-          marginBottom: SPACING.md,
+          background: COLORS.background.secondary,
+          borderRadius: RADIUS.md,
+          padding: `${SPACING.sm} ${SPACING.md}`,
+          marginBottom: SPACING.sm,
         }}>
           <h2 style={{
-            fontSize: TYPOGRAPHY.fontSize.xl,
-            fontWeight: TYPOGRAPHY.fontWeight.semibold,
+            fontSize: TYPOGRAPHY.fontSize.lg,
+            fontWeight: TYPOGRAPHY.fontWeight.bold,
             color: COLORS.primary.text,
-            marginBottom: SPACING.xs,
-            lineHeight: TYPOGRAPHY.lineHeight.normal,
+            marginBottom: '2px',
+            lineHeight: TYPOGRAPHY.lineHeight.tight,
           }}>
             {exam.subject}
           </h2>
           <p style={{
-            fontSize: TYPOGRAPHY.fontSize.base,
+            fontSize: TYPOGRAPHY.fontSize.sm,
             color: COLORS.primary.medium,
             margin: 0,
-            lineHeight: TYPOGRAPHY.lineHeight.normal,
+            lineHeight: TYPOGRAPHY.lineHeight.tight,
           }}>
             Grade {exam.grade} • {exam.total_questions} questions
           </p>
         </div>
 
-        {/* Audio Summary Card */}
-        {hasAudio && (
-          <div style={{
-            background: COLORS.background.primary,
-            borderRadius: RADIUS.lg,
-            boxShadow: SHADOWS.card,
-            padding: SPACING.md,
-            marginBottom: SPACING.md,
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: SPACING.md,
-            }}>
-              <div style={{
-                fontSize: '32px',
-                lineHeight: 1,
-              }}>
-                🎧
-              </div>
-              <div style={{ flex: 1 }}>
-                <h3 style={{
-                  fontSize: TYPOGRAPHY.fontSize.lg,
-                  fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                  color: COLORS.primary.text,
-                  marginBottom: SPACING.xs,
-                  lineHeight: TYPOGRAPHY.lineHeight.normal,
-                }}>
-                  Audio Summary
-                </h3>
-                <p style={{
-                  fontSize: TYPOGRAPHY.fontSize.sm,
-                  color: COLORS.primary.medium,
-                  marginBottom: SPACING.md,
-                  lineHeight: TYPOGRAPHY.lineHeight.normal,
-                }}>
-                  Listen to an overview of the material before taking the exam
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.sm }}>
-                  <button
-                    onClick={handleListenAudio}
-                    style={{
-                      background: BUTTONS.secondary.background,
-                      color: BUTTONS.secondary.text,
-                      padding: BUTTONS.secondary.padding,
-                      borderRadius: BUTTONS.secondary.radius,
-                      border: `2px solid ${COLORS.border.medium}`,
-                      fontSize: TYPOGRAPHY.fontSize.base,
-                      fontWeight: TYPOGRAPHY.fontWeight.medium,
-                      cursor: 'pointer',
-                      transition: TRANSITIONS.normal,
-                      minHeight: TOUCH_TARGETS.comfortable,
-                    }}
-                  >
-                    Listen Now
-                  </button>
-                  {rewardStatus.audioEligible ? (
-                    <div style={{
-                      background: '#fef3c7',
-                      color: '#92400e',
-                      padding: `${SPACING.xs} ${SPACING.sm}`,
-                      borderRadius: '12px',
-                      fontSize: TYPOGRAPHY.fontSize.sm,
-                      fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: SPACING.xs,
-                    }}>
-                      💵 +{GENIE_DOLLAR_REWARDS.AUDIO}
-                    </div>
-                  ) : (
-                    <div style={{
-                      background: '#d1fae5',
-                      color: '#065f46',
-                      padding: `${SPACING.xs} ${SPACING.sm}`,
-                      borderRadius: '12px',
-                      fontSize: TYPOGRAPHY.fontSize.sm,
-                      fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: SPACING.xs,
-                    }}>
-                      ✓ {rewardStatus.audioHoursRemaining > 0 && `${formatHoursRemaining(rewardStatus.audioHoursRemaining)}`}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Exam Card */}
+        {/* 3x2 Ultra-Compact Grid */}
         <div style={{
-          background: COLORS.background.primary,
-          borderRadius: RADIUS.lg,
-          boxShadow: SHADOWS.card,
-          padding: SPACING.md,
-          marginBottom: SPACING.md,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: '8px',
         }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: SPACING.md,
-          }}>
+          {/* Audio Summary Card */}
+          <div
+            onClick={hasAudio ? handleListenAudio : undefined}
+            style={{
+              background: COLORS.background.primary,
+              border: `2px solid ${COLORS.border.light}`,
+              borderRadius: '12px',
+              padding: '12px 8px',
+              textAlign: 'center',
+              cursor: hasAudio ? 'pointer' : 'default',
+              opacity: hasAudio ? 1 : 0.5,
+              transition: TRANSITIONS.normal,
+            }}
+          >
             <div style={{
-              fontSize: '32px',
-              lineHeight: 1,
+              fontSize: '28px',
+              marginBottom: '6px',
+            }}>
+              🎧
+            </div>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginBottom: '2px',
+              color: COLORS.primary.text,
+            }}>
+              Audio
+            </div>
+            {hasAudio ? (
+              rewardStatus.audioEligible ? (
+                <div style={{
+                  display: 'inline-block',
+                  background: '#fef3c7',
+                  color: '#92400e',
+                  padding: '2px 6px',
+                  borderRadius: '8px',
+                  fontSize: '10px',
+                  fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                  marginTop: '4px',
+                }}>
+                  +{GENIE_DOLLAR_REWARDS.AUDIO}
+                </div>
+              ) : (
+                <div style={{
+                  display: 'inline-block',
+                  background: '#d1fae5',
+                  color: '#065f46',
+                  padding: '2px 6px',
+                  borderRadius: '8px',
+                  fontSize: '10px',
+                  fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                  marginTop: '4px',
+                }}>
+                  ✓
+                </div>
+              )
+            ) : (
+              <div style={{
+                display: 'inline-block',
+                background: '#f3f4f6',
+                color: '#6b7280',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                fontSize: '10px',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                marginTop: '4px',
+              }}>
+                N/A
+              </div>
+            )}
+          </div>
+
+          {/* Exam Card */}
+          <div
+            onClick={handleStartExam}
+            style={{
+              background: COLORS.background.primary,
+              border: `2px solid ${COLORS.border.light}`,
+              borderRadius: '12px',
+              padding: '12px 8px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              transition: TRANSITIONS.normal,
+            }}
+          >
+            <div style={{
+              fontSize: '28px',
+              marginBottom: '6px',
             }}>
               📝
             </div>
-            <div style={{ flex: 1 }}>
-              <h3 style={{
-                fontSize: TYPOGRAPHY.fontSize.lg,
+            <div style={{
+              fontSize: '11px',
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginBottom: '2px',
+              color: COLORS.primary.text,
+            }}>
+              Exam
+            </div>
+            {rewardStatus.examEligible ? (
+              <div style={{
+                display: 'inline-block',
+                background: '#fef3c7',
+                color: '#92400e',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                fontSize: '10px',
                 fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                color: COLORS.primary.text,
-                marginBottom: SPACING.xs,
-                lineHeight: TYPOGRAPHY.lineHeight.normal,
+                marginTop: '4px',
               }}>
-                {isCompleted ? 'Exam Completed' : 'Exam'}
-              </h3>
-              <p style={{
-                fontSize: TYPOGRAPHY.fontSize.sm,
-                color: COLORS.primary.medium,
-                marginBottom: SPACING.md,
-                lineHeight: TYPOGRAPHY.lineHeight.normal,
-              }}>
-                {isCompleted
-                  ? `You've completed this exam. ${exam.canReuse ? 'You can retake it if you wish.' : ''}`
-                  : `${exam.total_questions} questions • Estimated time: ${Math.ceil(exam.total_questions * 1.5)} minutes`
-                }
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.sm }}>
-                <button
-                  onClick={handleStartExam}
-                  style={{
-                    background: BUTTONS.primary.background,
-                    color: BUTTONS.primary.text,
-                    padding: BUTTONS.primary.padding,
-                    borderRadius: BUTTONS.primary.radius,
-                    border: 'none',
-                    fontSize: TYPOGRAPHY.fontSize.base,
-                    fontWeight: TYPOGRAPHY.fontWeight.medium,
-                    minHeight: TOUCH_TARGETS.comfortable,
-                    cursor: 'pointer',
-                    transition: TRANSITIONS.normal,
-                  }}
-                >
-                  {isCompleted ? (exam.canReuse ? 'Retake Exam' : 'Review Exam') : 'Start Exam'}
-                </button>
-                {rewardStatus.examEligible ? (
-                  <div style={{
-                    background: '#fef3c7',
-                    color: '#92400e',
-                    padding: `${SPACING.xs} ${SPACING.sm}`,
-                    borderRadius: '12px',
-                    fontSize: TYPOGRAPHY.fontSize.sm,
-                    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: SPACING.xs,
-                  }}>
-                    💵 +{GENIE_DOLLAR_REWARDS.EXAM}
-                  </div>
-                ) : (
-                  <div style={{
-                    background: '#d1fae5',
-                    color: '#065f46',
-                    padding: `${SPACING.xs} ${SPACING.sm}`,
-                    borderRadius: '12px',
-                    fontSize: TYPOGRAPHY.fontSize.sm,
-                    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: SPACING.xs,
-                  }}>
-                    ✓ {rewardStatus.examHoursRemaining > 0 && `${formatHoursRemaining(rewardStatus.examHoursRemaining)}`}
-                  </div>
-                )}
+                +{GENIE_DOLLAR_REWARDS.EXAM}
               </div>
+            ) : (
+              <div style={{
+                display: 'inline-block',
+                background: '#d1fae5',
+                color: '#065f46',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                fontSize: '10px',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                marginTop: '4px',
+              }}>
+                ✓
+              </div>
+            )}
+          </div>
+
+          {/* Results Card */}
+          <div
+            onClick={isCompleted ? handleViewResults : undefined}
+            style={{
+              background: COLORS.background.primary,
+              border: `2px solid ${COLORS.border.light}`,
+              borderRadius: '12px',
+              padding: '12px 8px',
+              textAlign: 'center',
+              cursor: isCompleted ? 'pointer' : 'default',
+              opacity: isCompleted ? 1 : 0.5,
+              transition: TRANSITIONS.normal,
+            }}
+          >
+            <div style={{
+              fontSize: '28px',
+              marginBottom: '6px',
+            }}>
+              📊
+            </div>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginBottom: '2px',
+              color: COLORS.primary.text,
+            }}>
+              Results
+            </div>
+            {isCompleted ? (
+              <div style={{
+                display: 'inline-block',
+                background: '#dbeafe',
+                color: '#1e40af',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                fontSize: '10px',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                marginTop: '4px',
+              }}>
+                View
+              </div>
+            ) : (
+              <div style={{
+                display: 'inline-block',
+                background: '#f3f4f6',
+                color: '#6b7280',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                fontSize: '10px',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                marginTop: '4px',
+              }}>
+                Pending
+              </div>
+            )}
+          </div>
+
+          {/* Practice Mode Card */}
+          <div
+            style={{
+              background: COLORS.background.primary,
+              border: `2px solid ${COLORS.border.light}`,
+              borderRadius: '12px',
+              padding: '12px 8px',
+              textAlign: 'center',
+              cursor: 'default',
+              opacity: 0.5,
+              transition: TRANSITIONS.normal,
+            }}
+          >
+            <div style={{
+              fontSize: '28px',
+              marginBottom: '6px',
+            }}>
+              🎯
+            </div>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginBottom: '2px',
+              color: COLORS.primary.text,
+            }}>
+              Practice
+            </div>
+            <div style={{
+              display: 'inline-block',
+              background: '#f3f4f6',
+              color: '#6b7280',
+              padding: '2px 6px',
+              borderRadius: '8px',
+              fontSize: '10px',
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginTop: '4px',
+            }}>
+              Soon
+            </div>
+          </div>
+
+          {/* Study Guide Card */}
+          <div
+            style={{
+              background: COLORS.background.primary,
+              border: `2px solid ${COLORS.border.light}`,
+              borderRadius: '12px',
+              padding: '12px 8px',
+              textAlign: 'center',
+              cursor: 'default',
+              opacity: 0.5,
+              transition: TRANSITIONS.normal,
+            }}
+          >
+            <div style={{
+              fontSize: '28px',
+              marginBottom: '6px',
+            }}>
+              📚
+            </div>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginBottom: '2px',
+              color: COLORS.primary.text,
+            }}>
+              Study
+            </div>
+            <div style={{
+              display: 'inline-block',
+              background: '#f3f4f6',
+              color: '#6b7280',
+              padding: '2px 6px',
+              borderRadius: '8px',
+              fontSize: '10px',
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginTop: '4px',
+            }}>
+              Soon
+            </div>
+          </div>
+
+          {/* Leaderboard Card */}
+          <div
+            style={{
+              background: COLORS.background.primary,
+              border: `2px solid ${COLORS.border.light}`,
+              borderRadius: '12px',
+              padding: '12px 8px',
+              textAlign: 'center',
+              cursor: 'default',
+              opacity: 0.5,
+              transition: TRANSITIONS.normal,
+            }}
+          >
+            <div style={{
+              fontSize: '28px',
+              marginBottom: '6px',
+            }}>
+              🏆
+            </div>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginBottom: '2px',
+              color: COLORS.primary.text,
+            }}>
+              Ranking
+            </div>
+            <div style={{
+              display: 'inline-block',
+              background: '#f3f4f6',
+              color: '#6b7280',
+              padding: '2px 6px',
+              borderRadius: '8px',
+              fontSize: '10px',
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginTop: '4px',
+            }}>
+              Soon
             </div>
           </div>
         </div>
-
-        {/* Results Card (if completed) */}
-        {isCompleted && exam.latestGrading && (
-          <div style={{
-            background: COLORS.background.primary,
-            borderRadius: RADIUS.lg,
-            boxShadow: SHADOWS.card,
-            padding: SPACING.md,
-            marginBottom: SPACING.md,
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: SPACING.md,
-            }}>
-              <div style={{
-                fontSize: '32px',
-                lineHeight: 1,
-              }}>
-                📊
-              </div>
-              <div style={{ flex: 1 }}>
-                <h3 style={{
-                  fontSize: TYPOGRAPHY.fontSize.lg,
-                  fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                  color: COLORS.primary.text,
-                  marginBottom: SPACING.xs,
-                  lineHeight: TYPOGRAPHY.lineHeight.normal,
-                }}>
-                  Results
-                </h3>
-                <p style={{
-                  fontSize: TYPOGRAPHY.fontSize.sm,
-                  color: COLORS.primary.medium,
-                  marginBottom: SPACING.sm,
-                  lineHeight: TYPOGRAPHY.lineHeight.normal,
-                }}>
-                  Score: {exam.latestGrading.percentage}% ({exam.latestGrading.total_points}/{exam.latestGrading.max_total_points} points)
-                </p>
-                <p style={{
-                  fontSize: TYPOGRAPHY.fontSize.sm,
-                  color: COLORS.primary.medium,
-                  marginBottom: SPACING.md,
-                  lineHeight: TYPOGRAPHY.lineHeight.normal,
-                }}>
-                  Grade: {exam.latestGrading.final_grade}
-                </p>
-                <button
-                  onClick={handleViewResults}
-                  style={{
-                    background: BUTTONS.secondary.background,
-                    color: BUTTONS.secondary.text,
-                    padding: BUTTONS.secondary.padding,
-                    borderRadius: BUTTONS.secondary.radius,
-                    border: `2px solid ${COLORS.border.medium}`,
-                    fontSize: TYPOGRAPHY.fontSize.base,
-                    fontWeight: TYPOGRAPHY.fontWeight.medium,
-                    minHeight: TOUCH_TARGETS.comfortable,
-                    cursor: 'pointer',
-                    transition: TRANSITIONS.normal,
-                  }}
-                >
-                  View Detailed Feedback
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

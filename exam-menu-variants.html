@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamGenie Menu - 6 Content Pieces Variants</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .variant-container {
+            max-width: 430px;
+            margin: 0 auto 60px;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .variant-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .icon {
+            width: 40px;
+            height: 40px;
+            background: #2c2c2c;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .genie-dollars {
+            background: #f5f5f5;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .exam-title-section {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        .exam-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .exam-meta {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Variant 1: 2x3 Compact Grid */
+        .grid-2x3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .compact-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .compact-card-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .compact-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .compact-card-subtitle {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .compact-badge {
+            display: inline-block;
+            background: #fff8dc;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Variant 2: 3x2 Ultra-Compact Grid */
+        .grid-3x2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .ultra-compact-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px 8px;
+            text-align: center;
+        }
+
+        .ultra-compact-icon {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .ultra-compact-title {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .ultra-compact-badge {
+            display: inline-block;
+            background: #fff8dc;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        /* Variant 3: Horizontal List Compact */
+        .horizontal-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .horizontal-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .horizontal-icon {
+            font-size: 28px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .horizontal-content {
+            flex: 1;
+        }
+
+        .horizontal-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .horizontal-subtitle {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .horizontal-badge {
+            background: #fff8dc;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* Variant 4: Tabs with 3x2 Grid */
+        .tabs-container {
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 8px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            background: #2c2c2c;
+            color: white;
+        }
+
+        .tab-content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        /* Variant 5: Split Categories View */
+        .split-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .category-section {
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .category-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .mini-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .mini-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .mini-title {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .mini-badge {
+            display: inline-block;
+            background: #fff8dc;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- VARIANT 1: 2x3 Compact Grid -->
+    <div class="variant-container">
+        <div class="variant-title">VARIANT 1: 2x3 Compact Grid</div>
+
+        <div class="header">
+            <div class="logo">
+                <div class="icon">🎓</div>
+                <span>ExamGenie</span>
+            </div>
+            <div class="genie-dollars">💵 Genie Dollars 0</div>
+        </div>
+
+        <div class="exam-title-section">
+            <div class="exam-title">Yleinen</div>
+            <div class="exam-meta">Grade 9 • 15 questions</div>
+        </div>
+
+        <div class="grid-2x3">
+            <div class="compact-card">
+                <div class="compact-card-icon">🎧</div>
+                <div class="compact-card-title">Audio Summary</div>
+                <div class="compact-card-subtitle">Overview material</div>
+                <div class="compact-badge">💵 +5</div>
+            </div>
+
+            <div class="compact-card">
+                <div class="compact-card-icon">📝</div>
+                <div class="compact-card-title">Exam</div>
+                <div class="compact-card-subtitle">15 questions • 23 min</div>
+                <div class="compact-badge">💵 +10</div>
+            </div>
+
+            <div class="compact-card">
+                <div class="compact-card-icon">📊</div>
+                <div class="compact-card-title">Results</div>
+                <div class="compact-card-subtitle">View your score</div>
+                <div class="compact-badge">View</div>
+            </div>
+
+            <div class="compact-card">
+                <div class="compact-card-icon">🎯</div>
+                <div class="compact-card-title">Practice</div>
+                <div class="compact-card-subtitle">Wrong answers only</div>
+                <div class="compact-badge">💵 +5</div>
+            </div>
+
+            <div class="compact-card">
+                <div class="compact-card-icon">📚</div>
+                <div class="compact-card-title">Study Guide</div>
+                <div class="compact-card-subtitle">Key concepts</div>
+                <div class="compact-badge">Read</div>
+            </div>
+
+            <div class="compact-card">
+                <div class="compact-card-icon">🏆</div>
+                <div class="compact-card-title">Leaderboard</div>
+                <div class="compact-card-subtitle">Compare scores</div>
+                <div class="compact-badge">View</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VARIANT 2: 3x2 Ultra-Compact Grid -->
+    <div class="variant-container">
+        <div class="variant-title">VARIANT 2: 3x2 Ultra-Compact Grid</div>
+
+        <div class="header">
+            <div class="logo">
+                <div class="icon">🎓</div>
+                <span>ExamGenie</span>
+            </div>
+            <div class="genie-dollars">💵 Genie Dollars 0</div>
+        </div>
+
+        <div class="exam-title-section">
+            <div class="exam-title">Yleinen</div>
+            <div class="exam-meta">Grade 9 • 15 questions</div>
+        </div>
+
+        <div class="grid-3x2">
+            <div class="ultra-compact-card">
+                <div class="ultra-compact-icon">🎧</div>
+                <div class="ultra-compact-title">Audio</div>
+                <div class="ultra-compact-badge">+5</div>
+            </div>
+
+            <div class="ultra-compact-card">
+                <div class="ultra-compact-icon">📝</div>
+                <div class="ultra-compact-title">Exam</div>
+                <div class="ultra-compact-badge">+10</div>
+            </div>
+
+            <div class="ultra-compact-card">
+                <div class="ultra-compact-icon">📊</div>
+                <div class="ultra-compact-title">Results</div>
+                <div class="ultra-compact-badge">View</div>
+            </div>
+
+            <div class="ultra-compact-card">
+                <div class="ultra-compact-icon">🎯</div>
+                <div class="ultra-compact-title">Practice</div>
+                <div class="ultra-compact-badge">+5</div>
+            </div>
+
+            <div class="ultra-compact-card">
+                <div class="ultra-compact-icon">📚</div>
+                <div class="ultra-compact-title">Study</div>
+                <div class="ultra-compact-badge">Read</div>
+            </div>
+
+            <div class="ultra-compact-card">
+                <div class="ultra-compact-icon">🏆</div>
+                <div class="ultra-compact-title">Ranking</div>
+                <div class="ultra-compact-badge">View</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VARIANT 3: Horizontal List Compact -->
+    <div class="variant-container">
+        <div class="variant-title">VARIANT 3: Horizontal List Compact</div>
+
+        <div class="header">
+            <div class="logo">
+                <div class="icon">🎓</div>
+                <span>ExamGenie</span>
+            </div>
+            <div class="genie-dollars">💵 Genie Dollars 0</div>
+        </div>
+
+        <div class="exam-title-section">
+            <div class="exam-title">Yleinen</div>
+            <div class="exam-meta">Grade 9 • 15 questions</div>
+        </div>
+
+        <div class="horizontal-list">
+            <div class="horizontal-card">
+                <div class="horizontal-icon">🎧</div>
+                <div class="horizontal-content">
+                    <div class="horizontal-title">Audio Summary</div>
+                    <div class="horizontal-subtitle">Listen to overview</div>
+                </div>
+                <div class="horizontal-badge">💵 +5</div>
+            </div>
+
+            <div class="horizontal-card">
+                <div class="horizontal-icon">📝</div>
+                <div class="horizontal-content">
+                    <div class="horizontal-title">Exam</div>
+                    <div class="horizontal-subtitle">15 questions • 23 min</div>
+                </div>
+                <div class="horizontal-badge">💵 +10</div>
+            </div>
+
+            <div class="horizontal-card">
+                <div class="horizontal-icon">📊</div>
+                <div class="horizontal-content">
+                    <div class="horizontal-title">Results</div>
+                    <div class="horizontal-subtitle">View your score</div>
+                </div>
+                <div class="horizontal-badge">View</div>
+            </div>
+
+            <div class="horizontal-card">
+                <div class="horizontal-icon">🎯</div>
+                <div class="horizontal-content">
+                    <div class="horizontal-title">Practice Mode</div>
+                    <div class="horizontal-subtitle">Review mistakes</div>
+                </div>
+                <div class="horizontal-badge">💵 +5</div>
+            </div>
+
+            <div class="horizontal-card">
+                <div class="horizontal-icon">📚</div>
+                <div class="horizontal-content">
+                    <div class="horizontal-title">Study Guide</div>
+                    <div class="horizontal-subtitle">Key concepts</div>
+                </div>
+                <div class="horizontal-badge">Read</div>
+            </div>
+
+            <div class="horizontal-card">
+                <div class="horizontal-icon">🏆</div>
+                <div class="horizontal-content">
+                    <div class="horizontal-title">Leaderboard</div>
+                    <div class="horizontal-subtitle">Compare scores</div>
+                </div>
+                <div class="horizontal-badge">View</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VARIANT 4: Tabs with 3x2 Grid -->
+    <div class="variant-container">
+        <div class="variant-title">VARIANT 4: Tabs with 3x2 Grid</div>
+
+        <div class="header">
+            <div class="logo">
+                <div class="icon">🎓</div>
+                <span>ExamGenie</span>
+            </div>
+            <div class="genie-dollars">💵 Genie Dollars 0</div>
+        </div>
+
+        <div class="exam-title-section">
+            <div class="exam-title">Yleinen</div>
+            <div class="exam-meta">Grade 9 • 15 questions</div>
+        </div>
+
+        <div class="tabs-container">
+            <div class="tabs">
+                <div class="tab active">All (6)</div>
+                <div class="tab">Learn</div>
+                <div class="tab">Test</div>
+            </div>
+
+            <div class="tab-content-grid">
+                <div class="ultra-compact-card">
+                    <div class="ultra-compact-icon">🎧</div>
+                    <div class="ultra-compact-title">Audio</div>
+                    <div class="ultra-compact-badge">+5</div>
+                </div>
+
+                <div class="ultra-compact-card">
+                    <div class="ultra-compact-icon">📝</div>
+                    <div class="ultra-compact-title">Exam</div>
+                    <div class="ultra-compact-badge">+10</div>
+                </div>
+
+                <div class="ultra-compact-card">
+                    <div class="ultra-compact-icon">📊</div>
+                    <div class="ultra-compact-title">Results</div>
+                    <div class="ultra-compact-badge">View</div>
+                </div>
+
+                <div class="ultra-compact-card">
+                    <div class="ultra-compact-icon">🎯</div>
+                    <div class="ultra-compact-title">Practice</div>
+                    <div class="ultra-compact-badge">+5</div>
+                </div>
+
+                <div class="ultra-compact-card">
+                    <div class="ultra-compact-icon">📚</div>
+                    <div class="ultra-compact-title">Study</div>
+                    <div class="ultra-compact-badge">Read</div>
+                </div>
+
+                <div class="ultra-compact-card">
+                    <div class="ultra-compact-icon">🏆</div>
+                    <div class="ultra-compact-title">Ranking</div>
+                    <div class="ultra-compact-badge">View</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VARIANT 5: Split Categories View -->
+    <div class="variant-container">
+        <div class="variant-title">VARIANT 5: Split Categories View</div>
+
+        <div class="header">
+            <div class="logo">
+                <div class="icon">🎓</div>
+                <span>ExamGenie</span>
+            </div>
+            <div class="genie-dollars">💵 Genie Dollars 0</div>
+        </div>
+
+        <div class="exam-title-section">
+            <div class="exam-title">Yleinen</div>
+            <div class="exam-meta">Grade 9 • 15 questions</div>
+        </div>
+
+        <div class="split-container">
+            <div class="category-section">
+                <div class="category-title">📖 LEARNING</div>
+                <div class="category-grid">
+                    <div class="mini-card">
+                        <div class="mini-icon">🎧</div>
+                        <div class="mini-title">Audio</div>
+                        <div class="mini-badge">💵 +5</div>
+                    </div>
+
+                    <div class="mini-card">
+                        <div class="mini-icon">📚</div>
+                        <div class="mini-title">Study Guide</div>
+                        <div class="mini-badge">Read</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category-section">
+                <div class="category-title">✏️ TESTING</div>
+                <div class="category-grid">
+                    <div class="mini-card">
+                        <div class="mini-icon">📝</div>
+                        <div class="mini-title">Exam</div>
+                        <div class="mini-badge">💵 +10</div>
+                    </div>
+
+                    <div class="mini-card">
+                        <div class="mini-icon">🎯</div>
+                        <div class="mini-title">Practice</div>
+                        <div class="mini-badge">💵 +5</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category-section">
+                <div class="category-title">📊 PERFORMANCE</div>
+                <div class="category-grid">
+                    <div class="mini-card">
+                        <div class="mini-icon">📊</div>
+                        <div class="mini-title">Results</div>
+                        <div class="mini-badge">View</div>
+                    </div>
+
+                    <div class="mini-card">
+                        <div class="mini-icon">🏆</div>
+                        <div class="mini-title">Leaderboard</div>
+                        <div class="mini-badge">View</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
