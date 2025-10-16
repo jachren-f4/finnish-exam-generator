@@ -11,6 +11,7 @@ import { shuffleQuestionsOptions, getShuffleStats } from '../utils/question-shuf
 import { getConfiguredProviderType } from './ai-providers/provider-factory'
 import { MathExamService } from './math-exam-service'
 import { createUsageMetadata } from '../utils/cost-calculator'
+import { safeJsonParse } from '../utils/json-handler'
 
 export interface MobileApiRequest {
   images: File[]
@@ -418,36 +419,43 @@ export class MobileApiService {
       let summaryData: any = null
       let summaryText: string | null = null
 
-      try {
-        const parsedResult = JSON.parse(geminiData.rawText)
-        parsedQuestions = parsedResult.questions || []
+      // Use safeJsonParse to handle markdown code fences (```json ... ```)
+      const parseResult = safeJsonParse(geminiData.rawText)
 
-        // Extract summary if present
-        if (parsedResult.summary) {
-          summaryData = parsedResult.summary
-          console.log('=== SUMMARY EXTRACTED ===')
-          console.log('Summary language:', summaryData.language || 'not specified')
-          console.log('Summary word count:', summaryData.total_word_count || 'not specified')
-
-          // Combine all summary sections into single text for TTS
-          summaryText = [
-            summaryData.introduction || '',
-            summaryData.key_concepts || '',
-            summaryData.examples_and_applications || '',
-            summaryData.summary_conclusion || ''
-          ].filter(s => s.trim()).join('\n\n')
-
-          // Remove bold markdown formatting for TTS (e.g., **text** → text)
-          summaryText = summaryText.replace(/\*\*([^*]+)\*\*/g, '$1')
-
-          console.log('Combined summary length:', summaryText.length, 'characters')
-          console.log('Summary preview:', summaryText.substring(0, 200))
-        } else {
-          console.log('No summary found in response (may be language_studies or custom prompt)')
-        }
-      } catch (parseError) {
-        console.error('Failed to parse Gemini JSON response:', parseError)
+      if (!parseResult.success) {
+        console.error('Failed to parse Gemini JSON response:', parseResult.error)
+        console.error('Parse method attempted:', parseResult.method)
+        console.error('Response preview:', geminiData.rawText?.substring(0, 500))
         return null
+      }
+
+      console.log(`✅ JSON parsed successfully using method: ${parseResult.method}`)
+
+      const parsedResult = parseResult.data
+      parsedQuestions = parsedResult.questions || []
+
+      // Extract summary if present
+      if (parsedResult.summary) {
+        summaryData = parsedResult.summary
+        console.log('=== SUMMARY EXTRACTED ===')
+        console.log('Summary language:', summaryData.language || 'not specified')
+        console.log('Summary word count:', summaryData.total_word_count || 'not specified')
+
+        // Combine all summary sections into single text for TTS
+        summaryText = [
+          summaryData.introduction || '',
+          summaryData.key_concepts || '',
+          summaryData.examples_and_applications || '',
+          summaryData.summary_conclusion || ''
+        ].filter(s => s.trim()).join('\n\n')
+
+        // Remove bold markdown formatting for TTS (e.g., **text** → text)
+        summaryText = summaryText.replace(/\*\*([^*]+)\*\*/g, '$1')
+
+        console.log('Combined summary length:', summaryText.length, 'characters')
+        console.log('Summary preview:', summaryText.substring(0, 200))
+      } else {
+        console.log('No summary found in response (may be language_studies or custom prompt)')
       }
 
       if (!parsedQuestions || parsedQuestions.length === 0) {
