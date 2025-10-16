@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useLayoutEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Script from 'next/script'
 import type { ExamData, StudentAnswer } from '@/lib/supabase'
@@ -39,22 +39,37 @@ export default function ExamPage() {
   }, [examId])
 
   // Render LaTeX math notation with KaTeX
-  // Use useLayoutEffect to render synchronously before browser paint (eliminates flash)
-  useLayoutEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).renderMathInElement) {
-      try {
-        (window as any).renderMathInElement(document.body, {
-          delimiters: [
-            { left: "$$", right: "$$", display: true },   // Block math
-            { left: "$", right: "$", display: false }      // Inline math
-          ],
-          throwOnError: false  // Don't break on invalid LaTeX
-        })
-      } catch (error) {
-        console.warn('KaTeX rendering failed:', error)
+  // Only render after exam data has loaded and scripts are ready
+  useEffect(() => {
+    // Don't try to render if we're still loading or have no exam data
+    if (isLoading || !exam) return
+
+    const renderMath = () => {
+      if (typeof window !== 'undefined' && (window as any).renderMathInElement) {
+        try {
+          (window as any).renderMathInElement(document.body, {
+            delimiters: [
+              { left: "$$", right: "$$", display: true },   // Block math
+              { left: "$", right: "$", display: false }      // Inline math
+            ],
+            throwOnError: false  // Don't break on invalid LaTeX
+          })
+          console.log('[KaTeX] Rendered math for question', currentQuestion + 1)
+        } catch (error) {
+          console.warn('KaTeX rendering failed:', error)
+        }
+      } else {
+        // Scripts not loaded yet, retry after delay
+        console.log('[KaTeX] Scripts not ready, retrying in 50ms...')
+        const timer = setTimeout(renderMath, 50)
+        return () => clearTimeout(timer)
       }
     }
-  }, [currentQuestion, exam])  // Re-render when question changes
+
+    // Small delay to ensure DOM has updated with question content
+    const timer = setTimeout(renderMath, 10)
+    return () => clearTimeout(timer)
+  }, [isLoading, exam, currentQuestion])  // Trigger when exam loads or question changes
 
   const fetchExam = async () => {
     try {
