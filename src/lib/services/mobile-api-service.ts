@@ -447,6 +447,9 @@ export class MobileApiService {
         console.log('Reflections:', audioSummaryData.guided_reflections?.length || 0)
 
         // Flatten audio summary sections into summaryText for database storage
+        console.log('[SUMMARY_TEXT DEBUG] Starting to flatten math audio summary...')
+        console.log('[SUMMARY_TEXT DEBUG] audioSummaryData keys:', Object.keys(audioSummaryData))
+
         const mathSections = [
           audioSummaryData.overview || '',
           audioSummaryData.key_ideas || '',
@@ -454,8 +457,12 @@ export class MobileApiService {
           audioSummaryData.common_mistakes || ''
         ].filter(s => s.trim())
 
+        console.log('[SUMMARY_TEXT DEBUG] Math sections count:', mathSections.length)
+        console.log('[SUMMARY_TEXT DEBUG] Section lengths:', mathSections.map(s => s.length))
+
         // Add guided reflections to text summary
         if (audioSummaryData.guided_reflections && audioSummaryData.guided_reflections.length > 0) {
+          console.log('[SUMMARY_TEXT DEBUG] Adding', audioSummaryData.guided_reflections.length, 'guided reflections')
           audioSummaryData.guided_reflections.forEach((reflection: any) => {
             if (reflection.question) {
               mathSections.push(`${reflection.question} ${reflection.short_answer || ''}`)
@@ -464,7 +471,8 @@ export class MobileApiService {
         }
 
         summaryText = mathSections.join('\n\n')
-        console.log('Math summary flattened to text:', summaryText.length, 'characters')
+        console.log('[SUMMARY_TEXT DEBUG] ✅ Math summary flattened to text:', summaryText.length, 'characters')
+        console.log('[SUMMARY_TEXT DEBUG] Summary preview (first 200 chars):', summaryText.substring(0, 200))
       }
       // Extract summary if present (core_academics format)
       else if (parsedResult.summary) {
@@ -619,6 +627,11 @@ export class MobileApiService {
       // Note: user_id is already set in examData above
       // No need for separate student_id handling - we use user_id directly
 
+      console.log('[SUMMARY_TEXT DEBUG] 📝 About to insert exam with summary_text:', {
+        summary_text_length: summaryText ? summaryText.length : 0,
+        summary_text_is_null: summaryText === null,
+        summary_text_preview: summaryText ? summaryText.substring(0, 100) : 'NULL'
+      })
       console.log('Creating ExamGenie exam:', examData)
 
       if (!supabaseAdmin) {
@@ -638,6 +651,10 @@ export class MobileApiService {
         console.error('Failed to create examgenie_exams record:', examError)
         return null
       }
+
+      console.log('[SUMMARY_TEXT DEBUG] ✅ Exam inserted successfully')
+      console.log('[SUMMARY_TEXT DEBUG] DB returned summary_text length:', exam?.[0]?.summary_text?.length || 0)
+      console.log('[SUMMARY_TEXT DEBUG] DB returned summary_text preview:', exam?.[0]?.summary_text?.substring(0, 100) || 'NULL')
 
       // Create questions in examgenie_questions table
       const questionsData = parsedQuestions.map((q: any, index: number) => ({
