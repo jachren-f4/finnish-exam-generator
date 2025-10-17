@@ -6,7 +6,7 @@ import type { ExamData } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
 import { ICONS } from '@/constants/exam-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
-import { getTotalGenieDollars, getExamCompletionStatus, GENIE_DOLLAR_REWARDS } from '@/lib/utils/genie-dollars'
+import { getTotalGenieDollars, getExamCompletionStatus, GENIE_DOLLAR_REWARDS, awardExamRetakeDollars } from '@/lib/utils/genie-dollars'
 
 interface ExamMenuState extends ExamData {
   canReuse: boolean
@@ -25,13 +25,17 @@ export default function ExamMenuPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [totalGenieDollars, setTotalGenieDollars] = useState(0)
+  const [wrongQuestionCount, setWrongQuestionCount] = useState(0)
   const [rewardStatus, setRewardStatus] = useState({
     audioEarned: false,
     examEarned: false,
+    retakeEarned: false,
     audioEligible: true,
     examEligible: true,
+    retakeEligible: false,
     audioHoursRemaining: 0,
     examHoursRemaining: 0,
+    retakeHoursRemaining: 0,
   })
 
   useEffect(() => {
@@ -56,6 +60,22 @@ export default function ExamMenuPage() {
       const responseData = await response.json()
       const examData = responseData.data || responseData
       setExam(examData)
+
+      // If exam has been completed, fetch attempt history to get wrong question count
+      if (examData.hasBeenCompleted) {
+        try {
+          const attemptsResponse = await fetch(`/api/exam/${examId}/attempts`)
+          if (attemptsResponse.ok) {
+            const attemptsData = await attemptsResponse.json()
+            if (attemptsData.latest_attempt) {
+              setWrongQuestionCount(attemptsData.latest_attempt.questions_incorrect || 0)
+            }
+          }
+        } catch (attemptErr) {
+          console.error('Failed to fetch attempt history:', attemptErr)
+          // Non-critical, continue without wrong question count
+        }
+      }
     } catch (err) {
       console.error('Error fetching exam:', err)
       setError(err instanceof Error ? err.message : EXAM_UI.LOAD_FAILED)
@@ -468,16 +488,89 @@ export default function ExamMenuPage() {
             )}
           </div>
 
-          {/* Practice Mode Card */}
+          {/* Retake Full Exam Card */}
           <div
+            onClick={isCompleted ? () => router.push(`/exam/${examId}/take?mode=retake`) : undefined}
             style={{
               background: COLORS.background.primary,
               border: `2px solid ${COLORS.border.light}`,
               borderRadius: '12px',
               padding: '12px 8px',
               textAlign: 'center',
-              cursor: 'default',
-              opacity: 0.5,
+              cursor: isCompleted ? 'pointer' : 'default',
+              opacity: isCompleted ? 1 : 0.5,
+              transition: TRANSITIONS.normal,
+            }}
+          >
+            <div style={{
+              fontSize: '28px',
+              marginBottom: '6px',
+            }}>
+              🔄
+            </div>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginBottom: '2px',
+              color: '#1a1a1a',
+            }}>
+              Retake
+            </div>
+            {isCompleted ? (
+              rewardStatus.retakeEligible ? (
+                <div style={{
+                  display: 'inline-block',
+                  background: '#fb923c',
+                  color: '#ffffff',
+                  padding: '2px 6px',
+                  borderRadius: '8px',
+                  fontSize: '10px',
+                  fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                  marginTop: '4px',
+                }}>
+                  +{GENIE_DOLLAR_REWARDS.EXAM_RETAKE}
+                </div>
+              ) : (
+                <div style={{
+                  display: 'inline-block',
+                  background: '#d1fae5',
+                  color: '#065f46',
+                  padding: '2px 6px',
+                  borderRadius: '8px',
+                  fontSize: '10px',
+                  fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                  marginTop: '4px',
+                }}>
+                  ✓
+                </div>
+              )
+            ) : (
+              <div style={{
+                display: 'inline-block',
+                background: '#f3f4f6',
+                color: '#6b7280',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                fontSize: '10px',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                marginTop: '4px',
+              }}>
+                Pending
+              </div>
+            )}
+          </div>
+
+          {/* Practice Mistakes Card */}
+          <div
+            onClick={isCompleted && wrongQuestionCount > 0 ? () => router.push(`/exam/${examId}/take?mode=wrong-only`) : undefined}
+            style={{
+              background: COLORS.background.primary,
+              border: `2px solid ${COLORS.border.light}`,
+              borderRadius: '12px',
+              padding: '12px 8px',
+              textAlign: 'center',
+              cursor: isCompleted && wrongQuestionCount > 0 ? 'pointer' : 'default',
+              opacity: isCompleted && wrongQuestionCount > 0 ? 1 : 0.5,
               transition: TRANSITIONS.normal,
             }}
           >
@@ -493,61 +586,35 @@ export default function ExamMenuPage() {
               marginBottom: '2px',
               color: '#1a1a1a',
             }}>
-              Practice
+              Mistakes
             </div>
-            <div style={{
-              display: 'inline-block',
-              background: '#f3f4f6',
-              color: '#6b7280',
-              padding: '2px 6px',
-              borderRadius: '8px',
-              fontSize: '10px',
-              fontWeight: TYPOGRAPHY.fontWeight.semibold,
-              marginTop: '4px',
-            }}>
-              Soon
-            </div>
-          </div>
-
-          {/* Study Guide Card */}
-          <div
-            style={{
-              background: COLORS.background.primary,
-              border: `2px solid ${COLORS.border.light}`,
-              borderRadius: '12px',
-              padding: '12px 8px',
-              textAlign: 'center',
-              cursor: 'default',
-              opacity: 0.5,
-              transition: TRANSITIONS.normal,
-            }}
-          >
-            <div style={{
-              fontSize: '28px',
-              marginBottom: '6px',
-            }}>
-              📚
-            </div>
-            <div style={{
-              fontSize: '11px',
-              fontWeight: TYPOGRAPHY.fontWeight.semibold,
-              marginBottom: '2px',
-              color: '#1a1a1a',
-            }}>
-              Study
-            </div>
-            <div style={{
-              display: 'inline-block',
-              background: '#f3f4f6',
-              color: '#6b7280',
-              padding: '2px 6px',
-              borderRadius: '8px',
-              fontSize: '10px',
-              fontWeight: TYPOGRAPHY.fontWeight.semibold,
-              marginTop: '4px',
-            }}>
-              Soon
-            </div>
+            {isCompleted && wrongQuestionCount > 0 ? (
+              <div style={{
+                display: 'inline-block',
+                background: '#dbeafe',
+                color: '#1e40af',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                fontSize: '10px',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                marginTop: '4px',
+              }}>
+                {wrongQuestionCount} Q
+              </div>
+            ) : (
+              <div style={{
+                display: 'inline-block',
+                background: '#f3f4f6',
+                color: '#6b7280',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                fontSize: '10px',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                marginTop: '4px',
+              }}>
+                {isCompleted && wrongQuestionCount === 0 ? 'Perfect!' : 'Pending'}
+              </div>
+            )}
           </div>
 
           {/* Leaderboard Card */}

@@ -3,7 +3,8 @@
  *
  * Awards:
  * - 5 Genie Dollars for completing audio summary
- * - 10 Genie Dollars for completing exam
+ * - 10 Genie Dollars for completing exam (first attempt)
+ * - 5 Genie Dollars for completing exam retake
  *
  * Storage: Browser localStorage (per-device)
  * Earning: Once per exam per activity, repeatable every 12 hours
@@ -15,6 +16,7 @@ const HOURS_BETWEEN_REWARDS = 12
 export const GENIE_DOLLAR_REWARDS = {
   AUDIO: 5,
   EXAM: 10,
+  EXAM_RETAKE: 5,
 } as const
 
 interface GenieDollarsData {
@@ -23,8 +25,10 @@ interface GenieDollarsData {
     [examId: string]: {
       audioEarned: boolean
       examEarned: boolean
+      retakeEarned?: boolean
       audioLastEarnedAt?: number // timestamp in ms
       examLastEarnedAt?: number // timestamp in ms
+      retakeLastEarnedAt?: number // timestamp in ms
     }
   }
 }
@@ -204,6 +208,74 @@ export function awardExamDollars(examId: string): number {
 }
 
 /**
+ * Check if exam retake reward is currently eligible (12 hours since last retake)
+ */
+export function isExamRetakeEligible(examId: string): boolean {
+  const data = getGenieDollarsData()
+  const completion = data.completions[examId]
+
+  // Must have completed first attempt before retakes are eligible
+  if (!completion || !completion.examEarned) {
+    return false
+  }
+
+  if (!completion.retakeLastEarnedAt) {
+    return true // Never earned retake reward, eligible
+  }
+
+  const now = Date.now()
+  const hoursSinceLastEarned = (now - completion.retakeLastEarnedAt) / (1000 * 60 * 60)
+  return hoursSinceLastEarned >= HOURS_BETWEEN_REWARDS
+}
+
+/**
+ * Get hours remaining until retake reward is eligible again
+ * Returns 0 if eligible now
+ */
+export function getExamRetakeHoursRemaining(examId: string): number {
+  const data = getGenieDollarsData()
+  const completion = data.completions[examId]
+
+  if (!completion || !completion.examEarned) {
+    return 999 // Not eligible until first attempt completed
+  }
+
+  if (!completion.retakeLastEarnedAt) {
+    return 0 // Eligible now
+  }
+
+  const now = Date.now()
+  const hoursSinceLastEarned = (now - completion.retakeLastEarnedAt) / (1000 * 60 * 60)
+  const remaining = HOURS_BETWEEN_REWARDS - hoursSinceLastEarned
+
+  return remaining > 0 ? remaining : 0
+}
+
+/**
+ * Award Genie Dollars for completing exam retake
+ * Returns the amount awarded (0 if not eligible)
+ */
+export function awardExamRetakeDollars(examId: string): number {
+  if (!isExamRetakeEligible(examId)) {
+    return 0
+  }
+
+  const data = getGenieDollarsData()
+  const now = Date.now()
+
+  if (!data.completions[examId]) {
+    return 0 // Should not happen, but safety check
+  }
+
+  data.completions[examId].retakeEarned = true
+  data.completions[examId].retakeLastEarnedAt = now
+  data.totalDollars += GENIE_DOLLAR_REWARDS.EXAM_RETAKE
+
+  saveGenieDollarsData(data)
+  return GENIE_DOLLAR_REWARDS.EXAM_RETAKE
+}
+
+/**
  * Format hours remaining as human-readable string
  */
 export function formatHoursRemaining(hours: number): string {
@@ -225,9 +297,12 @@ export function getExamCompletionStatus(examId: string) {
   return {
     audioEarned: data.completions[examId]?.audioEarned ?? false,
     examEarned: data.completions[examId]?.examEarned ?? false,
+    retakeEarned: data.completions[examId]?.retakeEarned ?? false,
     audioEligible: isAudioRewardEligible(examId),
     examEligible: isExamRewardEligible(examId),
+    retakeEligible: isExamRetakeEligible(examId),
     audioHoursRemaining: getAudioRewardHoursRemaining(examId),
     examHoursRemaining: getExamRewardHoursRemaining(examId),
+    retakeHoursRemaining: getExamRetakeHoursRemaining(examId),
   }
 }

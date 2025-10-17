@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import type { ExamData, StudentAnswer } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
 import { ICONS } from '@/constants/exam-icons'
 import { NavigationDots } from '@/components/exam/NavigationDots'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
-import { awardExamDollars } from '@/lib/utils/genie-dollars'
+import { awardExamDollars, awardExamRetakeDollars } from '@/lib/utils/genie-dollars'
 
 interface ExamState extends ExamData {
   canReuse: boolean
@@ -20,9 +20,12 @@ interface ExamState extends ExamData {
 export default function ExamPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const examId = params?.id as string
+  const examMode = searchParams.get('mode') || 'normal' // 'normal', 'retake', or 'wrong-only'
 
   const [exam, setExam] = useState<ExamState | null>(null)
+  const [filteredQuestions, setFilteredQuestions] = useState<any[]>([])
   const [answers, setAnswers] = useState<{[questionId: string]: string}>({})
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -30,6 +33,7 @@ export default function ExamPage() {
   const [error, setError] = useState('')
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [mode, setMode] = useState<'take' | 'review'>('take')
+  const [attemptNumber, setAttemptNumber] = useState(1)
 
   useEffect(() => {
     if (examId) {

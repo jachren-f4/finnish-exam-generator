@@ -42,6 +42,18 @@ export interface DbGrading {
   grading_json: any // JSONB field
   final_grade: string
   graded_at: string
+  attempt_number: number // Tracks which attempt (1=first, 2=second, etc.)
+}
+
+export interface DbExamGenieGrading {
+  grading_id: string
+  exam_id: string // References examgenie_exams.id
+  grade_scale: string
+  grading_json: any // JSONB field
+  final_grade: string
+  graded_at: string
+  grading_prompt: string | null
+  attempt_number: number // Tracks which attempt (1=first, 2=second, etc.)
 }
 
 
@@ -94,6 +106,7 @@ export interface GradingResult {
   questions_correct: number
   questions_partial: number
   questions_incorrect: number
+  attempt_number?: number // Tracks which attempt (1=first, 2=second, etc.)
   grading_metadata?: {
     gemini_graded: number
     rule_based_graded: number
@@ -117,6 +130,18 @@ export interface GradedQuestion {
   options?: string[]
   grading_method?: 'gemini' | 'rule-based'
   usage_metadata?: any
+}
+
+// Exam attempt history for retakes
+export interface ExamAttempt {
+  attempt_number: number
+  final_grade: string
+  percentage: number
+  total_points: number
+  max_total_points: number
+  questions_correct: number
+  questions_incorrect: number
+  graded_at: string
 }
 
 // ExamGenie MVP types for multi-user architecture

@@ -39,6 +39,102 @@ export async function getExamForTaking(examId: string): Promise<ExamData | null>
   return ExamRepository.findForTaking(examId)
 }
 
+// Get next attempt number for an exam
+export async function getNextAttemptNumber(examId: string): Promise<number> {
+  try {
+    // Try ExamGenie grading table first
+    let gradingResult = await DatabaseManager.executeQuery(
+      async () => {
+        return await supabase
+          .from('examgenie_grading')
+          .select('attempt_number')
+          .eq('exam_id', examId)
+          .order('attempt_number', { ascending: false })
+          .limit(1)
+      },
+      'Get Latest ExamGenie Attempt Number'
+    )
+
+    // Fall back to legacy grading table if not found
+    if (gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+      gradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabase
+            .from('grading')
+            .select('attempt_number')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+        },
+        'Get Latest Legacy Attempt Number'
+      )
+    }
+
+    if (gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+      return 1 // First attempt
+    }
+
+    const latestAttempt = gradingResult.data[0].attempt_number || 1
+    return latestAttempt + 1
+  } catch (error) {
+    console.error('Error getting next attempt number:', error)
+    return 1
+  }
+}
+
+// Get IDs of questions that were answered incorrectly in the latest attempt
+export async function getWrongQuestionIds(examId: string): Promise<string[]> {
+  try {
+    // Try ExamGenie grading table first
+    let gradingResult = await DatabaseManager.executeQuery(
+      async () => {
+        return await supabase
+          .from('examgenie_grading')
+          .select('grading_json')
+          .eq('exam_id', examId)
+          .order('attempt_number', { ascending: false })
+          .limit(1)
+      },
+      'Get Latest ExamGenie Grading for Wrong Questions'
+    )
+
+    // Fall back to legacy grading table if not found
+    if (gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+      gradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabase
+            .from('grading')
+            .select('grading_json')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+        },
+        'Get Latest Legacy Grading for Wrong Questions'
+      )
+    }
+
+    if (gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+      return []
+    }
+
+    const grading = gradingResult.data[0].grading_json
+    if (!grading || !grading.questions) {
+      return []
+    }
+
+    // Filter questions where points_awarded < max_points
+    const wrongQuestionIds = grading.questions
+      .filter((q: any) => q.points_awarded < q.max_points)
+      .map((q: any) => q.id)
+
+    console.log(`Found ${wrongQuestionIds.length} wrong questions for exam ${examId}`)
+    return wrongQuestionIds
+  } catch (error) {
+    console.error('Error getting wrong question IDs:', error)
+    return []
+  }
+}
+
 // Get exam state for reuse/review - checks if exam has been completed at least once
 export async function getExamState(examId: string): Promise<{
   exam: ExamData | null,
@@ -54,17 +150,33 @@ export async function getExamState(examId: string): Promise<{
     }
 
     // Check if exam has been completed (has grading data)
-    const gradingResult = await DatabaseManager.executeQuery(
+    // Try ExamGenie grading table first
+    let gradingResult = await DatabaseManager.executeQuery(
       async () => {
         return await supabase
-          .from('grading')
+          .from('examgenie_grading')
           .select('*')
           .eq('exam_id', examId)
-          .order('graded_at', { ascending: false })
+          .order('attempt_number', { ascending: false })
           .limit(1)
       },
-      'Get Latest Grading'
+      'Get Latest ExamGenie Grading'
     )
+
+    // Fall back to legacy grading table if not found
+    if (gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+      gradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabase
+            .from('grading')
+            .select('*')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+        },
+        'Get Latest Legacy Grading'
+      )
+    }
 
     const hasBeenCompleted = !gradingResult.error && !!gradingResult.data && gradingResult.data.length > 0
     const latestGrading = hasBeenCompleted && gradingResult.data ? gradingResult.data[0] : null
@@ -89,7 +201,7 @@ export async function getExamState(examId: string): Promise<{
 }
 
 // Submit student answers and trigger grading
-export async function submitAnswers(examId: string, answers: StudentAnswer[]): Promise<GradingResult | null> {
+export async function submitAnswers(examId: string, answers: StudentAnswer[], attemptNumber?: number): Promise<GradingResult | null> {
   try {
     // First, try to get the original exam from legacy table
     let exam = null
@@ -235,20 +347,28 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
     }
 
     // Use transaction to save grading and update status atomically
+    const finalAttemptNumber = attemptNumber || 1
+
+    // Choose correct grading table based on exam source
+    const gradingTable = isExamGenieExam ? 'examgenie_grading' : 'grading'
+
     const transactionResult = await DatabaseManager.transaction([
-      // Save grading results
-      () => DatabaseManager.insert('grading', {
+      // Save grading results to appropriate table
+      () => DatabaseManager.insert(gradingTable, {
         exam_id: examId,
         grade_scale: '4-10',
         grading_json: gradingResult,
         final_grade: gradingResult.final_grade,
-        grading_prompt: getGradingPrompt()
+        grading_prompt: getGradingPrompt(),
+        attempt_number: finalAttemptNumber
       }),
-      // Update exam status to graded
-      () => DatabaseManager.update('exams',
-        { status: 'graded' },
-        { exam_id: examId }
-      )
+      // Update exam status to graded (only for legacy exams)
+      ...(isExamGenieExam ? [] : [
+        () => DatabaseManager.update('exams',
+          { status: 'graded' },
+          { exam_id: examId }
+        )
+      ])
     ], 'Submit Answers Transaction')
 
     if (transactionResult.error) {
@@ -276,7 +396,11 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
       }
     }
 
-    return gradingResult
+    // Add attempt number to the result
+    return {
+      ...gradingResult,
+      attempt_number: finalAttemptNumber
+    }
 
   } catch (error) {
     return null
@@ -286,7 +410,26 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
 // Get grading results
 export async function getGradingResults(examId: string): Promise<GradingResult | null> {
   try {
-    const gradingResult = await DatabaseManager.executeQuery(
+    // Try ExamGenie grading table first (modern)
+    const examGenieGradingResult = await DatabaseManager.executeQuery(
+      async () => {
+        return await supabase
+          .from('examgenie_grading')
+          .select('*')
+          .eq('exam_id', examId)
+          .order('attempt_number', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      },
+      'Get ExamGenie Grading Results'
+    )
+
+    if (!examGenieGradingResult.error && examGenieGradingResult.data) {
+      return (examGenieGradingResult.data as any).grading_json as GradingResult
+    }
+
+    // Fall back to legacy grading table (for production)
+    const legacyGradingResult = await DatabaseManager.executeQuery(
       async () => {
         return await supabase
           .from('grading')
@@ -295,16 +438,18 @@ export async function getGradingResults(examId: string): Promise<GradingResult |
             exams!inner(*)
           `)
           .eq('exam_id', examId)
-          .single()
+          .order('attempt_number', { ascending: false })
+          .limit(1)
+          .maybeSingle()
       },
-      'Get Grading Results'
+      'Get Legacy Grading Results'
     )
 
-    if (gradingResult.error || !gradingResult.data) {
+    if (legacyGradingResult.error || !legacyGradingResult.data) {
       return null
     }
 
-    return (gradingResult.data as any).grading_json as GradingResult
+    return (legacyGradingResult.data as any).grading_json as GradingResult
 
   } catch (error) {
     return null

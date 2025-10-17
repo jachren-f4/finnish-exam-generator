@@ -25,6 +25,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ❌ NEVER modify `.env.local` API keys without explicit user request
 - ❌ NEVER skip rate limiting checks on staging/production
 - ✅ All API keys must remain server-side only
+- ✅ `VERCEL_TOKEN` is for CLI access only (not used by application)
 
 ### Architecture Constraints
 - ❌ NEVER use OCR libraries - Gemini AI only (legacy naming)
@@ -81,6 +82,10 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ✅ Single text-heavy images work well
 - ❌ 2 images insufficient for graph-heavy content
 
+### Database Environments
+- ⚠️ Separate databases: `.env.local.staging` ≠ `.env.local.production`
+- ✅ Query scripts default to staging for safety
+
 ## Tech Stack
 
 ### Core
@@ -105,6 +110,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 - **Genie Dollars**: `/src/lib/utils/genie-dollars.ts`
 - **Gemini Client**: `/src/lib/gemini.ts`
 - **Supabase Client**: `/src/lib/supabase.ts`
+- **Scripts**: `/scripts/vercel-logs.sh`, `/scripts/db-query.sh`, `/scripts/db-latest-exams.sh`
 
 ### API Routes
 - **Mobile Exam Gen**: `/src/app/api/mobile/exam-questions/route.ts`
@@ -146,6 +152,12 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
   -F "grade=5"
 ```
 
+### Database Inspection
+```bash
+./scripts/db-latest-exams.sh staging 5           # Latest exams
+./scripts/db-query.sh staging examgenie_exams 10 # Query table
+```
+
 ## Common Issues & Solutions
 
 | Issue | Solution |
@@ -158,6 +170,7 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 | Math audio missing | Check `[Math Audio]` logs • Audio fails silently • Verify `GOOGLE_CLOUD_CREDENTIALS_JSON` |
 | Math equations not rendering | Verify KaTeX scripts in `layout.tsx` not page-level |
 | Questions reference images | Need minimum 3 images for graph-heavy content |
+| Vercel logs not working | Check `VERCEL_TOKEN` in `.env.local` • Get token from https://vercel.com/account/tokens |
 
 ## Architecture Decisions - Don't Break These
 

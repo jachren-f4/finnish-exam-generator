@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { submitAnswers } from '@/lib/exam-service'
+import { submitAnswers, getNextAttemptNumber } from '@/lib/exam-service'
 import { ApiResponseBuilder } from '@/lib/utils/api-response'
 import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
 
@@ -63,7 +63,11 @@ export async function POST(
       }
     }
 
-    const gradingResult = await submitAnswers(examId, answers)
+    // Get the next attempt number for this exam
+    const attemptNumber = await getNextAttemptNumber(examId)
+    console.log(`Processing attempt #${attemptNumber} for exam ${examId}`)
+
+    const gradingResult = await submitAnswers(examId, answers, attemptNumber)
     
     if (!gradingResult) {
       const managedError = ErrorManager.createFromError(

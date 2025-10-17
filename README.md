@@ -103,6 +103,9 @@ RATE_LIMIT_HOURLY=10        # Max requests per hour per user
 RATE_LIMIT_DAILY=50         # Max requests per day per user
 RATE_LIMITING_ENABLED=true  # Enable/disable rate limiting
 ENABLE_REQUEST_LOGGING=true # Log API requests to database
+
+# Optional - Vercel CLI
+VERCEL_TOKEN=your_token_here    # CLI log access
 ```
 
 **Keys:** [Gemini API](https://aistudio.google.com/app/apikey) • [Supabase](https://app.supabase.com/project/_/settings/api) • Set `NEXT_PUBLIC_APP_URL` for exam sharing URLs
@@ -143,6 +146,24 @@ npm run dev        # Start dev server (port 3001)
 npm run build      # ALWAYS RUN BEFORE PUSH
 npm run lint       # ESLint check
 ```
+
+### Scripts
+
+**Vercel Logs:** Stream real-time deployment logs
+```bash
+./scripts/vercel-logs.sh production   # Production logs
+./scripts/vercel-logs.sh staging      # Staging logs
+```
+
+**Database Queries:** Inspect staging/production databases
+```bash
+./scripts/db-latest-exams.sh staging 5        # Latest 5 exams (default)
+./scripts/db-query.sh staging examgenie_exams # Query any table
+```
+
+**Tables:** `examgenie_exams`, `examgenie_questions`, `students`, `rate_limits`, `api_request_logs`, `exam_results`
+
+**Note:** See `/scripts/README.md` for full documentation.
 
 ## Project Structure
 
