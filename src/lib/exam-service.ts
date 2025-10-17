@@ -233,11 +233,19 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[], at
             .from('examgenie_exams')
             .select('*')
             .eq('id', examId)
-            .eq('status', 'READY')
             .maybeSingle()
         },
         'Get ExamGenie Exam for Submission'
       )
+
+      // Check if exam exists and has valid status
+      if (examgenieResult.data) {
+        const status = (examgenieResult.data as any).status
+        if (status !== 'READY' && status !== 'created') {
+          console.log(`Exam ${examId} has invalid status for submission: ${status}`)
+          return null
+        }
+      }
 
       if (examgenieResult.error || !examgenieResult.data) {
         console.log('Exam not found in either table:', examId)
