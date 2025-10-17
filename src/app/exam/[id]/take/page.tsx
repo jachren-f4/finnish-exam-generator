@@ -35,7 +35,7 @@ export default function ExamPage() {
   const [mode, setMode] = useState<'take' | 'review'>('take')
   const [attemptNumber, setAttemptNumber] = useState(1)
   const [previousAttempt, setPreviousAttempt] = useState<any | null>(null)
-  const [showPreviousAnswer, setShowPreviousAnswer] = useState(false)
+  const [showBottomSheet, setShowBottomSheet] = useState(false)
 
   useEffect(() => {
     if (examId) {
@@ -418,6 +418,7 @@ export default function ExamPage() {
         background: COLORS.background.primary,
         display: 'flex',
         flexDirection: 'column',
+        paddingBottom: (mode === 'take' && (examMode === 'retake' || examMode === 'wrong-only') && getPreviousAnswer(currentQ.id)) ? '60px' : '0',
       }}>
       {/* Header */}
       <div style={{
@@ -459,53 +460,6 @@ export default function ExamPage() {
           </h1>
         </div>
       </div>
-
-      {/* Previous Attempt Banner - Mobile-compact */}
-      {(examMode === 'retake' || examMode === 'wrong-only') && previousAttempt && (
-        <div style={{
-          background: COLORS.background.secondary,
-          borderBottom: `2px solid ${COLORS.border.light}`,
-          padding: `${SPACING.xs} ${SPACING.md}`,
-        }}>
-          <div style={{
-            maxWidth: '640px',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: SPACING.sm,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.xs }}>
-              <span style={{
-                fontSize: TYPOGRAPHY.fontSize.sm,
-                color: COLORS.primary.medium,
-              }}>
-                Previous:
-              </span>
-              <span style={{
-                fontSize: TYPOGRAPHY.fontSize.base,
-                fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                color: COLORS.primary.text,
-              }}>
-                {previousAttempt.final_grade}
-              </span>
-              <span style={{
-                fontSize: TYPOGRAPHY.fontSize.sm,
-                color: COLORS.primary.medium,
-              }}>
-                ({previousAttempt.total_points}/{previousAttempt.max_total_points})
-              </span>
-            </div>
-            <div style={{
-              fontSize: TYPOGRAPHY.fontSize.xs,
-              color: COLORS.semantic.info,
-              fontWeight: TYPOGRAPHY.fontWeight.medium,
-            }}>
-              {examMode === 'retake' ? 'Full Retake' : `${activeQuestions.length} Questions`}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Navigation Dots - Top */}
       {mode === 'take' && (
@@ -556,84 +510,6 @@ export default function ExamPage() {
                 marginBottom: SPACING.md,
                 lineHeight: TYPOGRAPHY.lineHeight.normal,
               }}>{currentQ.question_text}</h2>
-
-              {/* Previous Answer Collapsible - Mobile-compact */}
-              {(examMode === 'retake' || examMode === 'wrong-only') && getPreviousAnswer(currentQ.id) && (
-                <div style={{
-                  marginBottom: SPACING.md,
-                  border: `1px solid ${COLORS.border.light}`,
-                  borderRadius: RADIUS.md,
-                  overflow: 'hidden',
-                }}>
-                  <button
-                    onClick={() => setShowPreviousAnswer(!showPreviousAnswer)}
-                    style={{
-                      width: '100%',
-                      background: COLORS.background.secondary,
-                      border: 'none',
-                      padding: SPACING.sm,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer',
-                      minHeight: TOUCH_TARGETS.comfortable,
-                    }}
-                  >
-                    <span style={{
-                      fontSize: TYPOGRAPHY.fontSize.sm,
-                      fontWeight: TYPOGRAPHY.fontWeight.medium,
-                      color: COLORS.primary.text,
-                    }}>
-                      Previous Answer {getPreviousAnswer(currentQ.id)?.points_awarded === getPreviousAnswer(currentQ.id)?.max_points ? '✓' : '✗'}
-                    </span>
-                    <span style={{ fontSize: TYPOGRAPHY.fontSize.sm }}>
-                      {showPreviousAnswer ? '▲' : '▼'}
-                    </span>
-                  </button>
-                  {showPreviousAnswer && (
-                    <div style={{
-                      padding: SPACING.sm,
-                      background: COLORS.background.primary,
-                      borderTop: `1px solid ${COLORS.border.light}`,
-                    }}>
-                      <div style={{
-                        fontSize: TYPOGRAPHY.fontSize.sm,
-                        color: COLORS.primary.medium,
-                        marginBottom: SPACING.xs,
-                      }}>
-                        You answered:
-                      </div>
-                      <div style={{
-                        fontSize: TYPOGRAPHY.fontSize.base,
-                        color: COLORS.primary.text,
-                        marginBottom: SPACING.xs,
-                        fontWeight: TYPOGRAPHY.fontWeight.medium,
-                      }}>
-                        {getPreviousAnswer(currentQ.id)?.student_answer || 'No answer'}
-                      </div>
-                      <div style={{
-                        fontSize: TYPOGRAPHY.fontSize.xs,
-                        color: getPreviousAnswer(currentQ.id)?.points_awarded === getPreviousAnswer(currentQ.id)?.max_points
-                          ? COLORS.semantic.success
-                          : COLORS.semantic.error,
-                      }}>
-                        {getPreviousAnswer(currentQ.id)?.points_awarded}/{getPreviousAnswer(currentQ.id)?.max_points} points
-                      </div>
-                      {getPreviousAnswer(currentQ.id)?.feedback && (
-                        <div style={{
-                          fontSize: TYPOGRAPHY.fontSize.sm,
-                          color: COLORS.primary.medium,
-                          marginTop: SPACING.xs,
-                          paddingTop: SPACING.xs,
-                          borderTop: `1px solid ${COLORS.border.light}`,
-                        }}>
-                          {getPreviousAnswer(currentQ.id)?.feedback}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* Answer Input */}
               {currentQ.question_type === 'multiple_choice' && currentQ.options ? (
@@ -927,6 +803,131 @@ export default function ExamPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Bottom Bar - Show previous answer (Variant 6) */}
+      {mode === 'take' && (examMode === 'retake' || examMode === 'wrong-only') && getPreviousAnswer(currentQ.id) && (
+        <div
+          onClick={() => setShowBottomSheet(true)}
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: COLORS.semantic.success,
+            color: '#FFFFFF',
+            padding: `${SPACING.sm} ${SPACING.md}`,
+            fontSize: TYPOGRAPHY.fontSize.sm,
+            fontWeight: TYPOGRAPHY.fontWeight.semibold,
+            textAlign: 'center',
+            cursor: 'pointer',
+            boxShadow: SHADOWS.card,
+            zIndex: 100,
+          }}
+        >
+          Previous: {getPreviousAnswer(currentQ.id)?.points_awarded === getPreviousAnswer(currentQ.id)?.max_points ? '✓' : '✗'} {getPreviousAnswer(currentQ.id)?.points_awarded}/{getPreviousAnswer(currentQ.id)?.max_points} points • Tap to view
+        </div>
+      )}
+
+      {/* Overlay */}
+      {showBottomSheet && (
+        <div
+          onClick={() => setShowBottomSheet(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 150,
+          }}
+        />
+      )}
+
+      {/* Bottom Sheet */}
+      {(examMode === 'retake' || examMode === 'wrong-only') && getPreviousAnswer(currentQ.id) && (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: COLORS.background.primary,
+          borderRadius: `${RADIUS.lg} ${RADIUS.lg} 0 0`,
+          padding: SPACING.lg,
+          boxShadow: '0 -4px 16px rgba(0,0,0,0.2)',
+          transform: showBottomSheet ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.3s ease',
+          zIndex: 200,
+          maxWidth: '640px',
+          margin: '0 auto',
+        }}>
+          {/* Sheet Handle */}
+          <div style={{
+            width: '40px',
+            height: '4px',
+            background: COLORS.border.medium,
+            borderRadius: RADIUS.full,
+            margin: `0 auto ${SPACING.md}`,
+          }} />
+
+          <h3 style={{
+            marginBottom: SPACING.sm,
+            fontSize: TYPOGRAPHY.fontSize.lg,
+            fontWeight: TYPOGRAPHY.fontWeight.semibold,
+            color: COLORS.primary.text,
+          }}>
+            Previous Answer {getPreviousAnswer(currentQ.id)?.points_awarded === getPreviousAnswer(currentQ.id)?.max_points ? '✓' : '✗'}
+          </h3>
+
+          <div style={{
+            fontSize: TYPOGRAPHY.fontSize.sm,
+            color: COLORS.primary.medium,
+            marginBottom: SPACING.sm,
+          }}>
+            <p style={{ marginBottom: SPACING.xs }}><strong>You answered:</strong></p>
+            <p style={{
+              marginBottom: SPACING.sm,
+              fontSize: TYPOGRAPHY.fontSize.base,
+              color: COLORS.primary.text,
+              fontWeight: TYPOGRAPHY.fontWeight.medium,
+            }}>
+              {getPreviousAnswer(currentQ.id)?.student_answer || 'No answer'}
+            </p>
+            <p style={{
+              color: getPreviousAnswer(currentQ.id)?.points_awarded === getPreviousAnswer(currentQ.id)?.max_points
+                ? COLORS.semantic.success
+                : COLORS.semantic.error,
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginBottom: SPACING.xs,
+            }}>
+              {getPreviousAnswer(currentQ.id)?.points_awarded}/{getPreviousAnswer(currentQ.id)?.max_points} points
+            </p>
+            {getPreviousAnswer(currentQ.id)?.feedback && (
+              <p style={{ color: COLORS.primary.medium }}>
+                {getPreviousAnswer(currentQ.id)?.feedback}
+              </p>
+            )}
+          </div>
+
+          <button
+            onClick={() => setShowBottomSheet(false)}
+            style={{
+              background: COLORS.primary.dark,
+              color: '#FFFFFF',
+              border: 'none',
+              padding: `${SPACING.sm} ${SPACING.md}`,
+              borderRadius: RADIUS.md,
+              width: '100%',
+              fontSize: TYPOGRAPHY.fontSize.base,
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              cursor: 'pointer',
+              minHeight: TOUCH_TARGETS.comfortable,
+            }}
+          >
+            Close
+          </button>
         </div>
       )}
 
