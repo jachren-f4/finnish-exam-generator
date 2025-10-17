@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retake UI Variants - ExamGenie</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      font-size: 32px;
+      margin-bottom: 12px;
+      color: #000;
+    }
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 32px;
+    }
+    .section {
+      margin-bottom: 48px;
+    }
+    .section-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #000;
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #000;
+    }
+    .variant-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+    }
+    .variant-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .variant-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    .variant-number {
+      display: inline-block;
+      background: #000;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .variant-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #000;
+    }
+    .variant-description {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 16px;
+      min-height: 60px;
+    }
+    .btn {
+      display: inline-block;
+      background: #000;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #333;
+    }
+    .recommended {
+      border: 3px solid #4CAF50;
+      position: relative;
+    }
+    .recommended::before {
+      content: '⭐ RECOMMENDED';
+      position: absolute;
+      top: -12px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .changes {
+      background: #e3f2fd;
+      border: 2px solid #2196f3;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 32px;
+    }
+    .changes h3 {
+      color: #1565c0;
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+    .changes ul {
+      color: #1565c0;
+      line-height: 1.8;
+      margin-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Retake UI Variants - Updated</h1>
+  <p class="subtitle">Exploring different approaches to showing previous answers on mobile retake screens</p>
+
+  <div class="changes">
+    <h3>✅ Changes Applied</h3>
+    <ul>
+      <li>✅ Added back button (←) in top left corner</li>
+      <li>✅ Added "Retake Exam" page title</li>
+      <li>✅ Removed previous score row (9/24/30) and "Full Retake" link</li>
+      <li>✅ Cleaner, more focused interface</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Variant 1 Iterations (Recommended Family)</h2>
+    <p style="margin-bottom: 20px; color: #666;">Different variations of the collapsed previous answer approach. All save maximum space while keeping info accessible.</p>
+    <div class="variant-grid">
+      <!-- Variant 1 Original -->
+      <div class="variant-card recommended">
+        <div class="variant-number">1</div>
+        <h3 class="variant-title">Collapsed by Default</h3>
+        <p class="variant-description">
+          Original variant. Collapsed details section with "Tap to expand" hint. Clean gray background.
+        </p>
+        <a href="variant-1-collapsed-default.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 1a -->
+      <div class="variant-card">
+        <div class="variant-number">1a</div>
+        <h3 class="variant-title">Score Badge Inline</h3>
+        <p class="variant-description">
+          Shows score badge (2/2) when collapsed. Green for correct, red for wrong. At-a-glance status without expanding.
+        </p>
+        <a href="variant-1a-score-inline.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 1b -->
+      <div class="variant-card">
+        <div class="variant-number">1b</div>
+        <h3 class="variant-title">Minimal Single Line</h3>
+        <p class="variant-description">
+          Ultra-minimal: just underline with "✓ Previous: 2/2 points". No background. Down arrow (▼) shows expandability.
+        </p>
+        <a href="variant-1b-minimal-line.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 1c -->
+      <div class="variant-card">
+        <div class="variant-number">1c</div>
+        <h3 class="variant-title">Subtle Color Background</h3>
+        <p class="variant-description">
+          Collapsed section has subtle green gradient. More prominent than gray. Wrong answers would use red/orange.
+        </p>
+        <a href="variant-1c-subtle-bg.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 1d -->
+      <div class="variant-card">
+        <div class="variant-number">1d</div>
+        <h3 class="variant-title">Compact with Emoji</h3>
+        <p class="variant-description">
+          Super compact: ✅ for correct, ❌ for wrong. Dashed border, minimal padding. Chevron (›) indicator. Most space-efficient.
+        </p>
+        <a href="variant-1d-compact-emoji.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 1e -->
+      <div class="variant-card">
+        <div class="variant-number">1e</div>
+        <h3 class="variant-title">Score Badge on Right</h3>
+        <p class="variant-description">
+          Score badge positioned on the right side, aligned with question number. Click badge to toggle expanded view.
+        </p>
+        <a href="variant-1e-score-right.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 1f -->
+      <div class="variant-card">
+        <div class="variant-number">1f</div>
+        <h3 class="variant-title">Inline Gradient Pill</h3>
+        <p class="variant-description">
+          Eye-catching green gradient pill badge. Inline with question number. Click pill to toggle details.
+        </p>
+        <a href="variant-1f-inline-pill.html" class="btn">View Demo</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Alternative Approaches</h2>
+    <p style="margin-bottom: 20px; color: #666;">Different UX patterns for displaying previous answer information.</p>
+    <div class="variant-grid">
+      <!-- Variant 2 -->
+      <div class="variant-card">
+        <div class="variant-number">2</div>
+        <h3 class="variant-title">Icon Badge + Modal</h3>
+        <p class="variant-description">
+          Minimal badge next to question number (✓ 2/2). Tap opens modal with full details. Maximum space saved.
+        </p>
+        <a href="variant-2-icon-badge.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 3 -->
+      <div class="variant-card">
+        <div class="variant-number">3</div>
+        <h3 class="variant-title">Inline Text Only</h3>
+        <p class="variant-description">
+          Simple text "Prev: ✓ 2/2" next to question number. No expansion. Extremely simple and compact.
+        </p>
+        <a href="variant-3-inline-text.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 4 -->
+      <div class="variant-card">
+        <div class="variant-number">4</div>
+        <h3 class="variant-title">Header Info</h3>
+        <p class="variant-description">
+          Previous answer info in top header. Question card stays clean. Updates per question as you navigate.
+        </p>
+        <a href="variant-4-header-info.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 5 -->
+      <div class="variant-card">
+        <div class="variant-number">5</div>
+        <h3 class="variant-title">Left Border Indicator</h3>
+        <p class="variant-description">
+          Colored left border (green/red) with score badge. Visual at-a-glance status. Minimal text, maximum clarity.
+        </p>
+        <a href="variant-5-left-border.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 6 -->
+      <div class="variant-card">
+        <div class="variant-number">6</div>
+        <h3 class="variant-title">Bottom Sheet</h3>
+        <p class="variant-description">
+          Sticky bottom bar. Tap opens drawer from bottom. Question area completely clean. Modern mobile pattern.
+        </p>
+        <a href="variant-6-bottom-sheet.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 7 -->
+      <div class="variant-card">
+        <div class="variant-number">7</div>
+        <h3 class="variant-title">No Display (Pure Focus)</h3>
+        <p class="variant-description">
+          Don't show previous answers at all. Color-coded progress dots (green/red). Comparison only in final results. Pedagogical approach.
+        </p>
+        <a href="variant-7-no-display.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 8 -->
+      <div class="variant-card">
+        <div class="variant-number">8</div>
+        <h3 class="variant-title">Icon Only - No Details</h3>
+        <p class="variant-description">
+          Ultra minimal: Just a green checkmark circle. No expandable section. Maximum space saved. Hover shows tooltip.
+        </p>
+        <a href="variant-8-no-details.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 9 -->
+      <div class="variant-card">
+        <div class="variant-number">9</div>
+        <h3 class="variant-title">Integrated Number Badge</h3>
+        <p class="variant-description">
+          Question number and previous score combined in single green badge. No separate section. Very compact.
+        </p>
+        <a href="variant-9-integrated-number.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 10 -->
+      <div class="variant-card">
+        <div class="variant-number">10</div>
+        <h3 class="variant-title">Compact Info Strip</h3>
+        <p class="variant-description">
+          Horizontal strip above question. Green background for correct. Question number and score side-by-side.
+        </p>
+        <a href="variant-10-top-strip.html" class="btn">View Demo</a>
+      </div>
+
+      <!-- Variant 11 -->
+      <div class="variant-card">
+        <div class="variant-number">11</div>
+        <h3 class="variant-title">Animated Slide-Down</h3>
+        <p class="variant-description">
+          Smooth animation when expanding. Arrow rotates. Content slides with fade-in. Green gradient background. Polished feel.
+        </p>
+        <a href="variant-11-animated-slide.html" class="btn">View Demo</a>
+      </div>
+    </div>
+  </div>
+
+  <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <h3 style="margin-bottom: 16px; font-size: 20px;">Summary</h3>
+    <p style="color: #666; line-height: 1.8; margin-bottom: 16px;">
+      <strong>17 total variants</strong> to compare, with 7 iterations of Variant 1 (the recommended family) plus 10 alternative approaches.
+    </p>
+    <p style="color: #666; line-height: 1.8; margin-bottom: 16px;">
+      <strong>Variant 1 family</strong> (1, 1a-1f) all use the collapsed details pattern with different visual treatments.
+      <strong>Variants 8-11</strong> explore more creative approaches including no details section, integrated badges, info strips, and animations.
+    </p>
+    <p style="color: #666; line-height: 1.8;">
+      Test all variants on mobile to see which works best for your users!
+    </p>
+  </div>
+</body>
+</html>
