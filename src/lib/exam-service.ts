@@ -300,48 +300,28 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[], at
       return null
     }
 
-    // For ExamGenie exams, we need to create a bridge record in the legacy exams table
-    // since the answers table has a foreign key constraint to exams, not examgenie_exams
-    let isExamGenieExam = false
-    if (!legacyExamResult.data && examgenieResult?.data) {
-      isExamGenieExam = true
-      console.log('Creating bridge record for ExamGenie exam in legacy table')
+    // Determine if this is an ExamGenie exam or legacy exam
+    const isExamGenieExam = !legacyExamResult.data && !!examgenieResult?.data
 
-      // Create a minimal record in the legacy exams table for foreign key compatibility
-      const bridgeResult = await DatabaseManager.executeQuery(
-        async () => {
-          return await supabase
-            .from('exams')
-            .insert({
-              exam_id: examId,
-              subject: exam.subject,
-              grade: exam.grade,
-              exam_json: exam.exam_json,
-              status: 'created'
-            })
-            .select('exam_id')
-            .single()
-        },
-        'Create Bridge Record for ExamGenie Exam'
+    // For legacy exams only: insert answers into answers table and create bridge record if needed
+    if (!isExamGenieExam) {
+      console.log('Processing legacy exam - inserting into answers table')
+
+      // Insert student answers
+      const answerResult = await DatabaseManager.insert(
+        'answers',
+        {
+          exam_id: examId,
+          answers_json: { answers }
+        }
       )
 
-      if (bridgeResult.error) {
-        console.error('Failed to create bridge record:', bridgeResult.error)
+      if (answerResult.error) {
+        console.error('Failed to insert answers for legacy exam:', answerResult.error)
         return null
       }
-    }
-
-    // Insert student answers
-    const answerResult = await DatabaseManager.insert(
-      'answers',
-      {
-        exam_id: examId,
-        answers_json: { answers }
-      }
-    )
-
-    if (answerResult.error) {
-      return null
+    } else {
+      console.log('Processing ExamGenie exam - skipping answers table and bridge record')
     }
 
     // Grade the exam using new grading service with personalized feedback
