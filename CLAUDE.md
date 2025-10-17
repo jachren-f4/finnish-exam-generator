@@ -128,7 +128,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ### Pages
 - **Exam Menu Hub**: `/src/app/exam/[id]/page.tsx`
-- **Take Exam**: `/src/app/exam/[id]/take/page.tsx`
+- **Take Exam**: `/src/app/exam/[id]/take/page.tsx` (includes variant 6 bottom sheet for retakes)
 - **Audio Player**: `/src/app/exam/[id]/audio/page.tsx`
 
 ## Testing
@@ -211,6 +211,12 @@ npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
 - 3×2 ultra-compact grid layout
 - Audio card only shows if `audio_url` exists
 - Results card appears after `completed_at` is set
+
+### Retake UI (Variant 6 Bottom Sheet)
+- Bottom bar only shows when: `mode=take` AND `examMode=retake|wrong-only` AND previous answer exists
+- Z-index layering: bottom bar (100) < overlay (150) < bottom sheet (200)
+- Root container needs 60px bottom padding when bottom bar visible
+- Clean question area: no previous answer section in card
 
 ### Database
 - Supabase PostgreSQL

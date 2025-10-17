@@ -346,6 +346,17 @@ useEffect(() => {
 - Yellow badge shows eligible rewards, green badge shows time until next eligibility
 - localStorage tracking: `audioLastEarnedAt` and `examLastEarnedAt`
 
+### 10. Retake UI Design
+
+**Bottom Sheet Pattern (Variant 6)** - When retaking exams, previous answer details are shown via a bottom sheet to keep the question area clean:
+
+- **Bottom Bar:** Sticky green bar showing previous score (e.g., "Previous: ✓ 2/2 points • Tap to view")
+- **Bottom Sheet:** Slide-up drawer with full previous answer details, feedback, and score
+- **Overlay:** Semi-transparent backdrop dismisses sheet when tapped
+- **Clean Question Card:** No clutter—students focus on current attempt
+
+**Why this design?** Works well with iOS Safari bottom address bar • Maximizes space for question content • Previous answer available but not intrusive • Tested across 17 variant prototypes (`/public/retake-variants/`)
+
 ## Common Tasks
 
 These are used to run tests directly from Claude Code.
