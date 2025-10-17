@@ -337,41 +337,60 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[], at
       return null
     }
 
-    // Use transaction to save grading and update status atomically
+    // Save grading results
     const finalAttemptNumber = attemptNumber || 1
 
-    // Choose correct grading table based on exam source
-    const gradingTable = isExamGenieExam ? 'examgenie_grading' : 'grading'
-
-    console.log(`[submitAnswers] About to save grading to table: ${gradingTable}`)
+    console.log(`[submitAnswers] About to save grading for ${isExamGenieExam ? 'ExamGenie' : 'legacy'} exam`)
     console.log(`[submitAnswers] Grading data keys: ${Object.keys(gradingResult)}`)
 
-    const transactionResult = await DatabaseManager.transaction([
-      // Save grading results to appropriate table
-      () => DatabaseManager.insert(gradingTable, {
-        exam_id: examId,
-        grade_scale: '4-10',
-        grading_json: gradingResult,
-        final_grade: gradingResult.final_grade,
-        grading_prompt: getGradingPrompt(),
-        attempt_number: finalAttemptNumber
-      }),
-      // Update exam status to graded (only for legacy exams)
-      ...(isExamGenieExam ? [] : [
+    if (isExamGenieExam) {
+      // For ExamGenie exams, use supabaseAdmin directly to bypass RLS
+      console.log('[submitAnswers] Using supabaseAdmin for ExamGenie grading insert')
+      const { data, error } = await supabaseAdmin!
+        .from('examgenie_grading')
+        .insert({
+          exam_id: examId,
+          grade_scale: '4-10',
+          grading_json: gradingResult,
+          final_grade: gradingResult.final_grade,
+          grading_prompt: getGradingPrompt(),
+          attempt_number: finalAttemptNumber
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('[submitAnswers] ExamGenie grading insert failed:', error)
+        return null
+      }
+
+      console.log('[submitAnswers] ExamGenie grading saved successfully')
+    } else {
+      // For legacy exams, use transaction with DatabaseManager
+      console.log('[submitAnswers] Using transaction for legacy exam')
+      const transactionResult = await DatabaseManager.transaction([
+        () => DatabaseManager.insert('grading', {
+          exam_id: examId,
+          grade_scale: '4-10',
+          grading_json: gradingResult,
+          final_grade: gradingResult.final_grade,
+          grading_prompt: getGradingPrompt(),
+          attempt_number: finalAttemptNumber
+        }),
         () => DatabaseManager.update('exams',
           { status: 'graded' },
           { exam_id: examId }
         )
-      ])
-    ], 'Submit Answers Transaction')
+      ], 'Submit Answers Transaction')
 
-    if (transactionResult.error) {
-      console.error('[submitAnswers] Transaction failed with error:', transactionResult.error)
-      console.error('[submitAnswers] Transaction metadata:', transactionResult.metadata)
-      return null
+      if (transactionResult.error) {
+        console.error('[submitAnswers] Transaction failed with error:', transactionResult.error)
+        console.error('[submitAnswers] Transaction metadata:', transactionResult.metadata)
+        return null
+      }
+
+      console.log('[submitAnswers] Legacy grading saved successfully')
     }
-
-    console.log('[submitAnswers] Transaction succeeded!')
 
     // Update completed_at timestamp for ExamGenie exams
     if (isExamGenieExam && supabaseAdmin) {
