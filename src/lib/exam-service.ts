@@ -42,21 +42,24 @@ export async function getExamForTaking(examId: string): Promise<ExamData | null>
 // Get next attempt number for an exam
 export async function getNextAttemptNumber(examId: string): Promise<number> {
   try {
-    // Try ExamGenie grading table first
-    let gradingResult = await DatabaseManager.executeQuery(
-      async () => {
-        return await supabase
-          .from('examgenie_grading')
-          .select('attempt_number')
-          .eq('exam_id', examId)
-          .order('attempt_number', { ascending: false })
-          .limit(1)
-      },
-      'Get Latest ExamGenie Attempt Number'
-    )
+    // Try ExamGenie grading table first - use supabaseAdmin to bypass RLS
+    let gradingResult = null
+    if (supabaseAdmin) {
+      gradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabaseAdmin!
+            .from('examgenie_grading')
+            .select('attempt_number')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+        },
+        'Get Latest ExamGenie Attempt Number'
+      )
+    }
 
     // Fall back to legacy grading table if not found
-    if (gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+    if (!gradingResult || gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
       gradingResult = await DatabaseManager.executeQuery(
         async () => {
           return await supabase
@@ -85,21 +88,24 @@ export async function getNextAttemptNumber(examId: string): Promise<number> {
 // Get IDs of questions that were answered incorrectly in the latest attempt
 export async function getWrongQuestionIds(examId: string): Promise<string[]> {
   try {
-    // Try ExamGenie grading table first
-    let gradingResult = await DatabaseManager.executeQuery(
-      async () => {
-        return await supabase
-          .from('examgenie_grading')
-          .select('grading_json')
-          .eq('exam_id', examId)
-          .order('attempt_number', { ascending: false })
-          .limit(1)
-      },
-      'Get Latest ExamGenie Grading for Wrong Questions'
-    )
+    // Try ExamGenie grading table first - use supabaseAdmin to bypass RLS
+    let gradingResult = null
+    if (supabaseAdmin) {
+      gradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabaseAdmin!
+            .from('examgenie_grading')
+            .select('grading_json')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+        },
+        'Get Latest ExamGenie Grading for Wrong Questions'
+      )
+    }
 
     // Fall back to legacy grading table if not found
-    if (gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+    if (!gradingResult || gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
       gradingResult = await DatabaseManager.executeQuery(
         async () => {
           return await supabase
@@ -150,21 +156,24 @@ export async function getExamState(examId: string): Promise<{
     }
 
     // Check if exam has been completed (has grading data)
-    // Try ExamGenie grading table first
-    let gradingResult = await DatabaseManager.executeQuery(
-      async () => {
-        return await supabase
-          .from('examgenie_grading')
-          .select('*')
-          .eq('exam_id', examId)
-          .order('attempt_number', { ascending: false })
-          .limit(1)
-      },
-      'Get Latest ExamGenie Grading'
-    )
+    // Try ExamGenie grading table first - use supabaseAdmin to bypass RLS
+    let gradingResult = null
+    if (supabaseAdmin) {
+      gradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabaseAdmin!
+            .from('examgenie_grading')
+            .select('*')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+        },
+        'Get Latest ExamGenie Grading'
+      )
+    }
 
     // Fall back to legacy grading table if not found
-    if (gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+    if (!gradingResult || gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
       gradingResult = await DatabaseManager.executeQuery(
         async () => {
           return await supabase
