@@ -88,10 +88,39 @@ export default function ExamPage() {
       const examData = responseData.data || responseData
       setExam(examData)
 
-      if (examData.hasBeenCompleted && examData.latestGrading) {
+      // Force 'take' mode if retaking or practicing wrong answers
+      if (examMode === 'retake' || examMode === 'wrong-only') {
+        setMode('take')
+
+        // Get next attempt number for retakes
+        if (examMode === 'retake') {
+          const attemptResponse = await fetch(`/api/exam/${examId}/next-attempt`)
+          if (attemptResponse.ok) {
+            const attemptData = await attemptResponse.json()
+            setAttemptNumber(attemptData.attemptNumber || 1)
+          }
+        }
+
+        // Filter questions for wrong-only mode
+        if (examMode === 'wrong-only' && examData.questions) {
+          const wrongResponse = await fetch(`/api/exam/${examId}/wrong-questions`)
+          if (wrongResponse.ok) {
+            const wrongData = await wrongResponse.json()
+            const wrongIds = new Set(wrongData.wrongQuestionIds || [])
+            const wrongQuestions = examData.questions.filter((q: any) => wrongIds.has(q.id))
+            setFilteredQuestions(wrongQuestions)
+          } else {
+            setFilteredQuestions(examData.questions)
+          }
+        } else {
+          setFilteredQuestions(examData.questions || [])
+        }
+      } else if (examData.hasBeenCompleted && examData.latestGrading) {
         setMode('review')
+        setFilteredQuestions(examData.questions || [])
       } else {
         setMode('take')
+        setFilteredQuestions(examData.questions || [])
       }
     } catch (err) {
       console.error('Error fetching exam:', err)
@@ -152,23 +181,33 @@ export default function ExamPage() {
     }
   }
 
+  // Get the active questions list (filtered for wrong-only mode, or all questions)
+  const getActiveQuestions = () => {
+    if (examMode === 'wrong-only' && filteredQuestions.length > 0) {
+      return filteredQuestions
+    }
+    return exam?.questions || []
+  }
+
   const isAllAnswered = () => {
-    if (!exam || !exam.questions || !Array.isArray(exam.questions)) return false
-    const allAnswered = exam.questions.every(q => answers[q.id]?.trim())
-    console.log('[Exam] isAllAnswered:', allAnswered, 'Total:', exam.questions.length, 'Answered:', Object.keys(answers).length)
+    const activeQuestions = getActiveQuestions()
+    if (!activeQuestions || activeQuestions.length === 0) return false
+    const allAnswered = activeQuestions.every(q => answers[q.id]?.trim())
+    console.log('[Exam] isAllAnswered:', allAnswered, 'Total:', activeQuestions.length, 'Answered:', Object.keys(answers).length)
     return allAnswered
   }
 
   const getProgress = () => {
-    if (!exam || !exam.questions || !Array.isArray(exam.questions) || exam.questions.length === 0) return 0
-    const answeredCount = exam.questions.filter(q => answers[q.id]?.trim()).length
-    return Math.round((answeredCount / exam.questions.length) * 100)
+    const activeQuestions = getActiveQuestions()
+    if (activeQuestions.length === 0) return 0
+    const answeredCount = activeQuestions.filter(q => answers[q.id]?.trim()).length
+    return Math.round((answeredCount / activeQuestions.length) * 100)
   }
 
   const getAnsweredIndices = (): Set<number> => {
-    if (!exam || !exam.questions || !Array.isArray(exam.questions)) return new Set()
+    const activeQuestions = getActiveQuestions()
     const answeredSet = new Set<number>()
-    exam.questions.forEach((q, index) => {
+    activeQuestions.forEach((q, index) => {
       if (answers[q.id]?.trim()) {
         answeredSet.add(index)
       }
@@ -266,7 +305,9 @@ export default function ExamPage() {
     )
   }
 
-  if (!exam.questions || !Array.isArray(exam.questions) || exam.questions.length === 0) {
+  const activeQuestions = getActiveQuestions()
+
+  if (!activeQuestions || activeQuestions.length === 0) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -296,14 +337,14 @@ export default function ExamPage() {
               fontSize: TYPOGRAPHY.fontSize.base,
               color: COLORS.primary.medium,
               marginBottom: SPACING.lg,
-            }}>{EXAM_UI.NOT_FOUND}</p>
+            }}>{examMode === 'wrong-only' ? 'No wrong answers to practice!' : EXAM_UI.NOT_FOUND}</p>
           </div>
         </div>
       </div>
     )
   }
 
-  const currentQ = exam.questions[currentQuestion]
+  const currentQ = activeQuestions[currentQuestion]
 
   if (!currentQ) {
     return (
@@ -405,7 +446,7 @@ export default function ExamPage() {
       {/* Navigation Dots - Top */}
       {mode === 'take' && (
         <NavigationDots
-          total={exam.questions.length}
+          total={activeQuestions.length}
           current={currentQuestion}
           onDotClick={undefined} // No click navigation for simplicity
           answeredIndices={getAnsweredIndices()}
@@ -441,7 +482,7 @@ export default function ExamPage() {
                 fontWeight: TYPOGRAPHY.fontWeight.medium,
                 marginBottom: SPACING.sm,
               }}>
-                {currentQuestion + 1} / {exam.total_questions}
+                {currentQuestion + 1} / {activeQuestions.length}
               </div>
 
               <h2 style={{
@@ -786,7 +827,7 @@ export default function ExamPage() {
             </button>
 
             {/* Next/Submit Button */}
-            {currentQuestion === (exam.questions?.length || 0) - 1 ? (
+            {currentQuestion === activeQuestions.length - 1 ? (
               <button
                 onClick={() => setShowConfirmDialog(true)}
                 disabled={!isAllAnswered()}
@@ -811,13 +852,13 @@ export default function ExamPage() {
                 {EXAM_UI.SUBMIT} {ICONS.CHECK}
                 {!isAllAnswered() && (
                   <span style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>
-                    ({getAnsweredIndices().size}/{exam.questions.length})
+                    ({getAnsweredIndices().size}/{activeQuestions.length})
                   </span>
                 )}
               </button>
             ) : (
               <button
-                onClick={() => setCurrentQuestion(Math.min((exam.questions?.length || 0) - 1, currentQuestion + 1))}
+                onClick={() => setCurrentQuestion(Math.min(activeQuestions.length - 1, currentQuestion + 1))}
                 style={{
                   flex: 1,
                   padding: BUTTONS.primary.padding,
