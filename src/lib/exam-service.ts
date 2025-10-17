@@ -427,22 +427,24 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[], at
 // Get grading results
 export async function getGradingResults(examId: string): Promise<GradingResult | null> {
   try {
-    // Try ExamGenie grading table first (modern)
-    const examGenieGradingResult = await DatabaseManager.executeQuery(
-      async () => {
-        return await supabase
-          .from('examgenie_grading')
-          .select('*')
-          .eq('exam_id', examId)
-          .order('attempt_number', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-      },
-      'Get ExamGenie Grading Results'
-    )
+    // Try ExamGenie grading table first (modern) - use supabaseAdmin to bypass RLS
+    if (supabaseAdmin) {
+      const examGenieGradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabaseAdmin!
+            .from('examgenie_grading')
+            .select('*')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        },
+        'Get ExamGenie Grading Results'
+      )
 
-    if (!examGenieGradingResult.error && examGenieGradingResult.data) {
-      return (examGenieGradingResult.data as any).grading_json as GradingResult
+      if (!examGenieGradingResult.error && examGenieGradingResult.data) {
+        return (examGenieGradingResult.data as any).grading_json as GradingResult
+      }
     }
 
     // Fall back to legacy grading table (for production)
