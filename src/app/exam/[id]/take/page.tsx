@@ -140,7 +140,8 @@ export default function ExamPage() {
       // Award Genie Dollars for completing exam
       awardExamDollars(examId)
 
-      router.push(`/exam/${examId}`)
+      // Redirect to grading page to show results immediately
+      router.push(`/grading/${examId}`)
 
     } catch (error) {
       console.error('Error submitting answers:', error)

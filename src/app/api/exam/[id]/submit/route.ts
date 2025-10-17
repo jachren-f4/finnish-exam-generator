@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { submitAnswers, getNextAttemptNumber } from '@/lib/exam-service'
 import { ApiResponseBuilder } from '@/lib/utils/api-response'
 import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
+import { examCache } from '@/lib/utils/cache-manager'
 
 export async function POST(
   request: NextRequest,
@@ -68,7 +69,7 @@ export async function POST(
     console.log(`Processing attempt #${attemptNumber} for exam ${examId}`)
 
     const gradingResult = await submitAnswers(examId, answers, attemptNumber)
-    
+
     if (!gradingResult) {
       const managedError = ErrorManager.createFromError(
         new Error('Exam submission failed'),
@@ -82,6 +83,10 @@ export async function POST(
         { status: 409 }
       )
     }
+
+    // Invalidate exam cache so next fetch gets updated state
+    examCache.delete(`state:${examId}`)
+    console.log(`[Cache] Invalidated exam state cache for: ${examId}`)
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://examgenie.app'
 
