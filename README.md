@@ -72,6 +72,7 @@ An AI-powered educational platform that transforms textbook images into exam que
 | **Request Logging** | All API calls logged to DB • Tracks user, endpoint, JWT status, timing, IP |
 | **Admin Monitoring** | `/api/admin/rate-limits` endpoint • View usage, reset limits, query logs |
 | **API Key Protection** | Server-side only • Never exposed to client • Gitignored properly |
+| **Secret Scanning** | Automated secret detection via Gitleaks • Pre-commit hooks + CI/CD • See [CLAUDE.md](./CLAUDE.md#secret-scanning--protection) for setup |
 
 **📚 Detailed Documentation:** `/SECURITY_IMPLEMENTATION_SUMMARY.md` • `/API_SECURITY_DOCUMENTATION.md` • `/FLUTTER_RATE_LIMIT_HANDLING.md` • `/TESTING_GUIDE.md`
 

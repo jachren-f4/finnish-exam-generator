@@ -24,8 +24,14 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ❌ NEVER expose `GEMINI_API_KEY` or `SUPABASE_SERVICE_ROLE_KEY` to client
 - ❌ NEVER modify `.env.local` API keys without explicit user request
 - ❌ NEVER skip rate limiting checks on staging/production
+- ❌ **NEVER copy/paste API keys or secrets into scripts or code**
+- ❌ **NEVER commit API keys, secrets, or credentials to Git**
+- ❌ **NEVER hardcode sensitive values - always use environment variables**
+- ✅ **ALWAYS reference environment variables (process.env.KEY_NAME)**
+- ✅ **ALWAYS use .env files for configuration (already in .gitignore)**
 - ✅ All API keys must remain server-side only
 - ✅ `VERCEL_TOKEN` is for CLI access only (not used by application)
+- ❌ **NEVER hardcode keys in migration/setup scripts** (use env vars only)
 
 ### Architecture Constraints
 - ❌ NEVER use OCR libraries - Gemini AI only (legacy naming)
@@ -120,6 +126,9 @@ This file provides guidance to Claude Code when working with code in this reposi
 - **Database Scripts**: `/db-query.ts` (CLI tool), `/scripts/db-query.sh`, `/scripts/db-latest-exams.sh`
 - **Scripts**: `/scripts/vercel-logs.sh`
 
+### Diagnostic Tools
+- **Database Connection Test**: `/src/app/api/test-db/route.ts` - Tests Supabase connection, shows masked env vars
+
 ### API Routes
 - **Mobile Exam Gen**: `/src/app/api/mobile/exam-questions/route.ts`
 - **Exam Retrieval**: `/src/app/api/exam/[id]/route.ts`
@@ -130,6 +139,46 @@ This file provides guidance to Claude Code when working with code in this reposi
 - **Exam Menu Hub**: `/src/app/exam/[id]/page.tsx`
 - **Take Exam**: `/src/app/exam/[id]/take/page.tsx` (includes variant 6 bottom sheet for retakes)
 - **Audio Player**: `/src/app/exam/[id]/audio/page.tsx`
+
+## Secret Scanning & Protection
+
+### Automated Secret Detection
+**Two-layer protection prevents API keys/secrets from reaching Git:**
+
+#### Layer 1: Pre-commit Hook (Local)
+- **Tool**: Gitleaks via Husky
+- **When**: Before every commit
+- **Action**: Blocks commit if secrets detected
+- **Setup**: Auto-runs after `npm install` (husky prepare script)
+
+```bash
+# Manual secret scan
+npm run secrets:scan
+
+# If gitleaks not installed:
+# macOS: brew install gitleaks
+# Linux/Windows: https://github.com/gitleaks/gitleaks#installing
+```
+
+#### Layer 2: GitHub Actions (CI)
+- **Tool**: Gitleaks Action
+- **When**: Every push and PR
+- **Action**: Fails CI pipeline if secrets found
+- **Location**: `.github/workflows/ci.yml` (secrets-scan job)
+
+### Handling False Positives
+Add to `.gitleaksignore`:
+```
+# Example: test file with fake credentials
+test/fixtures/fake-keys.ts:generic-api-key:15
+```
+
+### If Secrets Are Committed
+1. **IMMEDIATELY rotate/regenerate the exposed secret**
+2. Update `.env` files with new secret
+3. Never try to "fix" by removing from latest commit (still in history)
+4. Use `git filter-branch` or BFG Repo-Cleaner to purge from history
+5. Force push to update remote (coordinate with team)
 
 ## Testing
 
@@ -191,6 +240,10 @@ npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
 | Questions reference images | Need minimum 3 images for graph-heavy content |
 | Vercel logs not working | Check `VERCEL_TOKEN` in `.env.local` • Get token from https://vercel.com/account/tokens |
 | Database scripts failing | Missing `db-query.ts` in project root • Check file exists and is executable |
+| Commit blocked by gitleaks | Secret detected in code • Remove secret • Use environment variables • See "Secret Scanning & Protection" section |
+| CI fails with secret detected | Gitleaks found API key/secret • Never commit secrets • Rotate exposed keys immediately |
+| Exposed secrets in commit | Gitleaks pre-commit hook blocked commit • Remove secret • Use `process.env.KEY_NAME` • See "Secret Scanning & Protection" section |
+| Vercel env var not applied | Check environment type (Preview vs Production) • Wait 1-2 min for deployment propagation • Use `/api/test-db` to verify |
 
 ## Architecture Decisions - Don't Break These
 
