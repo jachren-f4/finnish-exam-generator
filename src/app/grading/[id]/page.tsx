@@ -12,9 +12,11 @@ export default function GradingPage() {
   const examId = params?.id as string
 
   const [grading, setGrading] = useState<GradingResult | null>(null)
+  const [previousGrading, setPreviousGrading] = useState<GradingResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [showAllQuestions, setShowAllQuestions] = useState(true)
+  const [attemptNumber, setAttemptNumber] = useState<number>(1)
 
   useEffect(() => {
     if (examId) {
@@ -35,6 +37,31 @@ export default function GradingPage() {
       const responseData = await response.json()
       const gradingData = responseData.data || responseData
       setGrading(gradingData)
+
+      // Extract attempt number if available
+      const currentAttempt = (gradingData as any).attempt_number || 1
+      setAttemptNumber(currentAttempt)
+
+      // Fetch previous attempt if this is a retry
+      if (currentAttempt > 1) {
+        try {
+          const attemptsResponse = await fetch(`/api/exam/${examId}/attempts`)
+          if (attemptsResponse.ok) {
+            const attemptsData = await attemptsResponse.json()
+            if (attemptsData.success && attemptsData.attempts) {
+              const prevAttempt = attemptsData.attempts.find(
+                (a: any) => a.attempt_number === currentAttempt - 1
+              )
+              if (prevAttempt && prevAttempt.grading_json) {
+                setPreviousGrading(prevAttempt.grading_json)
+              }
+            }
+          }
+        } catch (err) {
+          console.log('Could not fetch previous attempts:', err)
+        }
+      }
+
       setError('')
     } catch (err) {
       console.error('Error fetching grading:', err)
@@ -214,8 +241,51 @@ export default function GradingPage() {
             }}>
               ({grading.percentage}%)
             </p>
+            {attemptNumber > 1 && (
+              <p style={{
+                fontSize: TYPOGRAPHY.fontSize.sm,
+                color: COLORS.primary.medium,
+                marginTop: SPACING.sm,
+                fontStyle: 'italic',
+              }}>
+                Attempt #{attemptNumber}
+              </p>
+            )}
           </div>
         </div>
+
+        {/* Improvement Banner */}
+        {previousGrading && (() => {
+          const gradeDiff = parseFloat(grading.final_grade) - parseFloat(previousGrading.final_grade)
+          const pointsDiff = grading.total_points - previousGrading.total_points
+          const isImproved = gradeDiff > 0
+          const isWorsened = gradeDiff < 0
+
+          return (
+            <div style={{
+              background: isImproved ? '#E8F5E9' : isWorsened ? '#FFF3E0' : COLORS.background.secondary,
+              border: `2px solid ${isImproved ? COLORS.semantic.success : isWorsened ? COLORS.semantic.warning : COLORS.border.light}`,
+              borderRadius: RADIUS.md,
+              padding: SPACING.md,
+              marginBottom: SPACING.lg,
+            }}>
+              <div style={{
+                fontSize: TYPOGRAPHY.fontSize.sm,
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                color: COLORS.primary.text,
+                marginBottom: SPACING.xs,
+              }}>
+                {isImproved ? '📈 Improvement!' : isWorsened ? '📉 Keep Practicing' : '➡️ Same Score'}
+              </div>
+              <div style={{
+                fontSize: TYPOGRAPHY.fontSize.xs,
+                color: COLORS.primary.medium,
+              }}>
+                Grade: {gradeDiff > 0 ? '+' : ''}{gradeDiff.toFixed(1)} • Points: {pointsDiff > 0 ? '+' : ''}{pointsDiff}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Statistics */}
         <div style={{
@@ -338,42 +408,74 @@ export default function GradingPage() {
 
           {showAllQuestions && (
             <div style={{ marginTop: SPACING.lg, display: 'flex', flexDirection: 'column', gap: SPACING.lg }}>
-              {(grading.questions || []).map((question, index) => (
-                <div key={question.id} style={{
-                  border: `2px solid ${COLORS.border.light}`,
-                  borderRadius: RADIUS.md,
-                  padding: SPACING.md,
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    marginBottom: SPACING.md,
-                    gap: SPACING.md,
+              {(grading.questions || []).map((question, index) => {
+                const prevQuestion = previousGrading?.questions?.find((q: any) => q.id === question.id)
+                const pointsDiff = prevQuestion ? question.points_awarded - prevQuestion.points_awarded : 0
+                const hasChange = prevQuestion && pointsDiff !== 0
+
+                return (
+                  <div key={question.id} style={{
+                    border: `2px solid ${COLORS.border.light}`,
+                    borderRadius: RADIUS.md,
+                    padding: SPACING.md,
+                    position: 'relative',
                   }}>
-                    <h3 style={{
-                      fontSize: TYPOGRAPHY.fontSize.base,
-                      fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                      color: COLORS.primary.text,
-                      flex: 1,
-                    }}>
-                      {index + 1}. {question.question_text}
-                    </h3>
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{
-                        fontSize: TYPOGRAPHY.fontSize.lg,
-                        fontWeight: TYPOGRAPHY.fontWeight.bold,
-                        color: question.percentage === 100 ? COLORS.semantic.success :
-                          question.percentage > 0 ? COLORS.semantic.warning : COLORS.semantic.error
-                      }}>
-                        {question.points_awarded}/{question.max_points}
-                      </span>
-                      <p style={{
+                    {hasChange && (
+                      <div style={{
+                        position: 'absolute',
+                        top: SPACING.sm,
+                        right: SPACING.sm,
+                        background: pointsDiff > 0 ? COLORS.semantic.success : COLORS.semantic.error,
+                        color: 'white',
                         fontSize: TYPOGRAPHY.fontSize.xs,
-                        color: COLORS.primary.medium,
-                      }}>{question.percentage}%</p>
+                        fontWeight: TYPOGRAPHY.fontWeight.bold,
+                        padding: `2px ${SPACING.xs}`,
+                        borderRadius: RADIUS.sm,
+                        lineHeight: '1',
+                      }}>
+                        {pointsDiff > 0 ? '↑' : '↓'}{Math.abs(pointsDiff)}
+                      </div>
+                    )}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      marginBottom: SPACING.md,
+                      gap: SPACING.md,
+                      paddingRight: hasChange ? SPACING.xl : 0,
+                    }}>
+                      <h3 style={{
+                        fontSize: TYPOGRAPHY.fontSize.base,
+                        fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                        color: COLORS.primary.text,
+                        flex: 1,
+                      }}>
+                        {index + 1}. {question.question_text}
+                      </h3>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{
+                          fontSize: TYPOGRAPHY.fontSize.lg,
+                          fontWeight: TYPOGRAPHY.fontWeight.bold,
+                          color: question.percentage === 100 ? COLORS.semantic.success :
+                            question.percentage > 0 ? COLORS.semantic.warning : COLORS.semantic.error
+                        }}>
+                          {question.points_awarded}/{question.max_points}
+                        </span>
+                        <p style={{
+                          fontSize: TYPOGRAPHY.fontSize.xs,
+                          color: COLORS.primary.medium,
+                        }}>{question.percentage}%</p>
+                        {prevQuestion && (
+                          <p style={{
+                            fontSize: TYPOGRAPHY.fontSize.xs,
+                            color: COLORS.primary.medium,
+                            fontStyle: 'italic',
+                          }}>
+                            was: {prevQuestion.points_awarded}/{prevQuestion.max_points}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
                   {question.options && (
                     <div style={{ marginBottom: SPACING.md }}>
@@ -462,7 +564,8 @@ export default function GradingPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+              )
+              })}
             </div>
           )}
         </div>
