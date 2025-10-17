@@ -367,6 +367,29 @@ curl -X POST https://exam-generator-staging.vercel.app/api/mobile/exam-questions
   -F "student_id=fc495b10-c771-4bd1-8bb4-b2c5003b9613"
 ```
 
+### Database Write Operations
+
+The database scripts now support full CRUD operations (previously read-only).
+
+```bash
+# Update exam completion timestamp
+npx tsx db-query.ts \
+  --env=".env.local.staging" \
+  --operation=update \
+  --table=examgenie_exams \
+  --filter='{"id":"EXAM_ID"}' \
+  --data='{"completed_at":"2025-10-17T12:00:00Z"}'
+
+# Count records
+npx tsx db-query.ts \
+  --env=".env.local.staging" \
+  --operation=count \
+  --table=examgenie_exams \
+  --filter='{"status":"READY"}'
+```
+
+**📚 Full Documentation:** See `/DATABASE_SCRIPTS_GUIDE.md` for complete command reference.
+
 ### Test Prompt Variants
 
 ```bash
@@ -411,6 +434,7 @@ vercel logs       # Production logs
 | **Audio not generating** | Check `GOOGLE_CLOUD_CREDENTIALS_JSON` is valid JSON • Verify service account has TTS permissions |
 | **Math audio missing** | Check `[Math Audio]` logs in Vercel • Audio fails silently to not block exams • Verify `GOOGLE_CLOUD_CREDENTIALS_JSON` |
 | **Gemini 503 errors** | Verify `GEMINI_API_KEY` • Check `/prompttests/` logs • Retry logic handles overload |
+| **Database scripts not working** | Scripts call `db-query.ts` which must exist in project root • Requires `SUPABASE_SERVICE_ROLE_KEY` in env files |
 
 ## Important Notes
 

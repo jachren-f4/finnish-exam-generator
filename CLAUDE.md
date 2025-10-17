@@ -86,6 +86,13 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ⚠️ Separate databases: `.env.local.staging` ≠ `.env.local.production`
 - ✅ Query scripts default to staging for safety
 
+### Database Scripts
+- ✅ `db-query.ts` in project root enables write operations (INSERT, UPDATE, DELETE)
+- ✅ Shell scripts (`scripts/db-query.sh`) are wrappers that call `db-query.ts`
+- ✅ Uses `SUPABASE_SERVICE_ROLE_KEY` (bypasses RLS for write access)
+- ✅ JSON parameters must be single-quoted: `--filter='{"id":"value"}'`
+- ⚠️ Separate env files: `.env.local.staging` vs `.env.local.production`
+
 ## Tech Stack
 
 ### Core
@@ -110,7 +117,8 @@ This file provides guidance to Claude Code when working with code in this reposi
 - **Genie Dollars**: `/src/lib/utils/genie-dollars.ts`
 - **Gemini Client**: `/src/lib/gemini.ts`
 - **Supabase Client**: `/src/lib/supabase.ts`
-- **Scripts**: `/scripts/vercel-logs.sh`, `/scripts/db-query.sh`, `/scripts/db-latest-exams.sh`
+- **Database Scripts**: `/db-query.ts` (CLI tool), `/scripts/db-query.sh`, `/scripts/db-latest-exams.sh`
+- **Scripts**: `/scripts/vercel-logs.sh`
 
 ### API Routes
 - **Mobile Exam Gen**: `/src/app/api/mobile/exam-questions/route.ts`
@@ -158,6 +166,17 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 ./scripts/db-query.sh staging examgenie_exams 10 # Query table
 ```
 
+### Database Write Operations
+```bash
+# Update records
+npx tsx db-query.ts --env=".env.local.staging" --operation=update \
+  --table=examgenie_exams --filter='{"id":"ID"}' --data='{"status":"READY"}'
+
+# Insert records
+npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
+  --table=students --data='{"name":"Test","grade":5}'
+```
+
 ## Common Issues & Solutions
 
 | Issue | Solution |
@@ -171,6 +190,7 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 | Math equations not rendering | Verify KaTeX scripts in `layout.tsx` not page-level |
 | Questions reference images | Need minimum 3 images for graph-heavy content |
 | Vercel logs not working | Check `VERCEL_TOKEN` in `.env.local` • Get token from https://vercel.com/account/tokens |
+| Database scripts failing | Missing `db-query.ts` in project root • Check file exists and is executable |
 
 ## Architecture Decisions - Don't Break These
 

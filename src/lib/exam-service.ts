@@ -203,6 +203,8 @@ export async function getExamState(examId: string): Promise<{
 // Submit student answers and trigger grading
 export async function submitAnswers(examId: string, answers: StudentAnswer[], attemptNumber?: number): Promise<GradingResult | null> {
   try {
+    console.log(`[submitAnswers] Starting for exam ${examId}, answers count: ${answers.length}`)
+
     // First, try to get the original exam from legacy table
     let exam = null
     let examgenieResult = null
@@ -222,8 +224,9 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[], at
       exam = legacyExamResult.data
     } else {
       // If not found in legacy table, try ExamGenie table
+      console.log(`[submitAnswers] Legacy exam not found, trying ExamGenie. supabaseAdmin available: ${!!supabaseAdmin}`)
       if (!supabaseAdmin) {
-        console.error('supabaseAdmin not available for ExamGenie exam submission')
+        console.error('[submitAnswers] FAILED: supabaseAdmin not available for ExamGenie exam submission')
         return null
       }
 
@@ -340,6 +343,9 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[], at
     // Choose correct grading table based on exam source
     const gradingTable = isExamGenieExam ? 'examgenie_grading' : 'grading'
 
+    console.log(`[submitAnswers] About to save grading to table: ${gradingTable}`)
+    console.log(`[submitAnswers] Grading data keys: ${Object.keys(gradingResult)}`)
+
     const transactionResult = await DatabaseManager.transaction([
       // Save grading results to appropriate table
       () => DatabaseManager.insert(gradingTable, {
@@ -360,8 +366,12 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[], at
     ], 'Submit Answers Transaction')
 
     if (transactionResult.error) {
+      console.error('[submitAnswers] Transaction failed with error:', transactionResult.error)
+      console.error('[submitAnswers] Transaction metadata:', transactionResult.metadata)
       return null
     }
+
+    console.log('[submitAnswers] Transaction succeeded!')
 
     // Update completed_at timestamp for ExamGenie exams
     if (isExamGenieExam && supabaseAdmin) {
