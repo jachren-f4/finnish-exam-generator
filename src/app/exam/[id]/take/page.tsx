@@ -496,7 +496,7 @@ export default function ExamPage() {
               {/* Answer Input */}
               {currentQ.question_type === 'multiple_choice' && currentQ.options ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.sm }}>
-                  {currentQ.options.map((option, idx) => (
+                  {currentQ.options.map((option: string, idx: number) => (
                     <label key={idx} style={{
                       display: 'flex',
                       alignItems: 'center',
