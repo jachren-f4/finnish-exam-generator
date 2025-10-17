@@ -6,9 +6,10 @@ interface NavigationDotsProps {
   total: number
   current: number
   onDotClick?: (index: number) => void
+  answeredIndices?: Set<number>
 }
 
-export function NavigationDots({ total, current, onDotClick }: NavigationDotsProps) {
+export function NavigationDots({ total, current, onDotClick, answeredIndices }: NavigationDotsProps) {
   return (
     <div
       style={{
@@ -21,14 +22,14 @@ export function NavigationDots({ total, current, onDotClick }: NavigationDotsPro
     >
       {Array.from({ length: total }).map((_, index) => {
         const isActive = index === current
-        const isPast = index < current
+        const isAnswered = answeredIndices?.has(index)
 
         return (
           <button
             key={index}
             onClick={() => onDotClick?.(index)}
             disabled={!onDotClick}
-            aria-label={`Question ${index + 1}`}
+            aria-label={`Question ${index + 1}${isAnswered ? ' (answered)' : ''}`}
             aria-current={isActive ? 'step' : undefined}
             style={{
               width: isActive ? '20px' : '6px',
@@ -36,8 +37,8 @@ export function NavigationDots({ total, current, onDotClick }: NavigationDotsPro
               borderRadius: RADIUS.full,
               background: isActive
                 ? COLORS.primary.dark
-                : isPast
-                  ? COLORS.primary.medium
+                : isAnswered
+                  ? COLORS.semantic.success
                   : COLORS.border.light,
               border: 'none',
               cursor: onDotClick ? 'pointer' : 'default',

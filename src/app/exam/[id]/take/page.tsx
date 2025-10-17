@@ -102,10 +102,15 @@ export default function ExamPage() {
   }
 
   const handleAnswerChange = (questionId: string, answer: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }))
+    console.log(`[Exam] Answer changed for question ${questionId}:`, answer)
+    setAnswers(prev => {
+      const newAnswers = {
+        ...prev,
+        [questionId]: answer
+      }
+      console.log('[Exam] All answers:', Object.keys(newAnswers).length, 'answered')
+      return newAnswers
+    })
   }
 
   const submitAnswers = async () => {
@@ -148,13 +153,26 @@ export default function ExamPage() {
 
   const isAllAnswered = () => {
     if (!exam || !exam.questions || !Array.isArray(exam.questions)) return false
-    return exam.questions.every(q => answers[q.id]?.trim())
+    const allAnswered = exam.questions.every(q => answers[q.id]?.trim())
+    console.log('[Exam] isAllAnswered:', allAnswered, 'Total:', exam.questions.length, 'Answered:', Object.keys(answers).length)
+    return allAnswered
   }
 
   const getProgress = () => {
     if (!exam || !exam.questions || !Array.isArray(exam.questions) || exam.questions.length === 0) return 0
     const answeredCount = exam.questions.filter(q => answers[q.id]?.trim()).length
     return Math.round((answeredCount / exam.questions.length) * 100)
+  }
+
+  const getAnsweredIndices = (): Set<number> => {
+    if (!exam || !exam.questions || !Array.isArray(exam.questions)) return new Set()
+    const answeredSet = new Set<number>()
+    exam.questions.forEach((q, index) => {
+      if (answers[q.id]?.trim()) {
+        answeredSet.add(index)
+      }
+    })
+    return answeredSet
   }
 
   if (isLoading) {
@@ -389,6 +407,7 @@ export default function ExamPage() {
           total={exam.questions.length}
           current={currentQuestion}
           onDotClick={undefined} // No click navigation for simplicity
+          answeredIndices={getAnsweredIndices()}
         />
       )}
 
@@ -782,9 +801,18 @@ export default function ExamPage() {
                   minHeight: TOUCH_TARGETS.comfortable,
                   cursor: !isAllAnswered() ? 'not-allowed' : 'pointer',
                   opacity: !isAllAnswered() ? 0.5 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: SPACING.xs,
                 }}
               >
                 {EXAM_UI.SUBMIT} {ICONS.CHECK}
+                {!isAllAnswered() && (
+                  <span style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>
+                    ({getAnsweredIndices().size}/{exam.questions.length})
+                  </span>
+                )}
               </button>
             ) : (
               <button
