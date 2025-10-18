@@ -42,7 +42,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 ## Critical Knowledge - Common Pitfalls
 
 ### Parameter Usage (Important!)
-- **`subject` parameter**: Stored in DB but **NOT used in prompts** (only `category` matters)
+- **`subject` parameter**: Accepts any string (any language), **ONLY stored in DB** - NOT validated, NOT used in prompts or routing
 - **`language` parameter**: Accepted by API but **NOT used in prompts** (Gemini auto-detects from images)
 - **`category` parameter**: THIS is what routes to correct prompt service
   - `"mathematics"` → math-exam-service.ts (LaTeX, 3-level validation)
@@ -245,6 +245,7 @@ npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
 | TypeScript build errors | Always run `npm run build` before pushing |
 | localhost CURL fails | Use staging URL (RLS policies block localhost) |
 | Staging "user_id required" | Add `-F "student_id=fc495b10-c771-4bd1-8bb4-b2c5003b9613"` |
+| "Invalid subject" API error | Subject validation was removed • Accepts any string/language • Only stored in DB • Not used for routing |
 | Audio not generating | Check `GOOGLE_CLOUD_CREDENTIALS_JSON` validity |
 | Math audio missing | Check `[Math Audio]` logs • Audio fails silently • Verify `GOOGLE_CLOUD_CREDENTIALS_JSON` |
 | Math equations not rendering | Verify KaTeX scripts in `layout.tsx` not page-level |

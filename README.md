@@ -235,6 +235,13 @@ src/
 - **Output:** Exam questions + web URLs for taking/grading
 - **Used by:** Flutter mobile app
 
+**Parameter Roles:**
+- `category` (required for routing): Determines prompt service (`"mathematics"` → MathExamService, else → standard)
+- `subject` (optional): Stored as-is in database (any language accepted), not used for routing or prompts
+- `grade` (optional): 1-9, stored in database
+- `language` (optional): Accepted but not used (Gemini auto-detects from images)
+- `student_id` (required on staging/prod): For rate limiting (10/hour, 50/day)
+
 ```bash
 # Localhost (no student_id needed)
 curl -X POST http://localhost:3001/api/mobile/exam-questions \
@@ -247,6 +254,7 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 curl -X POST https://exam-generator-staging.vercel.app/api/mobile/exam-questions \
   -F "images=@textbook-page.jpg" \
   -F "category=mathematics" \
+  -F "subject=Algebra" \
   -F "grade=5" \
   -F "language=fi" \
   -F "student_id=fc495b10-c771-4bd1-8bb4-b2c5003b9613"
