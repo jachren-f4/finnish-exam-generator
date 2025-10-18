@@ -11,12 +11,16 @@ export default function GradingPage() {
   const params = useParams()
   const examId = params?.id as string
 
+  // Results mode toggle - change this to 'story' or 'legacy'
+  const RESULTS_MODE = 'story' as 'story' | 'legacy'
+
   const [grading, setGrading] = useState<GradingResult | null>(null)
   const [previousGrading, setPreviousGrading] = useState<GradingResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [showAllQuestions, setShowAllQuestions] = useState(true)
   const [attemptNumber, setAttemptNumber] = useState<number>(1)
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(0)
 
   useEffect(() => {
     if (examId) {
@@ -78,6 +82,80 @@ export default function GradingPage() {
     if (gradeNum >= 5) return COLORS.semantic.warning
     return COLORS.semantic.error
   }
+
+  // Story mode helpers
+  const getTotalStories = () => {
+    if (!grading || !grading.questions) return 2
+    return grading.questions.length + 2 // +2 for summary and completion
+  }
+
+  const getQuestionStatus = (percentage: number) => {
+    if (percentage === 100) return 'correct'
+    if (percentage > 0) return 'partial'
+    return 'incorrect'
+  }
+
+  const nextStory = () => {
+    if (currentStoryIndex < getTotalStories() - 1) {
+      setCurrentStoryIndex(currentStoryIndex + 1)
+    }
+  }
+
+  const prevStory = () => {
+    if (currentStoryIndex > 0) {
+      setCurrentStoryIndex(currentStoryIndex - 1)
+    }
+  }
+
+  // Keyboard navigation for story mode
+  useEffect(() => {
+    if (RESULTS_MODE !== 'story') return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault()
+        nextStory()
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        prevStory()
+      } else if (e.key === 'Escape') {
+        window.location.href = `/exam/${examId}`
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [currentStoryIndex, RESULTS_MODE, examId])
+
+  // Touch swipe for story mode
+  useEffect(() => {
+    if (RESULTS_MODE !== 'story') return
+
+    let touchStartX = 0
+    let touchEndX = 0
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.changedTouches[0].screenX
+    }
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      touchEndX = e.changedTouches[0].screenX
+      const swipeThreshold = 50
+      if (touchEndX < touchStartX - swipeThreshold) {
+        nextStory()
+      }
+      if (touchEndX > touchStartX + swipeThreshold) {
+        prevStory()
+      }
+    }
+
+    window.addEventListener('touchstart', handleTouchStart)
+    window.addEventListener('touchend', handleTouchEnd)
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [currentStoryIndex, RESULTS_MODE])
 
   if (isLoading) {
     return (
@@ -168,6 +246,353 @@ export default function GradingPage() {
     )
   }
 
+  // Render story mode or legacy mode
+  if (RESULTS_MODE === 'story') {
+    return (
+      <div style={{
+        background: '#000',
+        minHeight: '100vh',
+        overflow: 'hidden',
+        position: 'relative',
+      }}>
+        {/* Progress Bar */}
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          display: 'flex',
+          gap: '4px',
+          padding: SPACING.sm,
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)',
+        }}>
+          {Array.from({ length: getTotalStories() }).map((_, i) => (
+            <div key={i} style={{
+              flex: 1,
+              height: '3px',
+              background: 'rgba(255,255,255,0.3)',
+              borderRadius: RADIUS.sm,
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%',
+                background: 'white',
+                width: i === currentStoryIndex ? '100%' : i < currentStoryIndex ? '100%' : '0%',
+                transition: 'width 0.3s',
+              }} />
+            </div>
+          ))}
+        </div>
+
+        {/* Close Button */}
+        <button
+          onClick={() => window.location.href = `/exam/${examId}`}
+          style={{
+            position: 'fixed',
+            top: SPACING.md,
+            right: SPACING.md,
+            zIndex: 100,
+            background: 'rgba(0,0,0,0.5)',
+            border: 'none',
+            color: 'white',
+            fontSize: TYPOGRAPHY.fontSize['2xl'],
+            width: '40px',
+            height: '40px',
+            borderRadius: RADIUS.full,
+            cursor: 'pointer',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          ×
+        </button>
+
+        {/* Story Cards */}
+        <div style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: '640px',
+          margin: '0 auto',
+          minHeight: '100vh',
+        }}>
+          {/* Summary Card */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            opacity: currentStoryIndex === 0 ? 1 : 0,
+            pointerEvents: currentStoryIndex === 0 ? 'auto' : 'none',
+            transition: 'opacity 0.3s',
+            background: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
+          }}>
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: `80px ${SPACING.lg}`,
+              textAlign: 'center',
+              color: 'white',
+            }}>
+              <div style={{ maxWidth: '500px', width: '100%' }}>
+                <div style={{ fontSize: '80px', marginBottom: SPACING.lg, animation: 'bounce 1s' }}>
+                  {parseInt(grading.final_grade) >= 9 ? '🎉' :
+                   parseInt(grading.final_grade) >= 7 ? '👍' :
+                   parseInt(grading.final_grade) >= 5 ? '📚' : '💪'}
+                </div>
+                <div style={{ fontSize: '96px', fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.md }}>
+                  {grading.final_grade}
+                </div>
+                <div style={{ fontSize: TYPOGRAPHY.fontSize.xl, opacity: 0.95, marginBottom: SPACING.lg }}>
+                  Excellent Work!
+                </div>
+                <div style={{ fontSize: TYPOGRAPHY.fontSize.xl, opacity: 0.95, marginBottom: SPACING.xl }}>
+                  {grading.total_points} / {grading.max_total_points} {EXAM_UI.POINTS} ({grading.percentage}%)
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: SPACING.xl }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize['2xl'], fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.xs }}>
+                      {grading.questions_correct}
+                    </div>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>Correct</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize['2xl'], fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.xs }}>
+                      {grading.questions_partial}
+                    </div>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>Partial</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize['2xl'], fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.xs }}>
+                      {grading.questions_incorrect}
+                    </div>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>Wrong</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Question Cards */}
+          {grading.questions?.map((question, index) => {
+            const status = getQuestionStatus(question.percentage)
+            const storyIndex = index + 1
+            const gradientColors = status === 'correct'
+              ? 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)'
+              : status === 'partial'
+              ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+              : 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
+
+            return (
+              <div key={question.id} style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                opacity: currentStoryIndex === storyIndex ? 1 : 0,
+                pointerEvents: currentStoryIndex === storyIndex ? 'auto' : 'none',
+                transition: 'opacity 0.3s',
+                background: gradientColors,
+              }}>
+                <div style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: `80px ${SPACING.lg}`,
+                  textAlign: 'center',
+                  color: 'white',
+                }}>
+                  <div style={{ maxWidth: '500px', width: '100%' }}>
+                    <div style={{
+                      display: 'inline-block',
+                      background: 'rgba(255,255,255,0.2)',
+                      padding: `${SPACING.xs} ${SPACING.md}`,
+                      borderRadius: RADIUS.lg,
+                      fontSize: TYPOGRAPHY.fontSize.sm,
+                      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                      marginBottom: SPACING.lg,
+                    }}>
+                      Question {index + 1} of {grading.questions.length}
+                    </div>
+                    <div style={{
+                      fontSize: TYPOGRAPHY.fontSize.xl,
+                      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                      lineHeight: TYPOGRAPHY.lineHeight.normal,
+                      marginBottom: SPACING.xl,
+                    }}>
+                      {question.question_text}
+                    </div>
+                    <div style={{
+                      width: '120px',
+                      height: '120px',
+                      borderRadius: RADIUS.full,
+                      background: 'rgba(255,255,255,0.2)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: `0 auto ${SPACING.lg}`,
+                      backdropFilter: 'blur(10px)',
+                    }}>
+                      <div style={{ fontSize: '48px', fontWeight: TYPOGRAPHY.fontWeight.bold }}>
+                        {question.points_awarded}
+                      </div>
+                      <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>
+                        / {question.max_points}
+                      </div>
+                    </div>
+                    <div style={{
+                      background: 'rgba(0,0,0,0.3)',
+                      borderRadius: RADIUS.lg,
+                      padding: SPACING.lg,
+                      marginBottom: SPACING.md,
+                      textAlign: 'left',
+                      backdropFilter: 'blur(10px)',
+                    }}>
+                      <div style={{ marginBottom: SPACING.md }}>
+                        <div style={{
+                          fontSize: TYPOGRAPHY.fontSize.xs,
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          opacity: 0.7,
+                          marginBottom: SPACING.xs,
+                        }}>
+                          Your Answer
+                        </div>
+                        <div style={{ fontSize: TYPOGRAPHY.fontSize.base, lineHeight: TYPOGRAPHY.lineHeight.relaxed }}>
+                          {question.student_answer || EXAM_UI.YOUR_ANSWER}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{
+                          fontSize: TYPOGRAPHY.fontSize.xs,
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          opacity: 0.7,
+                          marginBottom: SPACING.xs,
+                        }}>
+                          Correct Answer
+                        </div>
+                        <div style={{ fontSize: TYPOGRAPHY.fontSize.base, lineHeight: TYPOGRAPHY.lineHeight.relaxed }}>
+                          {question.expected_answer}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{
+                      fontSize: TYPOGRAPHY.fontSize.sm,
+                      lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+                      opacity: 0.95,
+                      background: 'rgba(0,0,0,0.3)',
+                      padding: SPACING.md,
+                      borderRadius: RADIUS.md,
+                      backdropFilter: 'blur(10px)',
+                    }}>
+                      {question.feedback}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Completion Card */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            opacity: currentStoryIndex === getTotalStories() - 1 ? 1 : 0,
+            pointerEvents: currentStoryIndex === getTotalStories() - 1 ? 'auto' : 'none',
+            transition: 'opacity 0.3s',
+            background: 'linear-gradient(135deg, #1a1a1a 0%, #404040 100%)',
+          }}>
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: `80px ${SPACING.lg}`,
+              textAlign: 'center',
+              color: 'white',
+            }}>
+              <div>
+                <div style={{ fontSize: '80px', marginBottom: SPACING.lg }}>✨</div>
+                <div style={{ fontSize: TYPOGRAPHY.fontSize['2xl'], fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.md }}>
+                  Results Reviewed!
+                </div>
+                <div style={{ fontSize: TYPOGRAPHY.fontSize.base, opacity: 0.9, marginBottom: SPACING.xl }}>
+                  You've reviewed all {grading.questions?.length || 0} questions
+                </div>
+                <button
+                  onClick={() => window.location.href = `/exam/${examId}`}
+                  style={{
+                    background: 'white',
+                    color: '#1a1a1a',
+                    border: 'none',
+                    padding: `${SPACING.md} ${SPACING.xl}`,
+                    borderRadius: RADIUS.lg,
+                    fontSize: TYPOGRAPHY.fontSize.base,
+                    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                    cursor: 'pointer',
+                    minWidth: '200px',
+                    minHeight: TOUCH_TARGETS.comfortable,
+                  }}
+                >
+                  Back to Menu
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Areas */}
+        <div
+          onClick={prevStory}
+          style={{
+            position: 'fixed',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: '30%',
+            cursor: 'pointer',
+            zIndex: 5,
+          }}
+        />
+        <div
+          onClick={nextStory}
+          style={{
+            position: 'fixed',
+            top: 0,
+            bottom: 0,
+            right: 0,
+            width: '30%',
+            cursor: 'pointer',
+            zIndex: 5,
+          }}
+        />
+
+        <style jsx>{`
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+          }
+        `}</style>
+      </div>
+    )
+  }
+
+  // Legacy mode
   return (
     <div style={{
       minHeight: '100vh',
