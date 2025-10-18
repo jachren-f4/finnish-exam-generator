@@ -126,6 +126,11 @@ This file provides guidance to Claude Code when working with code in this reposi
 - **Database Scripts**: `/db-query.ts` (CLI tool), `/scripts/db-query.sh`, `/scripts/db-latest-exams.sh`
 - **Scripts**: `/scripts/vercel-logs.sh`
 
+### Security & Protection
+- **Pre-commit Hook**: `/.husky/pre-commit` (gitleaks scan)
+- **Gitleaks Ignore**: `/.gitleaksignore` (false positives)
+- **CI Secret Scan**: `/.github/workflows/ci.yml` (secrets-scan job)
+
 ### Diagnostic Tools
 - **Database Connection Test**: `/src/app/api/test-db/route.ts` - Tests Supabase connection, shows masked env vars
 
@@ -139,6 +144,12 @@ This file provides guidance to Claude Code when working with code in this reposi
 - **Exam Menu Hub**: `/src/app/exam/[id]/page.tsx`
 - **Take Exam**: `/src/app/exam/[id]/take/page.tsx` (includes variant 6 bottom sheet for retakes)
 - **Audio Player**: `/src/app/exam/[id]/audio/page.tsx`
+- **Results Page**: `/src/app/grading/[id]/page.tsx`
+
+### Layout Toggles
+- **Exam Menu Layout**: `/src/app/exam/[id]/page.tsx` (line 25: `LAYOUT_MODE`)
+- **Results Layout**: `/src/app/grading/[id]/page.tsx` (line 15: `RESULTS_MODE`)
+- **Variants Prototypes**: `/public/results-variants/` (6 HTML prototypes)
 
 ## Secret Scanning & Protection
 
@@ -264,6 +275,25 @@ npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
 - 3×2 ultra-compact grid layout
 - Audio card only shows if `audio_url` exists
 - Results card appears after `completed_at` is set
+
+### Layout Toggle System
+
+#### Exam Menu Layout Toggle
+- **Variable:** Line 25 in `/src/app/exam/[id]/page.tsx`
+- **Options:** `'classic'` (vertical cards) | `'grid'` (3×2 compact)
+- **Default:** `'classic'`
+- ❌ NOT user-facing (hardcoded only)
+
+#### Results Page Layout Toggle
+- **Variable:** Line 15 in `/src/app/grading/[id]/page.tsx`
+- **Options:** `'story'` (full-screen) | `'legacy'` (traditional)
+- **Default:** `'story'`
+- **Story mode features:**
+  - Full-screen gradient cards (green/orange/red by result)
+  - Swipe/tap/keyboard navigation (arrows, space, ESC)
+  - Scrollable when content overflows (`overflowY: auto`)
+  - Flow: Summary → Questions → Completion
+- ❌ NOT user-facing (hardcoded only)
 
 ### Retake UI (Variant 6 Bottom Sheet)
 - Bottom bar only shows when: `mode=take` AND `examMode=retake|wrong-only` AND previous answer exists

@@ -76,6 +76,47 @@ An AI-powered educational platform that transforms textbook images into exam que
 
 **📚 Detailed Documentation:** `/SECURITY_IMPLEMENTATION_SUMMARY.md` • `/API_SECURITY_DOCUMENTATION.md` • `/FLUTTER_RATE_LIMIT_HANDLING.md` • `/TESTING_GUIDE.md`
 
+### Secret Scanning & Protection
+
+**Two-layer protection prevents API keys and secrets from being committed to Git.**
+
+**Layer 1: Pre-commit Hook (Local)**
+- Gitleaks scans staged files before every commit
+- Blocks commit immediately if secrets detected
+- Setup: Auto-runs after `npm install` (husky prepare script)
+
+**Layer 2: GitHub Actions (CI)**
+- Every push/PR is scanned automatically
+- Pipeline fails if secrets found
+- Runs first, blocks all other jobs
+
+**Setup Instructions:**
+
+```bash
+# 1. Install Gitleaks
+brew install gitleaks  # macOS
+# Linux: wget https://github.com/gitleaks/gitleaks/releases/latest
+# Windows: Use WSL or download binary
+
+# 2. Install dependencies (husky auto-installs)
+npm install
+
+# 3. Verify
+npm run secrets:scan  # Should complete without errors
+```
+
+**If Secrets Detected:**
+1. Commit is blocked locally with clear error
+2. Remove secret from code
+3. Use `process.env.KEY_NAME` instead
+4. For false positives: Add to `.gitleaksignore`
+
+**Emergency Response (Secrets Already Committed):**
+1. **IMMEDIATELY** rotate/regenerate the exposed secret
+2. Update `.env` files with new credentials
+3. Use BFG Repo-Cleaner to purge from Git history
+4. Force push after cleanup
+
 ## Environment Setup
 
 Create `.env.local` in project root:
@@ -356,6 +397,46 @@ useEffect(() => {
 - **Overlay:** Semi-transparent backdrop dismisses sheet when tapped
 - **Clean Question Card:** No clutter—students focus on current attempt
 
+### 11. Layout Toggle System
+
+Two layout systems allow easy switching between UI variants:
+
+#### Exam Menu Layouts
+**Toggle Location:** `/src/app/exam/[id]/page.tsx` line 25
+
+**Classic (Default):** Vertical card stack with detailed descriptions
+- Full-width cards with large icons and action buttons
+- Clear descriptions explain each section
+- Breathing room and visual hierarchy
+
+**Grid:** 3×2 ultra-compact grid
+- High information density
+- All 6 sections visible without scrolling
+- Compact card design for quick navigation
+
+**Switch modes:** Change `LAYOUT_MODE` constant to `'classic'` or `'grid'`
+
+#### Results Page Layouts
+**Toggle Location:** `/src/app/grading/[id]/page.tsx` line 15
+
+**Story Mode (Default):** Full-screen immersive experience
+- Instagram/Snapchat-style full-screen cards
+- Color-coded gradient backgrounds (green for correct, orange for partial, red for incorrect)
+- Progress bars at top showing completion
+- Flow: Summary card → Individual questions → Completion
+- Navigation: Swipe gestures, tap left/right zones (30% width), arrow keys, space, or ESC
+- Scrollable cards when content overflows viewport
+
+**Legacy:** Traditional results page
+- List view with all questions visible
+- Expandable sections for details
+- Print and export options
+- Desktop-friendly layout
+
+**Switch modes:** Change `RESULTS_MODE` constant to `'story'` or `'legacy'`
+
+**Note:** Toggles are currently hardcoded (not user-facing). Both layouts maintain full feature parity.
+
 **Why this design?** Works well with iOS Safari bottom address bar • Maximizes space for question content • Previous answer available but not intrusive • Tested across 17 variant prototypes (`/public/retake-variants/`)
 
 ## Common Tasks
@@ -401,12 +482,6 @@ npx tsx db-query.ts \
 ```
 
 **📚 Full Documentation:** See `/DATABASE_SCRIPTS_GUIDE.md` for complete command reference.
-
-### Test Prompt Variants
-
-```bash
-npx tsx test-prompt-variants.ts assets/images/test-image.jpg
-```
 
 ### Test Prompt Quality with Multiple Images
 
@@ -490,6 +565,8 @@ vercel logs       # Production logs
 ✅ **AI Grading:** Automated grading with detailed feedback
 ✅ **Answer Shuffling:** Fisher-Yates randomization (even distribution)
 ✅ **Prompt Optimization:** Variant 4 (100% quality, 35% size reduction)
+✅ **Dual Layout Systems:** Menu (classic/grid) and results (story/legacy) with toggles
+✅ **Story-Style Results:** Full-screen immersive results with touch/keyboard navigation
 ⚠️ **Legacy Code:** OCR endpoints exist but are unused
 
 ## License
