@@ -534,26 +534,31 @@ Begin generating the pedagogically sound exam now.`
   },
 
   getHistoryPrompt: (grade?: number, language: string = 'en'): string => {
-    return `Create a history exam for grade ${grade || 'appropriate'} students based on educational material.
+    return `Create a history exam for grade ${grade || 'appropriate'} elementary/middle school students.
 
-🎯 PRIMARY OBJECTIVE: Test understanding of the SPECIFIC historical content shown in the material.
+🎯 PRIMARY OBJECTIVE: Create clear, direct questions about the historical content in the textbook.
 
 ⚠️ CRITICAL LANGUAGE REQUIREMENT:
-- Use the SAME language as the source material
-- Auto-detect the language from the textbook images
-- ALL questions, options, explanations, and summary MUST be in the detected language
-- Do NOT default to English if material is in another language (Finnish, Swedish, German, etc.)
+- Use the SAME language as the textbook
+- Auto-detect the language from the images
+- ALL content MUST be in the detected language (Finnish, Swedish, English, German, etc.)
+
+📚 ELEMENTARY SCHOOL QUESTION STYLE:
+✅ Write questions naturally and directly - like a teacher would ask in class
+✅ Use simple, clear language that students understand
+✅ Avoid academic phrases like "according to the material" or "the text states"
+✅ Make questions conversational and age-appropriate
 
 CRITICAL RULES:
-1. ✅ Questions MUST focus on the MAIN TOPICS and EVENTS described in the material
-2. ✅ Questions MUST test comprehension of the SPECIFIC narrative/story presented
-3. ✅ Questions MUST be factually accurate (verify dates, names, events)
-4. ❌ AVOID generic vocabulary/definition questions unless the term is central to understanding the topic
-5. ❌ NEVER include facts not present in the source material
-6. ❌ NEVER make assumptions about content not shown
+1. ✅ Questions MUST focus on the MAIN TOPICS and EVENTS in the textbook
+2. ✅ Questions MUST be factually accurate (verify dates, names, events)
+3. ✅ Questions should sound natural, not academic or formal
+4. ❌ AVOID generic vocabulary questions unless the term is central to the topic
+5. ❌ NEVER include facts not present in the textbook
+6. ❌ NEVER use phrases like "materiaalin mukaan", "tekstissä mainitaan", "materiaaliin viitaten"
 
 CONTENT ANALYSIS FIRST:
-Before generating questions, analyze the material:
+Before generating questions, read the textbook carefully:
 - What is the main historical event/period/concept?
 - What is the central narrative or story?
 - Who are the main people/groups involved?
@@ -562,42 +567,40 @@ Before generating questions, analyze the material:
 - Why did it happen (causes)?
 - What were the results/consequences?
 
-QUESTION PRIORITY (focus on these in order):
-1. **Main Events** (40%): What happened? Chronology, key turning points
-2. **Causes & Consequences** (30%): Why did it happen? What resulted?
-3. **Key Figures & Groups** (20%): Who was involved? What roles did they play?
-4. **Context & Terms** (10%): Supporting vocabulary ONLY if central to understanding
+QUESTION DISTRIBUTION:
+1. **Main Events** (40%): What happened? When? Key turning points?
+2. **Causes & Results** (30%): Why did it happen? What were the consequences?
+3. **Key People & Groups** (20%): Who was involved? What did they do?
+4. **Important Terms** (10%): Only terms central to understanding the topic
 
-FORBIDDEN QUESTION TYPES:
-❌ Generic definitions not tied to the specific topic (e.g., "What is democracy?")
-❌ Questions about concepts mentioned only briefly
-❌ Historical facts NOT present in the material
-❌ "Which of these is true?" questions without clear focus
-❌ Questions requiring outside knowledge beyond the material
-❌ References to visual elements (images, graphs, diagrams, page numbers)
+NATURAL QUESTION STYLE - Write questions directly:
+✅ Ask "Who was involved?" not "Who was involved according to the text?"
+✅ Ask "When did [event] happen?" not "When did [event] happen according to the material?"
+✅ Ask "Why did [event] happen?" not "What does the text say about why [event] happened?"
+✅ Ask "Who was [person]?" not "What does the material say about [person]?"
+✅ Ask "What does [term] mean?" not "What does the text define [term] as?" (only if central concept)
 
-GOOD QUESTION EXAMPLES:
-✅ "What were the main causes of [the event] according to the material?"
-✅ "Which groups/people were involved in [the event]?"
-✅ "When did [the event] take place?"
-✅ "What was the outcome of [the event]?"
-✅ "Why did [cause] lead to [consequence]?"
-✅ "How did [person/group] contribute to [event]?"
+❌ NEVER USE THESE PHRASES IN QUESTIONS:
+❌ "according to the material", "the text states", "the material says"
+❌ "referring to the material", "based on what you read"
+❌ "as mentioned in the text", "as described in the material"
 
-BAD QUESTION EXAMPLES:
-❌ "What does 'democracy' mean?" (too generic unless central to the narrative)
-❌ "What is a political system?" (generic definition)
-❌ "What is international cooperation?" (not about the main topic)
-❌ "What is the capital of [country]?" (random fact, not from material)
+Write questions as if you're a teacher asking students directly - no references to the textbook.
+
+FORBIDDEN:
+❌ Generic vocabulary questions not tied to the topic
+❌ Facts not in the textbook
+❌ Visual references ("in the image", "on page X")
+❌ Outside knowledge questions
+❌ Academic or formal phrasing
 
 FACTUAL ACCURACY REQUIREMENTS:
 Before finalizing EACH question:
-□ Verify dates are correct
+□ Verify dates are exactly right
 □ Verify names are spelled correctly
-□ Verify cause-effect relationships are accurate
-□ Verify the fact appears in the source material
+□ Verify the fact is clearly in the textbook
 □ If uncertain about ANY fact, SKIP that question
-□ If material doesn't clearly state something, DON'T ask about it
+□ If the textbook doesn't clearly state something, DON'T ask about it
 
 CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
 
@@ -642,24 +645,19 @@ CRITICAL - LANGUAGE DETECTION:
 1. Examine the textbook images carefully
 2. Identify the source language (Finnish, Swedish, English, German, etc.)
 3. Generate ALL content in that detected language
-4. Common patterns to help detect:
-   - Finnish: "Suomen sisällissota", "vuonna", "punaisten", "valkoisten"
-   - Swedish: "finska inbördeskriget", "år", "röda", "vita"
-   - English: "civil war", "year", "reds", "whites"
-   - German: "Bürgerkrieg", "Jahr", "Roten", "Weißen"
+4. Match the language naturally - if the textbook is in Finnish, write in Finnish; if Swedish, write in Swedish, etc.
 
 QUALITY CHECKLIST (verify before finalizing):
 □ At least 60% of questions focus on main events, causes, or key figures
 □ Generic definition questions are < 20% of total
-□ All facts are present in the source material
+□ All facts are present in the textbook
 □ All dates, names, events verified for accuracy
-□ Questions follow logical progression through the topic
+□ Questions are natural and direct (no "according to the material" phrases)
+□ Questions are conversational and age-appropriate for elementary/middle school
 □ No references to images, pages, or visual elements
-□ Summary focuses on the specific topic (not generic history concepts)
-□ ALL questions are in the SAME language as the source material
-□ ALL options are in the SAME language as the source material
-□ ALL explanations are in the SAME language as the source material
-□ Summary sections are in the SAME language as the source material
+□ Summary focuses on the specific historical topic
+□ ALL content is in the SAME language as the textbook
+□ Questions sound like something a teacher would naturally ask
 
 IMPORTANT:
 - The correct_answer field must contain the exact text from the options array
