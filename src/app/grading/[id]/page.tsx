@@ -328,6 +328,7 @@ export default function GradingPage() {
             pointerEvents: currentStoryIndex === 0 ? 'auto' : 'none',
             transition: 'opacity 0.3s',
             background: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
+            overflowY: 'auto',
           }}>
             <div style={{
               flex: 1,
@@ -337,6 +338,7 @@ export default function GradingPage() {
               padding: `80px ${SPACING.lg}`,
               textAlign: 'center',
               color: 'white',
+              minHeight: '100vh',
             }}>
               <div style={{ maxWidth: '500px', width: '100%' }}>
                 <div style={{ fontSize: '80px', marginBottom: SPACING.lg, animation: 'bounce 1s' }}>
@@ -400,6 +402,7 @@ export default function GradingPage() {
                 pointerEvents: currentStoryIndex === storyIndex ? 'auto' : 'none',
                 transition: 'opacity 0.3s',
                 background: gradientColors,
+                overflowY: 'auto',
               }}>
                 <div style={{
                   flex: 1,
@@ -409,6 +412,7 @@ export default function GradingPage() {
                   padding: `80px ${SPACING.lg}`,
                   textAlign: 'center',
                   color: 'white',
+                  minHeight: '100vh',
                 }}>
                   <div style={{ maxWidth: '500px', width: '100%' }}>
                     <div style={{
@@ -516,6 +520,7 @@ export default function GradingPage() {
             pointerEvents: currentStoryIndex === getTotalStories() - 1 ? 'auto' : 'none',
             transition: 'opacity 0.3s',
             background: 'linear-gradient(135deg, #1a1a1a 0%, #404040 100%)',
+            overflowY: 'auto',
           }}>
             <div style={{
               flex: 1,
@@ -525,6 +530,7 @@ export default function GradingPage() {
               padding: `80px ${SPACING.lg}`,
               textAlign: 'center',
               color: 'white',
+              minHeight: '100vh',
             }}>
               <div>
                 <div style={{ fontSize: '80px', marginBottom: SPACING.lg }}>✨</div>
