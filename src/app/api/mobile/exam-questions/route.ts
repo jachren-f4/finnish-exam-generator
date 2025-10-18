@@ -6,7 +6,6 @@ import { MobileApiService } from '@/lib/services/mobile-api-service'
 import { ApiResponseBuilder } from '@/lib/utils/api-response'
 import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
 import { withOptionalAuth } from '@/middleware/auth'
-import { FINNISH_SUBJECTS, FinnishSubject } from '@/lib/supabase'
 import { getRateLimiter } from '@/lib/services/rate-limiter'
 import { getRequestLogger } from '@/lib/services/request-logger'
 import { getJWTValidator } from '@/lib/services/jwt-validator'
@@ -45,7 +44,7 @@ export async function POST(request: NextRequest) {
 
       // Extract ExamGenie-specific parameters
       const category = formData.get('category')?.toString() // 'mathematics', 'core_academics', 'language_studies'
-      const subject = formData.get('subject')?.toString() as FinnishSubject // For backwards compatibility
+      const subject = formData.get('subject')?.toString() // For backwards compatibility
       const gradeStr = formData.get('grade')?.toString()
       const grade = gradeStr ? parseInt(gradeStr, 10) : undefined
       // Backward compatibility: Accept both user_id and student_id (mobile app currently sends student_id)
@@ -157,13 +156,8 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Validate subject if provided (for backwards compatibility)
-      if (subject && !category && !FINNISH_SUBJECTS.includes(subject as FinnishSubject)) {
-        return ApiResponseBuilder.validationError(
-          'Invalid subject. Must be one of the supported Finnish subjects.',
-          `Valid subjects: ${FINNISH_SUBJECTS.join(', ')}`
-        )
-      }
+      // Note: subject is only stored in DB, not used for routing
+      // Category determines routing (mathematics vs standard prompt)
 
       // Validate grade if provided
       if (grade && (typeof grade !== 'number' || grade < 1 || grade > 9)) {
