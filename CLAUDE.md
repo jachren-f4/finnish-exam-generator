@@ -42,11 +42,12 @@ This file provides guidance to Claude Code when working with code in this reposi
 ## Critical Knowledge - Common Pitfalls
 
 ### Parameter Usage (Important!)
-- **`subject` parameter**: Accepts any string (any language)
-  - **Routing**: If contains "historia", "history", or "geschichte" → getHistoryPrompt() (content-focused history prompt)
+- **`subject` parameter**: Routes to specialized prompts + stored in DB
+  - **Routing**: If contains "historia", "history", or "geschichte" (case-insensitive) → getHistoryPrompt()
   - **Storage**: Always stored in DB regardless of routing
+  - **Example**: `subject=Historia` → Finnish history exam with content-focused questions
 - **`language` parameter**: Accepted by API but **NOT used in prompts** (Gemini auto-detects from images)
-- **`category` parameter**: Routes to correct prompt service
+- **`category` parameter**: Routes to service-specific prompts
   - `"mathematics"` → math-exam-service.ts (LaTeX, 3-level validation)
   - `"language_studies"` → getLanguageStudiesPrompt()
   - Everything else → standard prompt via getCategoryAwarePrompt()
@@ -60,13 +61,14 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ❌ KaTeX scripts MUST be in `/src/app/layout.tsx` with `strategy="beforeInteractive"`
 
 ### History Special Handling
-- ✅ `subject` contains "historia", "history", or "geschichte" → routes to getHistoryPrompt()
-- ✅ Focuses on MAIN TOPICS from material (60%+ requirement)
-- ✅ Avoids generic definitions (democracy, political system, etc.) unless central to topic
-- ✅ Validates factual accuracy (dates, names, events must be in material)
-- ✅ Auto-detects language from source material (Finnish, Swedish, English, German, etc.)
-- ✅ Returns same JSON structure as standard prompt (questions + summary)
-- ❌ No visual references allowed in questions
+- ✅ Routes when `subject` matches `/historia|history|geschichte/i`
+- ✅ Focuses on main topics (60%+ requirement): events, causes, key figures
+- ✅ Avoids generic definitions unless central to topic
+- ✅ Validates factual accuracy (dates, names, events from material only)
+- ✅ Auto-detects language (Finnish, Swedish, English, German, etc.)
+- ✅ Returns same JSON as standard prompt (questions + summary)
+- ❌ No visual references in questions
+- ❌ No facts not present in source material
 
 ### Math Audio Summaries
 **Files:** `config.ts:getMathPrompt()`, `math-exam-service.ts`, `mobile-api-service.ts:generateMathAudioSummaryAsync()`
