@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results Variant 2: Timeline with Expansion</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #F5F5F5;
+      min-height: 100vh;
+      padding-bottom: 16px;
+    }
+
+    .header {
+      padding: 16px;
+      background: white;
+      border-bottom: 1px solid #E5E5E5;
+    }
+
+    .header-content {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+      min-height: 48px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Summary Card */
+    .summary-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 24px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .emoji-grade {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .grade-number {
+      font-size: 56px;
+      font-weight: 700;
+      color: #22C55E;
+      margin-bottom: 8px;
+    }
+
+    .grade-detail {
+      font-size: 16px;
+      color: #737373;
+      margin-bottom: 16px;
+    }
+
+    .stats-inline {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stat-number {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .stat-number.correct { color: #22C55E; }
+    .stat-number.partial { color: #F59E0B; }
+    .stat-number.incorrect { color: #EF4444; }
+
+    .stat-label {
+      font-size: 14px;
+      color: #737373;
+    }
+
+    /* Timeline */
+    .timeline-header {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .timeline-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .expand-all-btn {
+      background: transparent;
+      border: 2px solid #D4D4D4;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #1a1a1a;
+      cursor: pointer;
+    }
+
+    .timeline {
+      position: relative;
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-left: 40px;
+      margin-bottom: 16px;
+    }
+
+    .timeline-line {
+      position: absolute;
+      left: 15px;
+      top: 32px;
+      bottom: -16px;
+      width: 2px;
+      background: #E5E5E5;
+    }
+
+    .timeline-item:last-child .timeline-line {
+      display: none;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: white;
+    }
+
+    .timeline-dot.correct { background: #22C55E; }
+    .timeline-dot.partial { background: #F59E0B; }
+    .timeline-dot.incorrect { background: #EF4444; }
+
+    .timeline-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .timeline-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .timeline-preview {
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .timeline-question {
+      flex: 1;
+      font-size: 16px;
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-right: 12px;
+    }
+
+    .timeline-score {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .score-badge {
+      font-size: 14px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: white;
+    }
+
+    .score-badge.correct { background: #22C55E; }
+    .score-badge.partial { background: #F59E0B; }
+    .score-badge.incorrect { background: #EF4444; }
+
+    .expand-icon {
+      font-size: 12px;
+      color: #737373;
+      transition: transform 0.3s;
+    }
+
+    .timeline-card.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .timeline-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .timeline-card.expanded .timeline-details {
+      max-height: 1000px;
+    }
+
+    .timeline-content {
+      padding: 0 16px 16px 16px;
+      border-top: 1px solid #E5E5E5;
+    }
+
+    .answer-section {
+      margin-top: 12px;
+    }
+
+    .answer-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #737373;
+      margin-bottom: 4px;
+    }
+
+    .answer-box {
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+
+    .your-answer {
+      background: #EBF5FF;
+    }
+
+    .correct-answer {
+      background: #E8F5E9;
+    }
+
+    .feedback-box {
+      padding: 12px;
+      border-radius: 6px;
+      border-left: 4px solid;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    .feedback-box.correct {
+      background: #E8F5E9;
+      border-color: #22C55E;
+    }
+
+    .feedback-box.incorrect {
+      background: #FFEBEE;
+      border-color: #EF4444;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .action-btn {
+      width: 100%;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      min-height: 48px;
+      cursor: pointer;
+    }
+
+    .action-btn.primary {
+      background: #1a1a1a;
+      color: white;
+      border: none;
+    }
+
+    .action-btn.secondary {
+      background: white;
+      color: #1a1a1a;
+      border: 2px solid #D4D4D4;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <button class="back-btn" onclick="window.location.href='https://exam-generator-staging.vercel.app/exam/40aca3a0-eb9a-4ce3-a4d9-eccc0eb609df'">←</button>
+      <h1>Exam Results</h1>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Summary Card -->
+    <div class="summary-card">
+      <div class="emoji-grade">🎉</div>
+      <div class="grade-number">9</div>
+      <div class="grade-detail">13.5 / 15 points (90%)</div>
+      <div class="stats-inline">
+        <div class="stat-inline">
+          <span class="stat-number correct">12</span>
+          <span class="stat-label">Correct</span>
+        </div>
+        <div class="stat-inline">
+          <span class="stat-number partial">2</span>
+          <span class="stat-label">Partial</span>
+        </div>
+        <div class="stat-inline">
+          <span class="stat-number incorrect">1</span>
+          <span class="stat-label">Incorrect</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline Header -->
+    <div class="timeline-header">
+      <h2>Questions (15)</h2>
+      <button class="expand-all-btn" onclick="toggleAll()">Expand All</button>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline" id="timeline"></div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button class="action-btn primary" onclick="window.location.href='https://exam-generator-staging.vercel.app/exam/40aca3a0-eb9a-4ce3-a4d9-eccc0eb609df'">← Back to Menu</button>
+      <button class="action-btn secondary" onclick="window.print()">🖨️ Print Results</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      { id: 1, text: "What is the capital of France?", yourAnswer: "Paris", correctAnswer: "Paris", score: 1, maxScore: 1, feedback: "Correct! Paris is the capital and largest city of France.", percentage: 100 },
+      { id: 2, text: "Calculate: 15 + 27", yourAnswer: "42", correctAnswer: "42", score: 1, maxScore: 1, feedback: "Perfect!", percentage: 100 },
+      { id: 3, text: "What year did World War II end?", yourAnswer: "1945", correctAnswer: "1945", score: 1, maxScore: 1, feedback: "Correct!", percentage: 100 },
+      { id: 4, text: "What is photosynthesis?", yourAnswer: "Process where plants make food", correctAnswer: "The process by which green plants use sunlight to synthesize nutrients", score: 0.5, maxScore: 1, feedback: "Partially correct. Your answer captures the basic idea but lacks detail.", percentage: 50 },
+      { id: 5, text: "Name three primary colors", yourAnswer: "Red, Blue, Yellow", correctAnswer: "Red, Blue, Yellow", score: 1, maxScore: 1, feedback: "Excellent!", percentage: 100 },
+    ];
+
+    function init() {
+      const timeline = document.getElementById('timeline');
+      timeline.innerHTML = questions.map((q, i) => {
+        const statusClass = q.percentage === 100 ? 'correct' : q.percentage > 0 ? 'partial' : 'incorrect';
+        return `
+          <div class="timeline-item">
+            <div class="timeline-line"></div>
+            <div class="timeline-dot ${statusClass}">${i + 1}</div>
+            <div class="timeline-card" onclick="toggleCard(${i})">
+              <div class="timeline-preview">
+                <div class="timeline-question">${q.text}</div>
+                <div class="timeline-score">
+                  <span class="score-badge ${statusClass}">${q.score}/${q.maxScore}</span>
+                  <span class="expand-icon">▼</span>
+                </div>
+              </div>
+              <div class="timeline-details">
+                <div class="timeline-content">
+                  <div class="answer-section">
+                    <div class="answer-label">Your Answer</div>
+                    <div class="answer-box your-answer">${q.yourAnswer}</div>
+                  </div>
+                  <div class="answer-section">
+                    <div class="answer-label">Correct Answer</div>
+                    <div class="answer-box correct-answer">${q.correctAnswer}</div>
+                  </div>
+                  <div class="feedback-box ${statusClass}">
+                    ${q.feedback}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleCard(index) {
+      const cards = document.querySelectorAll('.timeline-card');
+      cards[index].classList.toggle('expanded');
+    }
+
+    let allExpanded = false;
+    function toggleAll() {
+      const cards = document.querySelectorAll('.timeline-card');
+      const btn = document.querySelector('.expand-all-btn');
+
+      allExpanded = !allExpanded;
+      cards.forEach(card => {
+        if (allExpanded) {
+          card.classList.add('expanded');
+        } else {
+          card.classList.remove('expanded');
+        }
+      });
+
+      btn.textContent = allExpanded ? 'Collapse All' : 'Expand All';
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results Variant 3: Compact List with Slide-in</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #F5F5F5;
+      min-height: 100vh;
+    }
+
+    .header {
+      padding: 16px;
+      background: white;
+      border-bottom: 1px solid #E5E5E5;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-content {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+      min-height: 48px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 16px;
+      padding-bottom: 80px;
+    }
+
+    /* Summary Card */
+    .summary-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .summary-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .emoji-grade {
+      font-size: 48px;
+    }
+
+    .grade-number {
+      font-size: 48px;
+      font-weight: 700;
+      color: #22C55E;
+    }
+
+    .summary-right {
+      flex: 1;
+    }
+
+    .grade-detail {
+      font-size: 14px;
+      color: #737373;
+      margin-bottom: 12px;
+    }
+
+    .mini-stats {
+      display: flex;
+      gap: 12px;
+    }
+
+    .mini-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+    }
+
+    .mini-stat-number {
+      font-weight: 700;
+    }
+
+    .mini-stat-number.correct { color: #22C55E; }
+    .mini-stat-number.partial { color: #F59E0B; }
+    .mini-stat-number.incorrect { color: #EF4444; }
+
+    /* Filter Buttons */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 2px solid #D4D4D4;
+      background: white;
+      color: #1a1a1a;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.3s;
+    }
+
+    .filter-btn.active {
+      background: #1a1a1a;
+      color: white;
+      border-color: #1a1a1a;
+    }
+
+    /* Compact List */
+    .question-list {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .question-row {
+      padding: 16px;
+      border-bottom: 1px solid #E5E5E5;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .question-row:last-child {
+      border-bottom: none;
+    }
+
+    .question-row:active {
+      background: #F5F5F5;
+    }
+
+    .question-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .question-number.correct { background: #22C55E; }
+    .question-number.partial { background: #F59E0B; }
+    .question-number.incorrect { background: #EF4444; }
+
+    .question-preview {
+      flex: 1;
+      font-size: 14px;
+      color: #1a1a1a;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .question-score {
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .question-score.correct { color: #22C55E; }
+    .question-score.partial { color: #F59E0B; }
+    .question-score.incorrect { color: #EF4444; }
+
+    .chevron {
+      font-size: 12px;
+      color: #D4D4D4;
+      flex-shrink: 0;
+    }
+
+    /* Slide-in Panel */
+    .slide-panel-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 40;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .slide-panel-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .slide-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 100%;
+      max-width: 640px;
+      height: 100%;
+      background: white;
+      z-index: 50;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      overflow-y: auto;
+    }
+
+    .slide-panel.active {
+      transform: translateX(0);
+    }
+
+    .panel-header {
+      position: sticky;
+      top: 0;
+      background: white;
+      border-bottom: 1px solid #E5E5E5;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .panel-close {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+      min-height: 48px;
+    }
+
+    .panel-title {
+      flex: 1;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .panel-content {
+      padding: 16px;
+    }
+
+    .panel-question {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    .score-display {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: #F5F5F5;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .score-label {
+      font-size: 14px;
+      color: #737373;
+    }
+
+    .score-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .answer-section {
+      margin-bottom: 16px;
+    }
+
+    .answer-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #737373;
+      margin-bottom: 8px;
+    }
+
+    .answer-box {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+
+    .your-answer {
+      background: #EBF5FF;
+    }
+
+    .correct-answer {
+      background: #E8F5E9;
+    }
+
+    .feedback-box {
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 4px solid;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .feedback-box.correct {
+      background: #E8F5E9;
+      border-color: #22C55E;
+    }
+
+    .feedback-box.incorrect {
+      background: #FFEBEE;
+      border-color: #EF4444;
+    }
+
+    /* Navigation in Panel */
+    .panel-nav {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      border-top: 1px solid #E5E5E5;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .nav-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px solid #D4D4D4;
+      background: white;
+      color: #1a1a1a;
+      font-size: 16px;
+      font-weight: 500;
+      min-height: 48px;
+      cursor: pointer;
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <button class="back-btn" onclick="window.location.href='https://exam-generator-staging.vercel.app/exam/40aca3a0-eb9a-4ce3-a4d9-eccc0eb609df'">←</button>
+      <h1>Exam Results</h1>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Summary Card -->
+    <div class="summary-card">
+      <div class="summary-left">
+        <div class="emoji-grade">🎉</div>
+        <div class="grade-number">9</div>
+      </div>
+      <div class="summary-right">
+        <div class="grade-detail">13.5 / 15 points (90%)</div>
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <span class="mini-stat-number correct">12</span>
+            <span style="color: #737373;">✓</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-stat-number partial">2</span>
+            <span style="color: #737373;">~</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-stat-number incorrect">1</span>
+            <span style="color: #737373;">✗</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterQuestions('all')">All (15)</button>
+      <button class="filter-btn" onclick="filterQuestions('correct')">Correct (12)</button>
+      <button class="filter-btn" onclick="filterQuestions('partial')">Partial (2)</button>
+      <button class="filter-btn" onclick="filterQuestions('incorrect')">Incorrect (1)</button>
+    </div>
+
+    <!-- Compact List -->
+    <div class="question-list" id="questionList"></div>
+  </div>
+
+  <!-- Slide-in Panel Overlay -->
+  <div class="slide-panel-overlay" id="overlay" onclick="closePanel()"></div>
+
+  <!-- Slide-in Panel -->
+  <div class="slide-panel" id="panel">
+    <div class="panel-header">
+      <button class="panel-close" onclick="closePanel()">←</button>
+      <div class="panel-title">Question <span id="panelNumber">1</span></div>
+    </div>
+    <div class="panel-content" id="panelContent"></div>
+    <div class="panel-nav">
+      <button class="nav-btn" id="prevBtn" onclick="navigateQuestion(-1)">← Previous</button>
+      <button class="nav-btn" id="nextBtn" onclick="navigateQuestion(1)">Next →</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      { id: 1, text: "What is the capital of France?", yourAnswer: "Paris", correctAnswer: "Paris", score: 1, maxScore: 1, feedback: "Correct! Paris is the capital and largest city of France.", percentage: 100 },
+      { id: 2, text: "Calculate: 15 + 27", yourAnswer: "42", correctAnswer: "42", score: 1, maxScore: 1, feedback: "Perfect!", percentage: 100 },
+      { id: 3, text: "What year did World War II end?", yourAnswer: "1945", correctAnswer: "1945", score: 1, maxScore: 1, feedback: "Correct!", percentage: 100 },
+      { id: 4, text: "What is photosynthesis?", yourAnswer: "Process where plants make food", correctAnswer: "The process by which green plants use sunlight to synthesize nutrients", score: 0.5, maxScore: 1, feedback: "Partially correct. Your answer captures the basic idea but lacks detail.", percentage: 50 },
+      { id: 5, text: "Name three primary colors", yourAnswer: "Red, Blue, Yellow", correctAnswer: "Red, Blue, Yellow", score: 1, maxScore: 1, feedback: "Excellent!", percentage: 100 },
+    ];
+
+    let currentFilter = 'all';
+    let currentQuestionIndex = 0;
+
+    function getStatus(q) {
+      return q.percentage === 100 ? 'correct' : q.percentage > 0 ? 'partial' : 'incorrect';
+    }
+
+    function renderList() {
+      const list = document.getElementById('questionList');
+      const filtered = currentFilter === 'all' ? questions : questions.filter(q => getStatus(q) === currentFilter);
+
+      list.innerHTML = filtered.map((q, i) => {
+        const status = getStatus(q);
+        return `
+          <div class="question-row" onclick="openPanel(${questions.indexOf(q)})">
+            <div class="question-number ${status}">${questions.indexOf(q) + 1}</div>
+            <div class="question-preview">${q.text}</div>
+            <div class="question-score ${status}">${q.score}/${q.maxScore}</div>
+            <div class="chevron">›</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterQuestions(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      renderList();
+    }
+
+    function openPanel(index) {
+      currentQuestionIndex = index;
+      updatePanel();
+      document.getElementById('panel').classList.add('active');
+      document.getElementById('overlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePanel() {
+      document.getElementById('panel').classList.remove('active');
+      document.getElementById('overlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function updatePanel() {
+      const q = questions[currentQuestionIndex];
+      const status = getStatus(q);
+
+      document.getElementById('panelNumber').textContent = currentQuestionIndex + 1;
+      document.getElementById('panelContent').innerHTML = `
+        <div class="panel-question">${q.text}</div>
+        <div class="score-display">
+          <span class="score-label">Score</span>
+          <span class="score-value" style="color: ${status === 'correct' ? '#22C55E' : status === 'partial' ? '#F59E0B' : '#EF4444'}">${q.score}/${q.maxScore} (${q.percentage}%)</span>
+        </div>
+        <div class="answer-section">
+          <div class="answer-label">Your Answer</div>
+          <div class="answer-box your-answer">${q.yourAnswer}</div>
+        </div>
+        <div class="answer-section">
+          <div class="answer-label">Correct Answer</div>
+          <div class="answer-box correct-answer">${q.correctAnswer}</div>
+        </div>
+        <div class="feedback-box ${status}">
+          ${q.feedback}
+        </div>
+      `;
+
+      document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
+      document.getElementById('nextBtn').disabled = currentQuestionIndex === questions.length - 1;
+    }
+
+    function navigateQuestion(direction) {
+      currentQuestionIndex += direction;
+      if (currentQuestionIndex < 0) currentQuestionIndex = 0;
+      if (currentQuestionIndex >= questions.length) currentQuestionIndex = questions.length - 1;
+      updatePanel();
+    }
+
+    renderList();
+  </script>
+</body>
+</html>

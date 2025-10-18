@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results Variant 6: Story Style</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #000;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Story Container */
+    .story-container {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: #000;
+    }
+
+    /* Progress Bar */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      gap: 4px;
+      padding: 8px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+    }
+
+    .progress-segment {
+      flex: 1;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: white;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .progress-segment.active .progress-fill {
+      width: 100%;
+    }
+
+    .progress-segment.viewed .progress-fill {
+      width: 100%;
+    }
+
+    /* Story Card */
+    .story-card {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .story-card.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Header */
+    .story-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 56px 16px 16px 16px;
+      z-index: 10;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(0,0,0,0.5);
+      border: none;
+      color: white;
+      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+    }
+
+    /* Story Content */
+    .story-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+      text-align: center;
+      color: white;
+    }
+
+    /* Summary Card */
+    .summary-story {
+      background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+    }
+
+    .summary-emoji {
+      font-size: 80px;
+      margin-bottom: 24px;
+      animation: bounce 1s;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .summary-grade {
+      font-size: 96px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .summary-text {
+      font-size: 20px;
+      opacity: 0.95;
+      margin-bottom: 32px;
+    }
+
+    .summary-stats {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+    }
+
+    .summary-stat {
+      text-align: center;
+    }
+
+    .stat-big {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    /* Question Cards */
+    .question-story {
+      background: linear-gradient(135deg, #1a1a1a 0%, #404040 100%);
+    }
+
+    .question-story.correct {
+      background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+    }
+
+    .question-story.partial {
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    }
+
+    .question-story.incorrect {
+      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    }
+
+    .question-number-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    .question-text-large {
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 32px;
+    }
+
+    .score-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    .score-big {
+      font-size: 48px;
+      font-weight: 700;
+    }
+
+    .score-max {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .answer-comparison {
+      background: rgba(0,0,0,0.3);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: left;
+      backdrop-filter: blur(10px);
+    }
+
+    .answer-item {
+      margin-bottom: 16px;
+    }
+
+    .answer-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .answer-item-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.7;
+      margin-bottom: 8px;
+    }
+
+    .answer-item-text {
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .feedback-text {
+      font-size: 14px;
+      line-height: 1.6;
+      opacity: 0.95;
+      background: rgba(0,0,0,0.3);
+      padding: 16px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    /* Navigation */
+    .story-nav {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 30%;
+      cursor: pointer;
+      z-index: 5;
+    }
+
+    .story-nav.prev {
+      left: 0;
+    }
+
+    .story-nav.next {
+      right: 0;
+    }
+
+    /* Completion Card */
+    .completion-story {
+      background: linear-gradient(135deg, #1a1a1a 0%, #404040 100%);
+    }
+
+    .completion-icon {
+      font-size: 80px;
+      margin-bottom: 24px;
+    }
+
+    .completion-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .completion-text {
+      font-size: 16px;
+      opacity: 0.9;
+      margin-bottom: 32px;
+    }
+
+    .action-btn {
+      background: white;
+      color: #1a1a1a;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 24px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      min-width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <div class="story-container">
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Close Button -->
+    <button class="close-btn" onclick="window.location.href='https://exam-generator-staging.vercel.app/exam/40aca3a0-eb9a-4ce3-a4d9-eccc0eb609df'">×</button>
+
+    <!-- Story Cards -->
+    <div id="storyCards"></div>
+
+    <!-- Navigation Areas -->
+    <div class="story-nav prev" onclick="prevStory()"></div>
+    <div class="story-nav next" onclick="nextStory()"></div>
+  </div>
+
+  <script>
+    const questions = [
+      { id: 1, text: "What is the capital of France?", yourAnswer: "Paris", correctAnswer: "Paris", score: 1, maxScore: 1, feedback: "Correct! Paris is the capital and largest city of France.", percentage: 100 },
+      { id: 2, text: "Calculate: 15 + 27", yourAnswer: "42", correctAnswer: "42", score: 1, maxScore: 1, feedback: "Perfect!", percentage: 100 },
+      { id: 3, text: "What year did World War II end?", yourAnswer: "1945", correctAnswer: "1945", score: 1, maxScore: 1, feedback: "Correct!", percentage: 100 },
+      { id: 4, text: "What is photosynthesis?", yourAnswer: "Process where plants make food", correctAnswer: "The process by which green plants use sunlight to synthesize nutrients", score: 0.5, maxScore: 1, feedback: "Partially correct. Your answer captures the basic idea but lacks detail.", percentage: 50 },
+      { id: 5, text: "Name three primary colors", yourAnswer: "Red, Blue, Yellow", correctAnswer: "Red, Blue, Yellow", score: 1, maxScore: 1, feedback: "Excellent!", percentage: 100 },
+    ];
+
+    let currentStory = 0;
+    const totalStories = questions.length + 2; // +2 for summary and completion
+
+    function getStatus(q) {
+      return q.percentage === 100 ? 'correct' : q.percentage > 0 ? 'partial' : 'incorrect';
+    }
+
+    function init() {
+      renderProgressBar();
+      renderStories();
+      updateDisplay();
+    }
+
+    function renderProgressBar() {
+      const progressBar = document.getElementById('progressBar');
+      progressBar.innerHTML = Array(totalStories).fill(0).map((_, i) => `
+        <div class="progress-segment">
+          <div class="progress-fill"></div>
+        </div>
+      `).join('');
+    }
+
+    function renderStories() {
+      const container = document.getElementById('storyCards');
+
+      // Summary Card
+      const summaryCard = `
+        <div class="story-card summary-story ${currentStory === 0 ? 'active' : ''}">
+          <div class="story-content">
+            <div>
+              <div class="summary-emoji">🎉</div>
+              <div class="summary-grade">9</div>
+              <div class="summary-text">Excellent Work!</div>
+              <div class="summary-text">13.5 / 15 points (90%)</div>
+              <div class="summary-stats">
+                <div class="summary-stat">
+                  <div class="stat-big">12</div>
+                  <div class="stat-label">Correct</div>
+                </div>
+                <div class="summary-stat">
+                  <div class="stat-big">2</div>
+                  <div class="stat-label">Partial</div>
+                </div>
+                <div class="summary-stat">
+                  <div class="stat-big">1</div>
+                  <div class="stat-label">Wrong</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Question Cards
+      const questionCards = questions.map((q, i) => {
+        const status = getStatus(q);
+        return `
+          <div class="story-card question-story ${status}">
+            <div class="story-content">
+              <div style="max-width: 500px; width: 100%;">
+                <div class="question-number-badge">Question ${i + 1} of ${questions.length}</div>
+                <div class="question-text-large">${q.text}</div>
+                <div class="score-circle">
+                  <div class="score-big">${q.score}</div>
+                  <div class="score-max">/ ${q.maxScore}</div>
+                </div>
+                <div class="answer-comparison">
+                  <div class="answer-item">
+                    <div class="answer-item-label">Your Answer</div>
+                    <div class="answer-item-text">${q.yourAnswer}</div>
+                  </div>
+                  <div class="answer-item">
+                    <div class="answer-item-label">Correct Answer</div>
+                    <div class="answer-item-text">${q.correctAnswer}</div>
+                  </div>
+                </div>
+                <div class="feedback-text">${q.feedback}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Completion Card
+      const completionCard = `
+        <div class="story-card completion-story">
+          <div class="story-content">
+            <div>
+              <div class="completion-icon">✨</div>
+              <div class="completion-title">Results Reviewed!</div>
+              <div class="completion-text">You've reviewed all ${questions.length} questions</div>
+              <button class="action-btn" onclick="window.location.href='https://exam-generator-staging.vercel.app/exam/40aca3a0-eb9a-4ce3-a4d9-eccc0eb609df'">
+                Back to Menu
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = summaryCard + questionCards + completionCard;
+    }
+
+    function updateDisplay() {
+      // Update progress bar
+      document.querySelectorAll('.progress-segment').forEach((seg, i) => {
+        seg.classList.toggle('active', i === currentStory);
+        seg.classList.toggle('viewed', i < currentStory);
+      });
+
+      // Update cards
+      document.querySelectorAll('.story-card').forEach((card, i) => {
+        card.classList.toggle('active', i === currentStory);
+      });
+    }
+
+    function nextStory() {
+      if (currentStory < totalStories - 1) {
+        currentStory++;
+        updateDisplay();
+      }
+    }
+
+    function prevStory() {
+      if (currentStory > 0) {
+        currentStory--;
+        updateDisplay();
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextStory();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevStory();
+      } else if (e.key === 'Escape') {
+        window.location.href = 'https://exam-generator-staging.vercel.app/exam/40aca3a0-eb9a-4ce3-a4d9-eccc0eb609df';
+      }
+    });
+
+    // Touch swipe support
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+
+    document.addEventListener('touchend', e => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+
+    function handleSwipe() {
+      const swipeThreshold = 50;
+      if (touchEndX < touchStartX - swipeThreshold) {
+        nextStory();
+      }
+      if (touchEndX > touchStartX + swipeThreshold) {
+        prevStory();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

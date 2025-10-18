@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results Variant 1: Swipeable Cards</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #F5F5F5;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    .header {
+      padding: 16px;
+      background: white;
+      border-bottom: 1px solid #E5E5E5;
+    }
+
+    .header-content {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+      min-height: 48px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Summary Card */
+    .summary-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 24px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .emoji-grade {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .grade-number {
+      font-size: 72px;
+      font-weight: 700;
+      color: #22C55E;
+      margin-bottom: 8px;
+    }
+
+    .grade-detail {
+      font-size: 16px;
+      color: #737373;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .stat-number.correct { color: #22C55E; }
+    .stat-number.partial { color: #F59E0B; }
+    .stat-number.incorrect { color: #EF4444; }
+    .stat-number.total { color: #1a1a1a; }
+
+    .stat-icon {
+      font-size: 12px;
+      color: #737373;
+      margin-top: 4px;
+    }
+
+    /* Navigation Dots */
+    .nav-dots {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      padding: 0 16px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #D4D4D4;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .dot.active {
+      width: 24px;
+      border-radius: 4px;
+      background: #1a1a1a;
+    }
+
+    .dot.correct { background: #22C55E; }
+    .dot.partial { background: #F59E0B; }
+    .dot.incorrect { background: #EF4444; }
+
+    /* Question Card */
+    .question-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 16px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .question-card.active {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .question-badge {
+      display: inline-block;
+      background: #F5F5F5;
+      color: #737373;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .question-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    .score-display {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: #F5F5F5;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .score-label {
+      font-size: 14px;
+      color: #737373;
+    }
+
+    .score-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .answer-section {
+      margin-bottom: 12px;
+    }
+
+    .answer-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #737373;
+      margin-bottom: 4px;
+    }
+
+    .answer-box {
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 16px;
+      color: #1a1a1a;
+    }
+
+    .your-answer {
+      background: #EBF5FF;
+    }
+
+    .correct-answer {
+      background: #E8F5E9;
+    }
+
+    .feedback-box {
+      padding: 12px;
+      border-radius: 6px;
+      border-left: 4px solid;
+      font-size: 14px;
+      margin-top: 16px;
+    }
+
+    .feedback-box.correct {
+      background: #E8F5E9;
+      border-color: #22C55E;
+      color: #1a1a1a;
+    }
+
+    .feedback-box.incorrect {
+      background: #FFEBEE;
+      border-color: #EF4444;
+      color: #1a1a1a;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #E5E5E5;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+      padding: 16px;
+    }
+
+    .bottom-nav-content {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      gap: 12px;
+    }
+
+    .nav-btn {
+      padding: 12px 24px;
+      border: 2px solid #D4D4D4;
+      border-radius: 8px;
+      background: white;
+      color: #1a1a1a;
+      font-size: 16px;
+      font-weight: 500;
+      min-height: 48px;
+      cursor: pointer;
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .nav-btn.primary {
+      flex: 1;
+      background: #1a1a1a;
+      color: white;
+      border: none;
+    }
+
+    .question-counter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #737373;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <button class="back-btn" onclick="window.location.href='https://exam-generator-staging.vercel.app/exam/40aca3a0-eb9a-4ce3-a4d9-eccc0eb609df'">←</button>
+      <h1>Exam Results</h1>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Summary Card -->
+    <div class="summary-card">
+      <div class="emoji-grade">🎉</div>
+      <div class="grade-number">9</div>
+      <div class="grade-detail">13.5 / 15 points (90%)</div>
+    </div>
+
+    <!-- Statistics Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number correct">12</div>
+        <div class="stat-icon">✓</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number partial">2</div>
+        <div class="stat-icon">~</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number incorrect">1</div>
+        <div class="stat-icon">✗</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number total">15</div>
+        <div class="stat-icon">Total</div>
+      </div>
+    </div>
+
+    <!-- Navigation Dots -->
+    <div class="nav-dots" id="navDots"></div>
+
+    <!-- Question Counter -->
+    <div class="question-counter">
+      <span id="currentNum">1</span> / <span id="totalNum">15</span>
+    </div>
+
+    <!-- Question Cards (Swipeable) -->
+    <div id="questionCards"></div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="bottom-nav-content">
+      <button class="nav-btn" id="prevBtn" onclick="prevQuestion()">←</button>
+      <button class="nav-btn primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+      <button class="nav-btn" onclick="window.location.href='https://exam-generator-staging.vercel.app/exam/40aca3a0-eb9a-4ce3-a4d9-eccc0eb609df'" style="display: none;" id="backBtn">Back to Menu</button>
+    </div>
+  </div>
+
+  <script>
+    // Sample data
+    const questions = [
+      { id: 1, text: "What is the capital of France?", yourAnswer: "Paris", correctAnswer: "Paris", score: 1, maxScore: 1, feedback: "Correct! Paris is the capital and largest city of France.", percentage: 100 },
+      { id: 2, text: "Calculate: 15 + 27", yourAnswer: "42", correctAnswer: "42", score: 1, maxScore: 1, feedback: "Perfect!", percentage: 100 },
+      { id: 3, text: "What year did World War II end?", yourAnswer: "1945", correctAnswer: "1945", score: 1, maxScore: 1, feedback: "Correct! World War II ended in 1945.", percentage: 100 },
+      { id: 4, text: "What is photosynthesis?", yourAnswer: "Process where plants make food", correctAnswer: "The process by which green plants use sunlight to synthesize nutrients from carbon dioxide and water", score: 0.5, maxScore: 1, feedback: "Partially correct. Your answer captures the basic idea but lacks detail about the specific inputs and outputs.", percentage: 50 },
+      { id: 5, text: "Name three primary colors", yourAnswer: "Red, Blue, Yellow", correctAnswer: "Red, Blue, Yellow", score: 1, maxScore: 1, feedback: "Excellent!", percentage: 100 },
+    ];
+
+    let currentIndex = 0;
+
+    function init() {
+      renderDots();
+      renderQuestions();
+      updateDisplay();
+    }
+
+    function renderDots() {
+      const dotsContainer = document.getElementById('navDots');
+      dotsContainer.innerHTML = questions.map((q, i) => {
+        const statusClass = q.percentage === 100 ? 'correct' : q.percentage > 0 ? 'partial' : 'incorrect';
+        return `<div class="dot ${statusClass} ${i === 0 ? 'active' : ''}" onclick="goToQuestion(${i})"></div>`;
+      }).join('');
+    }
+
+    function renderQuestions() {
+      const container = document.getElementById('questionCards');
+      container.innerHTML = questions.map((q, i) => `
+        <div class="question-card ${i === 0 ? 'active' : ''}" id="card-${i}">
+          <div class="question-badge">Question ${i + 1} of ${questions.length}</div>
+          <div class="question-text">${q.text}</div>
+          <div class="score-display">
+            <span class="score-label">Score</span>
+            <span class="score-value" style="color: ${q.percentage === 100 ? '#22C55E' : q.percentage > 0 ? '#F59E0B' : '#EF4444'}">${q.score}/${q.maxScore} (${q.percentage}%)</span>
+          </div>
+          <div class="answer-section">
+            <div class="answer-label">Your Answer</div>
+            <div class="answer-box your-answer">${q.yourAnswer}</div>
+          </div>
+          <div class="answer-section">
+            <div class="answer-label">Correct Answer</div>
+            <div class="answer-box correct-answer">${q.correctAnswer}</div>
+          </div>
+          <div class="feedback-box ${q.percentage === 100 ? 'correct' : 'incorrect'}">
+            ${q.feedback}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateDisplay() {
+      // Update dots
+      document.querySelectorAll('.dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentIndex);
+      });
+
+      // Update cards
+      document.querySelectorAll('.question-card').forEach((card, i) => {
+        card.classList.toggle('active', i === currentIndex);
+      });
+
+      // Update counter
+      document.getElementById('currentNum').textContent = currentIndex + 1;
+      document.getElementById('totalNum').textContent = questions.length;
+
+      // Update buttons
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const backBtn = document.getElementById('backBtn');
+
+      prevBtn.disabled = currentIndex === 0;
+
+      if (currentIndex === questions.length - 1) {
+        nextBtn.style.display = 'none';
+        backBtn.style.display = 'block';
+      } else {
+        nextBtn.style.display = 'block';
+        backBtn.style.display = 'none';
+      }
+    }
+
+    function nextQuestion() {
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        updateDisplay();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateDisplay();
+      }
+    }
+
+    function goToQuestion(index) {
+      currentIndex = index;
+      updateDisplay();
+    }
+
+    init();
+  </script>
+</body>
+</html>

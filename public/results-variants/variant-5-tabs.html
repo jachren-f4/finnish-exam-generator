@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results Variant 5: Tab-Based</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #F5F5F5;
+      min-height: 100vh;
+    }
+
+    .header {
+      padding: 16px;
+      background: white;
+      border-bottom: 1px solid #E5E5E5;
+    }
+
+    .header-content {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+      min-height: 48px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    /* Tabs */
+    .tabs-container {
+      background: white;
+      border-bottom: 1px solid #E5E5E5;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .tabs {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      overflow-x: auto;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 16px 12px;
+      border: none;
+      background: transparent;
+      color: #737373;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+      white-space: nowrap;
+      min-width: 120px;
+    }
+
+    .tab.active {
+      color: #1a1a1a;
+      border-bottom-color: #1a1a1a;
+    }
+
+    .tab-badge {
+      display: inline-block;
+      background: #F5F5F5;
+      color: #737373;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    .tab.active .tab-badge {
+      background: #1a1a1a;
+      color: white;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Overview Tab */
+    .overview-summary {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 24px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .emoji-large {
+      font-size: 64px;
+      margin-bottom: 12px;
+    }
+
+    .grade-large {
+      font-size: 72px;
+      font-weight: 700;
+      color: #22C55E;
+      margin-bottom: 8px;
+    }
+
+    .grade-text {
+      font-size: 16px;
+      color: #737373;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-box {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stat-value.correct { color: #22C55E; }
+    .stat-value.partial { color: #F59E0B; }
+    .stat-value.incorrect { color: #EF4444; }
+    .stat-value.total { color: #1a1a1a; }
+
+    .stat-icon {
+      font-size: 12px;
+      color: #737373;
+    }
+
+    /* Question Cards */
+    .question-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+
+    .question-number {
+      font-size: 14px;
+      font-weight: 700;
+      color: #737373;
+    }
+
+    .question-score-badge {
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .question-score-badge.correct { background: #22C55E; }
+    .question-score-badge.partial { background: #F59E0B; }
+    .question-score-badge.incorrect { background: #EF4444; }
+
+    .question-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .answer-col {
+      flex: 1;
+    }
+
+    .answer-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #737373;
+      margin-bottom: 4px;
+    }
+
+    .answer-text {
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #1a1a1a;
+    }
+
+    .answer-text.your { background: #EBF5FF; }
+    .answer-text.correct { background: #E8F5E9; }
+
+    .feedback {
+      padding: 12px;
+      border-radius: 6px;
+      border-left: 4px solid;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .feedback.success {
+      background: #E8F5E9;
+      border-color: #22C55E;
+    }
+
+    .feedback.warning {
+      background: #FFF9C4;
+      border-color: #F59E0B;
+    }
+
+    .feedback.error {
+      background: #FFEBEE;
+      border-color: #EF4444;
+    }
+
+    /* Empty State */
+    .empty-state {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 48px 24px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .empty-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+
+    .empty-text {
+      font-size: 14px;
+      color: #737373;
+    }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .action-btn {
+      width: 100%;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      min-height: 48px;
+      cursor: pointer;
+    }
+
+    .action-btn.primary {
+      background: #1a1a1a;
+      color: white;
+      border: none;
+    }
+
+    .action-btn.secondary {
+      background: white;
+      color: #1a1a1a;
+      border: 2px solid #D4D4D4;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <button class="back-btn" onclick="window.location.href='https://exam-generator-staging.vercel.app/exam/40aca3a0-eb9a-4ce3-a4d9-eccc0eb609df'">←</button>
+      <h1>Exam Results</h1>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('overview')">
+        Overview
+      </button>
+      <button class="tab" onclick="switchTab('correct')">
+        Correct <span class="tab-badge">12</span>
+      </button>
+      <button class="tab" onclick="switchTab('partial')">
+        Partial <span class="tab-badge">2</span>
+      </button>
+      <button class="tab" onclick="switchTab('incorrect')">
+        Wrong <span class="tab-badge">1</span>
+      </button>
+      <button class="tab" onclick="switchTab('all')">
+        All <span class="tab-badge">15</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Overview Tab -->
+    <div class="tab-content active" id="overview">
+      <div class="overview-summary">
+        <div class="emoji-large">🎉</div>
+        <div class="grade-large">9</div>
+        <div class="grade-text">13.5 / 15 points (90%)</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value correct">12</div>
+          <div class="stat-icon">✓</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value partial">2</div>
+          <div class="stat-icon">~</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value incorrect">1</div>
+          <div class="stat-icon">✗</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value total">15</div>
+          <div class="stat-icon">Total</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="action-btn primary" onclick="window.location.href='https://exam-generator-staging.vercel.app/exam/40aca3a0-eb9a-4ce3-a4d9-eccc0eb609df'">← Back to Menu</button>
+        <button class="action-btn secondary" onclick="window.print()">🖨️ Print Results</button>
+      </div>
+    </div>
+
+    <!-- Correct Tab -->
+    <div class="tab-content" id="correct"></div>
+
+    <!-- Partial Tab -->
+    <div class="tab-content" id="partial"></div>
+
+    <!-- Incorrect Tab -->
+    <div class="tab-content" id="incorrect"></div>
+
+    <!-- All Tab -->
+    <div class="tab-content" id="all"></div>
+  </div>
+
+  <script>
+    const questions = [
+      { id: 1, text: "What is the capital of France?", yourAnswer: "Paris", correctAnswer: "Paris", score: 1, maxScore: 1, feedback: "Correct! Paris is the capital and largest city of France.", percentage: 100 },
+      { id: 2, text: "Calculate: 15 + 27", yourAnswer: "42", correctAnswer: "42", score: 1, maxScore: 1, feedback: "Perfect!", percentage: 100 },
+      { id: 3, text: "What year did World War II end?", yourAnswer: "1945", correctAnswer: "1945", score: 1, maxScore: 1, feedback: "Correct!", percentage: 100 },
+      { id: 4, text: "What is photosynthesis?", yourAnswer: "Process where plants make food", correctAnswer: "The process by which green plants use sunlight to synthesize nutrients", score: 0.5, maxScore: 1, feedback: "Partially correct. Your answer captures the basic idea but lacks detail.", percentage: 50 },
+      { id: 5, text: "Name three primary colors", yourAnswer: "Red, Blue, Yellow", correctAnswer: "Red, Blue, Yellow", score: 1, maxScore: 1, feedback: "Excellent!", percentage: 100 },
+    ];
+
+    function getStatus(q) {
+      return q.percentage === 100 ? 'correct' : q.percentage > 0 ? 'partial' : 'incorrect';
+    }
+
+    function renderQuestions(filter) {
+      const filtered = filter === 'all' ? questions : questions.filter(q => getStatus(q) === filter);
+
+      if (filtered.length === 0) {
+        return `
+          <div class="empty-state">
+            <div class="empty-icon">🎯</div>
+            <div class="empty-title">No ${filter} answers</div>
+            <div class="empty-text">You don't have any ${filter} answers in this exam.</div>
+          </div>
+        `;
+      }
+
+      return filtered.map((q, i) => {
+        const status = getStatus(q);
+        const feedbackClass = status === 'correct' ? 'success' : status === 'partial' ? 'warning' : 'error';
+        return `
+          <div class="question-card">
+            <div class="question-header">
+              <span class="question-number">Question ${questions.indexOf(q) + 1}</span>
+              <span class="question-score-badge ${status}">${q.score}/${q.maxScore}</span>
+            </div>
+            <div class="question-text">${q.text}</div>
+            <div class="answer-row">
+              <div class="answer-col">
+                <div class="answer-label">Your Answer</div>
+                <div class="answer-text your">${q.yourAnswer}</div>
+              </div>
+              <div class="answer-col">
+                <div class="answer-label">Correct Answer</div>
+                <div class="answer-text correct">${q.correctAnswer}</div>
+              </div>
+            </div>
+            <div class="feedback ${feedbackClass}">
+              ${q.feedback}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function switchTab(tab) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // Update content
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      const content = document.getElementById(tab);
+      content.classList.add('active');
+
+      // Render questions for this tab
+      if (tab !== 'overview') {
+        content.innerHTML = renderQuestions(tab);
+      }
+    }
+
+    // Initialize question tabs
+    ['correct', 'partial', 'incorrect', 'all'].forEach(filter => {
+      document.getElementById(filter).innerHTML = renderQuestions(filter);
+    });
+  </script>
+</body>
+</html>
