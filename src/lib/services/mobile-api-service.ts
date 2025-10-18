@@ -281,6 +281,10 @@ export class MobileApiService {
       if (customPrompt && customPrompt.trim() !== '') {
         promptToUse = customPrompt
         promptType = 'CUSTOM'
+      } else if (subject && /historia|history|geschichte/i.test(subject)) {
+        // Use specialized prompt for history subjects (any language)
+        promptToUse = PROMPTS.getHistoryPrompt(grade, language)
+        promptType = `HISTORY(subject-${subject}, grade-${grade || 'auto'})`
       } else if (category) {
         // Use specialized prompt for language studies, category prompt with summary for others
         if (category === 'language_studies') {

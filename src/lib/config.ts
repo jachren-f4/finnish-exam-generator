@@ -126,6 +126,7 @@ export const RATE_LIMIT_CONFIG = {
 
 /**
  * Prompt Routing Logic:
+ * - subject: contains 'historia|history|geschichte' → getHistoryPrompt() (content-focused, factual verification)
  * - category: 'mathematics' → getMathPrompt() (LaTeX support, specialized validation)
  * - category: 'language_studies' → getLanguageStudiesPrompt() (auto-detect languages)
  * - category: 'core_academics' OR default → getCategoryAwarePrompt() (with summary for TTS)
@@ -530,6 +531,142 @@ IF ANY VALIDATION FAILS:
 - DO NOT try to "fix" by choosing wrong answer
 
 Begin generating the pedagogically sound exam now.`
+  },
+
+  getHistoryPrompt: (grade?: number, language: string = 'en'): string => {
+    return `Create a history exam for grade ${grade || 'appropriate'} students based on educational material.
+
+🎯 PRIMARY OBJECTIVE: Test understanding of the SPECIFIC historical content shown in the material.
+
+⚠️ CRITICAL LANGUAGE REQUIREMENT:
+- Use the SAME language as the source material
+- Auto-detect the language from the textbook images
+- ALL questions, options, explanations, and summary MUST be in the detected language
+- Do NOT default to English if material is in another language (Finnish, Swedish, German, etc.)
+
+CRITICAL RULES:
+1. ✅ Questions MUST focus on the MAIN TOPICS and EVENTS described in the material
+2. ✅ Questions MUST test comprehension of the SPECIFIC narrative/story presented
+3. ✅ Questions MUST be factually accurate (verify dates, names, events)
+4. ❌ AVOID generic vocabulary/definition questions unless the term is central to understanding the topic
+5. ❌ NEVER include facts not present in the source material
+6. ❌ NEVER make assumptions about content not shown
+
+CONTENT ANALYSIS FIRST:
+Before generating questions, analyze the material:
+- What is the main historical event/period/concept?
+- What is the central narrative or story?
+- Who are the main people/groups involved?
+- What happened (chronological events)?
+- When did it happen (dates/periods)?
+- Why did it happen (causes)?
+- What were the results/consequences?
+
+QUESTION PRIORITY (focus on these in order):
+1. **Main Events** (40%): What happened? Chronology, key turning points
+2. **Causes & Consequences** (30%): Why did it happen? What resulted?
+3. **Key Figures & Groups** (20%): Who was involved? What roles did they play?
+4. **Context & Terms** (10%): Supporting vocabulary ONLY if central to understanding
+
+FORBIDDEN QUESTION TYPES:
+❌ Generic definitions not tied to the specific topic (e.g., "What is democracy?")
+❌ Questions about concepts mentioned only briefly
+❌ Historical facts NOT present in the material
+❌ "Which of these is true?" questions without clear focus
+❌ Questions requiring outside knowledge beyond the material
+❌ References to visual elements (images, graphs, diagrams, page numbers)
+
+GOOD QUESTION EXAMPLES:
+✅ "What were the main causes of [the event] according to the material?"
+✅ "Which groups/people were involved in [the event]?"
+✅ "When did [the event] take place?"
+✅ "What was the outcome of [the event]?"
+✅ "Why did [cause] lead to [consequence]?"
+✅ "How did [person/group] contribute to [event]?"
+
+BAD QUESTION EXAMPLES:
+❌ "What does 'democracy' mean?" (too generic unless central to the narrative)
+❌ "What is a political system?" (generic definition)
+❌ "What is international cooperation?" (not about the main topic)
+❌ "What is the capital of [country]?" (random fact, not from material)
+
+FACTUAL ACCURACY REQUIREMENTS:
+Before finalizing EACH question:
+□ Verify dates are correct
+□ Verify names are spelled correctly
+□ Verify cause-effect relationships are accurate
+□ Verify the fact appears in the source material
+□ If uncertain about ANY fact, SKIP that question
+□ If material doesn't clearly state something, DON'T ask about it
+
+CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
+
+Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions following this JSON format:
+
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "[Question about SPECIFIC content - in SAME language as source material]",
+      "options": [
+        "[Option A in source language]",
+        "[Option B in source language]",
+        "[Option C in source language]",
+        "[Option D in source language]"
+      ],
+      "correct_answer": "[Exact match from options - in source language]",
+      "explanation": "[1-2 sentence explanation in SAME language as source material]"
+    }
+  ],
+  "summary": {
+    "introduction": "[100-250 word introduction to the SPECIFIC topic in the SAME language as source material]",
+    "key_concepts": "[250-500 word explanation focusing on the MAIN NARRATIVE in the SAME language]",
+    "examples_and_applications": "[200-400 word section on understanding this historical topic in the SAME language]",
+    "summary_conclusion": "[100-250 word conclusion in the SAME language]",
+    "total_word_count": [approximate word count],
+    "language": "[ISO 639-1 code - e.g., 'fi' for Finnish, 'en' for English, 'sv' for Swedish]"
+  }
+}
+
+SUMMARY REQUIREMENTS:
+- Write in the SAME language as the source material
+- Target audience: Grade ${grade || 'appropriate'} students
+- Total length: ~1000 words
+- Structure: 4 sections as specified in the JSON format
+- Educational tone: clear, pedagogical, age-appropriate
+- Focus on the SPECIFIC historical topic from the material (not generic history concepts)
+- Use proper formatting: **bold** for key terms, numbered lists where appropriate
+
+CRITICAL - LANGUAGE DETECTION:
+1. Examine the textbook images carefully
+2. Identify the source language (Finnish, Swedish, English, German, etc.)
+3. Generate ALL content in that detected language
+4. Common patterns to help detect:
+   - Finnish: "Suomen sisällissota", "vuonna", "punaisten", "valkoisten"
+   - Swedish: "finska inbördeskriget", "år", "röda", "vita"
+   - English: "civil war", "year", "reds", "whites"
+   - German: "Bürgerkrieg", "Jahr", "Roten", "Weißen"
+
+QUALITY CHECKLIST (verify before finalizing):
+□ At least 60% of questions focus on main events, causes, or key figures
+□ Generic definition questions are < 20% of total
+□ All facts are present in the source material
+□ All dates, names, events verified for accuracy
+□ Questions follow logical progression through the topic
+□ No references to images, pages, or visual elements
+□ Summary focuses on the specific topic (not generic history concepts)
+□ ALL questions are in the SAME language as the source material
+□ ALL options are in the SAME language as the source material
+□ ALL explanations are in the SAME language as the source material
+□ Summary sections are in the SAME language as the source material
+
+IMPORTANT:
+- The correct_answer field must contain the exact text from the options array
+- The summary must be in the SAME language as the questions and source material
+- Do not reference visual elements in the summary either
+
+Begin analysis and question generation now.`
   }
 } as const
 

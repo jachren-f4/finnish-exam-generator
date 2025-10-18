@@ -42,10 +42,13 @@ This file provides guidance to Claude Code when working with code in this reposi
 ## Critical Knowledge - Common Pitfalls
 
 ### Parameter Usage (Important!)
-- **`subject` parameter**: Accepts any string (any language), **ONLY stored in DB** - NOT validated, NOT used in prompts or routing
+- **`subject` parameter**: Accepts any string (any language)
+  - **Routing**: If contains "historia", "history", or "geschichte" → getHistoryPrompt() (content-focused history prompt)
+  - **Storage**: Always stored in DB regardless of routing
 - **`language` parameter**: Accepted by API but **NOT used in prompts** (Gemini auto-detects from images)
-- **`category` parameter**: THIS is what routes to correct prompt service
+- **`category` parameter**: Routes to correct prompt service
   - `"mathematics"` → math-exam-service.ts (LaTeX, 3-level validation)
+  - `"language_studies"` → getLanguageStudiesPrompt()
   - Everything else → standard prompt via getCategoryAwarePrompt()
 
 ### Mathematics Special Handling
@@ -55,6 +58,15 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ✅ LaTeX notation: `$x^2$` (inline), `$$...$$` (block)
 - ✅ Math audio summaries use spoken notation (e.g., "x squared" not "$x^2$")
 - ❌ KaTeX scripts MUST be in `/src/app/layout.tsx` with `strategy="beforeInteractive"`
+
+### History Special Handling
+- ✅ `subject` contains "historia", "history", or "geschichte" → routes to getHistoryPrompt()
+- ✅ Focuses on MAIN TOPICS from material (60%+ requirement)
+- ✅ Avoids generic definitions (democracy, political system, etc.) unless central to topic
+- ✅ Validates factual accuracy (dates, names, events must be in material)
+- ✅ Auto-detects language from source material (Finnish, Swedish, English, German, etc.)
+- ✅ Returns same JSON structure as standard prompt (questions + summary)
+- ❌ No visual references allowed in questions
 
 ### Math Audio Summaries
 **Files:** `config.ts:getMathPrompt()`, `math-exam-service.ts`, `mobile-api-service.ts:generateMathAudioSummaryAsync()`
@@ -116,7 +128,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 ## File Locations - Quick Reference
 
 ### Key Configuration
-- **Prompts**: `/src/lib/config.ts` (getCategoryAwarePrompt function)
+- **Prompts**: `/src/lib/config.ts` (getCategoryAwarePrompt, getMathPrompt, getHistoryPrompt, getLanguageStudiesPrompt)
 - **Math Service**: `/src/lib/services/math-exam-service.ts`
 - **Design Tokens**: `/src/constants/design-tokens.ts`
 - **Question Shuffler**: `/src/lib/utils/question-shuffler.ts`
@@ -217,6 +229,21 @@ curl -X POST https://exam-generator-staging.vercel.app/api/mobile/exam-questions
 curl -X POST http://localhost:3001/api/mobile/exam-questions \
   -F "images=@assets/images/math-test.jpg" \
   -F "category=mathematics" \
+  -F "grade=5"
+```
+
+### Test with History
+```bash
+# Finnish history material
+curl -X POST http://localhost:3001/api/mobile/exam-questions \
+  -F "images=@assets/images/history-test.jpg" \
+  -F "subject=Historia" \
+  -F "grade=5"
+
+# English history material
+curl -X POST http://localhost:3001/api/mobile/exam-questions \
+  -F "images=@assets/images/history-test.jpg" \
+  -F "subject=History" \
   -F "grade=5"
 ```
 
