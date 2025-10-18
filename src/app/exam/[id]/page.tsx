@@ -21,6 +21,9 @@ export default function ExamMenuPage() {
   const router = useRouter()
   const examId = params?.id as string
 
+  // Layout mode toggle - change this to 'grid' or 'classic'
+  const LAYOUT_MODE = 'classic' as 'grid' | 'classic'
+
   const [exam, setExam] = useState<ExamMenuState | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -297,13 +300,15 @@ export default function ExamMenuPage() {
           </p>
         </div>
 
-        {/* 3x2 Ultra-Compact Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          gap: '8px',
-        }}>
-          {/* Audio Summary Card */}
+        {/* Conditional Layout Rendering */}
+        {LAYOUT_MODE === 'grid' ? (
+          /* 3x2 Ultra-Compact Grid */
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gap: '8px',
+          }}>
+            {/* Audio Summary Card */}
           <div
             onClick={hasAudio ? handleListenAudio : undefined}
             style={{
@@ -657,7 +662,419 @@ export default function ExamMenuPage() {
               Soon
             </div>
           </div>
-        </div>
+          </div>
+        ) : (
+          /* Classic Vertical Layout */
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: SPACING.md,
+          }}>
+            {/* Audio Summary Card */}
+            {hasAudio && (
+              <div
+                onClick={handleListenAudio}
+                style={{
+                  background: COLORS.background.primary,
+                  borderRadius: RADIUS.lg,
+                  padding: SPACING.lg,
+                  boxShadow: SHADOWS.card,
+                  cursor: 'pointer',
+                  transition: TRANSITIONS.normal,
+                  border: `1px solid ${COLORS.border.light}`,
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: SPACING.md,
+                  marginBottom: SPACING.md,
+                }}>
+                  <div style={{ fontSize: '48px' }}>🎧</div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontSize: TYPOGRAPHY.fontSize.lg,
+                      fontWeight: TYPOGRAPHY.fontWeight.bold,
+                      color: COLORS.primary.text,
+                      margin: 0,
+                      marginBottom: SPACING.xs,
+                    }}>
+                      Audio Summary
+                    </h3>
+                    <p style={{
+                      fontSize: TYPOGRAPHY.fontSize.sm,
+                      color: COLORS.primary.medium,
+                      margin: 0,
+                      lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+                    }}>
+                      Listen to an overview of the material before taking the exam
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleListenAudio}
+                  style={{
+                    width: '100%',
+                    background: COLORS.background.primary,
+                    color: COLORS.primary.text,
+                    padding: BUTTONS.primary.padding,
+                    borderRadius: BUTTONS.primary.radius,
+                    border: `2px solid ${COLORS.border.medium}`,
+                    fontSize: TYPOGRAPHY.fontSize.base,
+                    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                    minHeight: TOUCH_TARGETS.comfortable,
+                    cursor: 'pointer',
+                    transition: TRANSITIONS.normal,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: SPACING.sm,
+                  }}
+                >
+                  Listen Now
+                  {rewardStatus.audioEligible && (
+                    <span style={{
+                      background: '#fef3c7',
+                      color: '#92400e',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      fontSize: TYPOGRAPHY.fontSize.xs,
+                      fontWeight: TYPOGRAPHY.fontWeight.bold,
+                    }}>
+                      +{GENIE_DOLLAR_REWARDS.AUDIO}
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Exam Card */}
+            <div
+              onClick={handleStartExam}
+              style={{
+                background: COLORS.background.primary,
+                borderRadius: RADIUS.lg,
+                padding: SPACING.lg,
+                boxShadow: SHADOWS.card,
+                cursor: 'pointer',
+                transition: TRANSITIONS.normal,
+                border: `1px solid ${COLORS.border.light}`,
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: SPACING.md,
+                marginBottom: SPACING.md,
+              }}>
+                <div style={{ fontSize: '48px' }}>📝</div>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{
+                    fontSize: TYPOGRAPHY.fontSize.lg,
+                    fontWeight: TYPOGRAPHY.fontWeight.bold,
+                    color: COLORS.primary.text,
+                    margin: 0,
+                    marginBottom: SPACING.xs,
+                  }}>
+                    Exam
+                  </h3>
+                  <p style={{
+                    fontSize: TYPOGRAPHY.fontSize.sm,
+                    color: COLORS.primary.medium,
+                    margin: 0,
+                    lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+                  }}>
+                    {exam.total_questions} questions
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleStartExam}
+                style={{
+                  width: '100%',
+                  background: COLORS.primary.dark,
+                  color: COLORS.background.primary,
+                  padding: BUTTONS.primary.padding,
+                  borderRadius: BUTTONS.primary.radius,
+                  border: 'none',
+                  fontSize: TYPOGRAPHY.fontSize.base,
+                  fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                  minHeight: TOUCH_TARGETS.comfortable,
+                  cursor: 'pointer',
+                  transition: TRANSITIONS.normal,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: SPACING.sm,
+                }}
+              >
+                Start Exam
+                {rewardStatus.examEligible && (
+                  <span style={{
+                    background: 'rgba(254, 243, 199, 0.3)',
+                    color: '#fef3c7',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    fontSize: TYPOGRAPHY.fontSize.xs,
+                    fontWeight: TYPOGRAPHY.fontWeight.bold,
+                  }}>
+                    +{GENIE_DOLLAR_REWARDS.EXAM}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Results Card */}
+            <div
+              onClick={isCompleted ? handleViewResults : undefined}
+              style={{
+                background: COLORS.background.primary,
+                borderRadius: RADIUS.lg,
+                padding: SPACING.lg,
+                boxShadow: SHADOWS.card,
+                cursor: isCompleted ? 'pointer' : 'default',
+                opacity: isCompleted ? 1 : 0.6,
+                transition: TRANSITIONS.normal,
+                border: `1px solid ${COLORS.border.light}`,
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: SPACING.md,
+                marginBottom: SPACING.md,
+              }}>
+                <div style={{ fontSize: '48px' }}>📊</div>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{
+                    fontSize: TYPOGRAPHY.fontSize.lg,
+                    fontWeight: TYPOGRAPHY.fontWeight.bold,
+                    color: COLORS.primary.text,
+                    margin: 0,
+                    marginBottom: SPACING.xs,
+                  }}>
+                    Results
+                  </h3>
+                  <p style={{
+                    fontSize: TYPOGRAPHY.fontSize.sm,
+                    color: COLORS.primary.medium,
+                    margin: 0,
+                    lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+                  }}>
+                    {isCompleted ? 'View your exam results and feedback' : 'Complete the exam to see results'}
+                  </p>
+                </div>
+              </div>
+              {isCompleted && (
+                <button
+                  onClick={handleViewResults}
+                  style={{
+                    width: '100%',
+                    background: COLORS.background.primary,
+                    color: COLORS.primary.text,
+                    padding: BUTTONS.primary.padding,
+                    borderRadius: BUTTONS.primary.radius,
+                    border: `2px solid ${COLORS.border.medium}`,
+                    fontSize: TYPOGRAPHY.fontSize.base,
+                    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                    minHeight: TOUCH_TARGETS.comfortable,
+                    cursor: 'pointer',
+                    transition: TRANSITIONS.normal,
+                  }}
+                >
+                  View Results
+                </button>
+              )}
+            </div>
+
+            {/* Retake Full Exam Card */}
+            <div
+              onClick={isCompleted ? () => router.push(`/exam/${examId}/take?mode=retake`) : undefined}
+              style={{
+                background: COLORS.background.primary,
+                borderRadius: RADIUS.lg,
+                padding: SPACING.lg,
+                boxShadow: SHADOWS.card,
+                cursor: isCompleted ? 'pointer' : 'default',
+                opacity: isCompleted ? 1 : 0.6,
+                transition: TRANSITIONS.normal,
+                border: `1px solid ${COLORS.border.light}`,
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: SPACING.md,
+                marginBottom: SPACING.md,
+              }}>
+                <div style={{ fontSize: '48px' }}>🔄</div>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{
+                    fontSize: TYPOGRAPHY.fontSize.lg,
+                    fontWeight: TYPOGRAPHY.fontWeight.bold,
+                    color: COLORS.primary.text,
+                    margin: 0,
+                    marginBottom: SPACING.xs,
+                  }}>
+                    Retake Full Exam
+                  </h3>
+                  <p style={{
+                    fontSize: TYPOGRAPHY.fontSize.sm,
+                    color: COLORS.primary.medium,
+                    margin: 0,
+                    lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+                  }}>
+                    {isCompleted ? 'Practice again with all questions' : 'Complete the exam first to unlock retakes'}
+                  </p>
+                </div>
+              </div>
+              {isCompleted && (
+                <button
+                  onClick={() => router.push(`/exam/${examId}/take?mode=retake`)}
+                  style={{
+                    width: '100%',
+                    background: COLORS.background.primary,
+                    color: COLORS.primary.text,
+                    padding: BUTTONS.primary.padding,
+                    borderRadius: BUTTONS.primary.radius,
+                    border: `2px solid ${COLORS.border.medium}`,
+                    fontSize: TYPOGRAPHY.fontSize.base,
+                    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                    minHeight: TOUCH_TARGETS.comfortable,
+                    cursor: 'pointer',
+                    transition: TRANSITIONS.normal,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: SPACING.sm,
+                  }}
+                >
+                  Start Retake
+                  {rewardStatus.retakeEligible && (
+                    <span style={{
+                      background: '#fb923c',
+                      color: '#ffffff',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      fontSize: TYPOGRAPHY.fontSize.xs,
+                      fontWeight: TYPOGRAPHY.fontWeight.bold,
+                    }}>
+                      +{GENIE_DOLLAR_REWARDS.EXAM_RETAKE}
+                    </span>
+                  )}
+                </button>
+              )}
+            </div>
+
+            {/* Practice Mistakes Card */}
+            <div
+              onClick={isCompleted && wrongQuestionCount > 0 ? () => router.push(`/exam/${examId}/take?mode=wrong-only`) : undefined}
+              style={{
+                background: COLORS.background.primary,
+                borderRadius: RADIUS.lg,
+                padding: SPACING.lg,
+                boxShadow: SHADOWS.card,
+                cursor: isCompleted && wrongQuestionCount > 0 ? 'pointer' : 'default',
+                opacity: isCompleted && wrongQuestionCount > 0 ? 1 : 0.6,
+                transition: TRANSITIONS.normal,
+                border: `1px solid ${COLORS.border.light}`,
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: SPACING.md,
+                marginBottom: SPACING.md,
+              }}>
+                <div style={{ fontSize: '48px' }}>🎯</div>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{
+                    fontSize: TYPOGRAPHY.fontSize.lg,
+                    fontWeight: TYPOGRAPHY.fontWeight.bold,
+                    color: COLORS.primary.text,
+                    margin: 0,
+                    marginBottom: SPACING.xs,
+                  }}>
+                    Practice Mistakes
+                  </h3>
+                  <p style={{
+                    fontSize: TYPOGRAPHY.fontSize.sm,
+                    color: COLORS.primary.medium,
+                    margin: 0,
+                    lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+                  }}>
+                    {isCompleted && wrongQuestionCount > 0
+                      ? `Review ${wrongQuestionCount} question${wrongQuestionCount > 1 ? 's' : ''} you got wrong`
+                      : isCompleted && wrongQuestionCount === 0
+                      ? 'Perfect score! No mistakes to practice'
+                      : 'Complete the exam to see your mistakes'}
+                  </p>
+                </div>
+              </div>
+              {isCompleted && wrongQuestionCount > 0 && (
+                <button
+                  onClick={() => router.push(`/exam/${examId}/take?mode=wrong-only`)}
+                  style={{
+                    width: '100%',
+                    background: COLORS.background.primary,
+                    color: COLORS.primary.text,
+                    padding: BUTTONS.primary.padding,
+                    borderRadius: BUTTONS.primary.radius,
+                    border: `2px solid ${COLORS.border.medium}`,
+                    fontSize: TYPOGRAPHY.fontSize.base,
+                    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                    minHeight: TOUCH_TARGETS.comfortable,
+                    cursor: 'pointer',
+                    transition: TRANSITIONS.normal,
+                  }}
+                >
+                  Practice Now
+                </button>
+              )}
+            </div>
+
+            {/* Leaderboard Card */}
+            <div
+              style={{
+                background: COLORS.background.primary,
+                borderRadius: RADIUS.lg,
+                padding: SPACING.lg,
+                boxShadow: SHADOWS.card,
+                cursor: 'default',
+                opacity: 0.6,
+                transition: TRANSITIONS.normal,
+                border: `1px solid ${COLORS.border.light}`,
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: SPACING.md,
+              }}>
+                <div style={{ fontSize: '48px' }}>🏆</div>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{
+                    fontSize: TYPOGRAPHY.fontSize.lg,
+                    fontWeight: TYPOGRAPHY.fontWeight.bold,
+                    color: COLORS.primary.text,
+                    margin: 0,
+                    marginBottom: SPACING.xs,
+                  }}>
+                    Leaderboard
+                  </h3>
+                  <p style={{
+                    fontSize: TYPOGRAPHY.fontSize.sm,
+                    color: COLORS.primary.medium,
+                    margin: 0,
+                    lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+                  }}>
+                    Coming soon - compete with other students
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
