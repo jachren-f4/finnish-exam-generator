@@ -573,6 +573,13 @@ QUESTION DISTRIBUTION:
 3. **Key People & Groups** (20%): Who was involved? What did they do?
 4. **Important Terms** (10%): Only terms central to understanding the topic
 
+⚠️ CRITICAL - ENFORCE QUESTION DISTRIBUTION:
+Before finalizing your exam, COUNT each question type:
+□ You MUST have at least 6 questions about main events, causes, or key people
+□ You MUST NOT have more than 2-3 terminology questions (13-20% maximum)
+□ If you have too many "What does X mean?" questions, REPLACE them with event/cause questions
+□ Prioritize WHAT HAPPENED over definitions
+
 NATURAL QUESTION STYLE - Write questions directly:
 ✅ Ask "Who was involved?" not "Who was involved according to the text?"
 ✅ Ask "When did [event] happen?" not "When did [event] happen according to the material?"
