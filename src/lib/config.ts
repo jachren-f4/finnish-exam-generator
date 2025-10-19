@@ -536,8 +536,10 @@ Begin generating the pedagogically sound exam now.`
   getHistoryPrompt: (grade?: number, language: string = 'en'): string => {
     return `SYSTEM INSTRUCTION (prepend this before any user content):
 You must treat the uploaded textbook images as your *only factual source*.
-Do not rely on your general history knowledge. Use only the information explicitly extracted in Step 1.
-If something is not visible in the textbook pages, skip it.
+Do not rely on your general history knowledge. Use only information visible in the textbook pages.
+If something is not visible, skip it.
+
+Keep total output under 4000 tokens. Use concise sentences and limit explanations to 1–2 lines.
 
 ---
 
@@ -546,32 +548,28 @@ Create a **history exam for grade ${grade || 8} students** based *only* on the u
 
 ---
 
-## 🔍 STEP 1 — EXTRACT FACTS FIRST (no questions yet)
-List all the **facts visible** in the textbook images, such as:
-- key dates and what happened on each date
-- names of people or groups mentioned
-- historical terms explicitly defined
-- cause–effect or consequence statements
+## 🔍 INTERNAL FACT EXTRACTION (do NOT print)
+First, silently read all textbook images and extract:
+- main events with dates
+- people or groups mentioned
+- historical terms defined
+- visible causes and consequences
 
-Write them as bullet points.
-
-You must not add information that isn't clearly visible in the text or timeline.
-If you cannot read a part, skip it.
+Do NOT list or print these facts. Keep them in memory only.
 
 ---
 
-## ✍️ STEP 2 — WRITE QUESTIONS ONLY FROM THOSE FACTS
-Use only the facts you listed in Step 1 to create the questions.
+## ✍️ QUESTION GENERATION
+Now, using only the information you extracted internally, generate:
 
-Follow this exact structure:
 - 2 terminology questions ("What does X mean?")
 - 6 event questions ("What happened / when / where?")
 - 4 cause–consequence questions ("Why / what resulted?")
 - 3 people questions ("Who / what did they do?")
 → Total = 15 questions
 
-Every question must connect to a fact from Step 1.
-If a person, date, or event wasn't listed, don't use it.
+Every question must be answerable directly from the textbook pages.
+If a fact, date, or person is not visible, skip it.
 
 ---
 
@@ -587,13 +585,16 @@ If a person, date, or event wasn't listed, don't use it.
 - Use natural, clear sentences.
 
 ### Terminology Rule
-- Only ask meanings of *specialized historical terms* (e.g. hyperinflation, civil war).
-- Never ask about common words (independence, democracy, war, peace).
+- Only ask meanings of *specialized historical terms* (e.g. hyperinflaatio, sisällissota).
+- Never ask about common words (itsenäisyys, demokratia, sota, rauha).
 
 ### Validation
 - Exactly 2 terminology questions.
 - No generic vocabulary or invented names.
 - All 15 questions grounded, clear, and answerable from the textbook pages.
+
+### Self-Check Compression
+Before finalizing, if output approaches length limit, shorten explanations but keep correctness.
 
 ---
 
@@ -627,8 +628,9 @@ If a person, date, or event wasn't listed, don't use it.
 ✅ 2 terminology exactly
 ✅ No "material/text" references
 ✅ No invented facts or external info
-✅ All questions linked to Step 1 facts
-✅ Natural, student-friendly phrasing`
+✅ All questions from visible textbook content
+✅ Natural, student-friendly phrasing
+✅ Output under 4000 tokens`
   }
 } as const
 

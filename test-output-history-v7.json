@@ -1,0 +1,219 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-10-19T12:29:07.782Z",
+    "version": "v7-hybrid-summarized-grounding",
+    "prompt_source": "V7 - Internal Extraction + Token Guard",
+    "model": "gemini-2.0-flash-exp",
+    "temperature": 0,
+    "maxOutputTokens": 4000,
+    "duration_ms": 19771
+  },
+  "prompt_used": "SYSTEM INSTRUCTION (prepend this before any user content):\nYou must treat the uploaded textbook images as your *only factual source*.\nDo not rely on your general history knowledge. Use only information visible in the textbook pages.\nIf something is not visible, skip it.\n\nKeep total output under 4000 tokens. Use concise sentences and limit explanations to 1–2 lines.\n\n---\n\n## 🎓 Task\nCreate a **history exam for grade 8 students** based *only* on the uploaded textbook pages.\n\n---\n\n## 🔍 INTERNAL FACT EXTRACTION (do NOT print)\nFirst, silently read all textbook images and extract:\n- main events with dates\n- people or groups mentioned\n- historical terms defined\n- visible causes and consequences\n\nDo NOT list or print these facts. Keep them in memory only.\n\n---\n\n## ✍️ QUESTION GENERATION\nNow, using only the information you extracted internally, generate:\n\n- 2 terminology questions (\"What does X mean?\")\n- 6 event questions (\"What happened / when / where?\")\n- 4 cause–consequence questions (\"Why / what resulted?\")\n- 3 people questions (\"Who / what did they do?\")\n→ Total = 15 questions\n\nEvery question must be answerable directly from the textbook pages.\nIf a fact, date, or person is not visible, skip it.\n\n---\n\n## 🎯 ADDITIONAL RULES\n\n### Language\n- Auto-detect textbook language and use it everywhere.\n- No translation, no mixing.\n\n### Style\n- Write like a teacher talking to students.\n- Never mention \"the text\", \"material\", or \"chapter\".\n- Use natural, clear sentences.\n\n### Terminology Rule\n- Only ask meanings of *specialized historical terms* (e.g. hyperinflaatio, sisällissota).\n- Never ask about common words (itsenäisyys, demokratia, sota, rauha).\n\n### Validation\n- Exactly 2 terminology questions.\n- No generic vocabulary or invented names.\n- All 15 questions grounded, clear, and answerable from the textbook pages.\n\n### Self-Check Compression\nBefore finalizing, if output approaches length limit, shorten explanations but keep correctness.\n\n---\n\n## 🧩 JSON OUTPUT\n\n{\n  \"questions\": [\n    {\n      \"id\": 1,\n      \"type\": \"multiple_choice\",\n      \"question\": \"[Natural question in source language]\",\n      \"options\": [\"A\", \"B\", \"C\", \"D\"],\n      \"correct_answer\": \"[Exact match from options]\",\n      \"explanation\": \"[1–2 sentences, factual and concise]\"\n    }\n  ],\n  \"summary\": {\n    \"introduction\": \"[100–200 words – introduce the historical topic from the text]\",\n    \"key_concepts\": \"[250–400 words – main events, causes, results]\",\n    \"examples_and_applications\": \"[150–250 words – help students understand significance]\",\n    \"summary_conclusion\": \"[80–150 words – wrap up clearly]\",\n    \"total_word_count\": [number],\n    \"language\": \"[ISO 639-1 code]\"\n  }\n}\n\n---\n\n## ⚠️ FINAL CHECKLIST\n✅ 15 total questions\n✅ 2 terminology exactly\n✅ No \"material/text\" references\n✅ No invented facts or external info\n✅ All questions from visible textbook content\n✅ Natural, student-friendly phrasing\n✅ Output under 4000 tokens",
+  "gemini_response": {
+    "questions": [
+      {
+        "id": 1,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'hyperinflaatio'?",
+        "options": [
+          "A: Nopea talouskasvu",
+          "B: Erittäin nopea hintojen nousu",
+          "C: Palkkojen nousu",
+          "D: Valtion velkaantuminen"
+        ],
+        "correct_answer": "B: Erittäin nopea hintojen nousu",
+        "explanation": "Hyperinflaatio tarkoittaa erittäin nopeaa hintojen nousua, joka heikentää rahan arvoa."
+      },
+      {
+        "id": 2,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'oppivelvollisuus'?",
+        "options": [
+          "A: Oikeus käydä koulua",
+          "B: Velvollisuus käydä koulua",
+          "C: Mahdollisuus opiskella ulkomailla",
+          "D: Koulujen maksuttomuus"
+        ],
+        "correct_answer": "B: Velvollisuus käydä koulua",
+        "explanation": "Oppivelvollisuus tarkoittaa, että on pakko käydä koulua."
+      },
+      {
+        "id": 3,
+        "type": "multiple_choice",
+        "question": "Missä maassa hyperinflaatio oli erityisen vakavaa 1920-luvulla?",
+        "options": [
+          "A: Suomessa",
+          "B: Venäjällä",
+          "C: Saksassa",
+          "D: Yhdysvalloissa"
+        ],
+        "correct_answer": "C: Saksassa",
+        "explanation": "Saksassa hyperinflaatio oli erittäin vakavaa 1920-luvulla."
+      },
+      {
+        "id": 4,
+        "type": "multiple_choice",
+        "question": "Mihin kahteen ryhmään Suomen kansa jakautui sisällissodassa?",
+        "options": [
+          "A: Työväenluokka ja porvaristo",
+          "B: Suomalaiset ja venäläiset",
+          "C: Uskovat ja ateistit",
+          "D: Kaupunkilaiset ja maalaiset"
+        ],
+        "correct_answer": "A: Työväenluokka ja porvaristo",
+        "explanation": "Suomen kansa jakautui sisällissodassa työväenluokkaan ja porvaristoon."
+      },
+      {
+        "id": 5,
+        "type": "multiple_choice",
+        "question": "Mitä tapahtui Suomessa vuonna 1918?",
+        "options": [
+          "A: Itsenäistyminen",
+          "B: Sisällissota",
+          "C: Talvisota",
+          "D: Jatkosota"
+        ],
+        "correct_answer": "B: Sisällissota",
+        "explanation": "Suomessa käytiin sisällissota vuonna 1918."
+      },
+      {
+        "id": 6,
+        "type": "multiple_choice",
+        "question": "Mitä kiellettiin Suomessa vuonna 1919-1932?",
+        "options": [
+          "A: Alkoholin valmistus ja myynti",
+          "B: Ulkomaankauppa",
+          "C: Matkustaminen",
+          "D: Sananvapaus"
+        ],
+        "correct_answer": "A: Alkoholin valmistus ja myynti",
+        "explanation": "Suomessa oli kieltolaki voimassa vuosina 1919-1932, jolloin alkoholin valmistus ja myynti oli kielletty."
+      },
+      {
+        "id": 7,
+        "type": "multiple_choice",
+        "question": "Mitä Suomi ja Neuvosto-Venäjä sopivat Tarton rauhassa?",
+        "options": [
+          "A: Suomen itsenäisyyden tunnustamisen",
+          "B: Yhteisen armeijan perustamisen",
+          "C: Uuden pääkaupungin rakentamisen",
+          "D: Tullivapauden"
+        ],
+        "correct_answer": "A: Suomen itsenäisyyden tunnustamisen",
+        "explanation": "Tarton rauhassa Suomi ja Neuvosto-Venäjä sopivat Suomen itsenäisyyden tunnustamisesta."
+      },
+      {
+        "id": 8,
+        "type": "multiple_choice",
+        "question": "Mitä tapahtui Euroopassa ensimmäisen maailmansodan jälkeen?",
+        "options": [
+          "A: Kaikki maat vaurastuivat",
+          "B: Syntyi uusia valtioita",
+          "C: Yhteiskuntarauha parani",
+          "D: Teknologia kehittyi"
+        ],
+        "correct_answer": "B: Syntyi uusia valtioita",
+        "explanation": "Ensimmäisen maailmansodan jälkeen Euroopassa syntyi uusia valtioita."
+      },
+      {
+        "id": 9,
+        "type": "multiple_choice",
+        "question": "Miksi Yhdysvallat vaurastui 1920-luvulla?",
+        "options": [
+          "A: Luonnonvarojen runsaus",
+          "B: Vähäinen työttömyys",
+          "C: Euroopan maiden tukeminen",
+          "D: Sotakorvaukset"
+        ],
+        "correct_answer": "A: Luonnonvarojen runsaus",
+        "explanation": "Yhdysvallat vaurastui 1920-luvulla luonnonvarojen runsauden ansiosta."
+      },
+      {
+        "id": 10,
+        "type": "multiple_choice",
+        "question": "Miksi Suomessa käytiin sisällissota?",
+        "options": [
+          "A: Uskonnon takia",
+          "B: Poliittisten erimielisyyksien takia",
+          "C: Talouskasvun takia",
+          "D: Ulkopuolisen hyökkäyksen takia"
+        ],
+        "correct_answer": "B: Poliittisten erimielisyyksien takia",
+        "explanation": "Suomessa käytiin sisällissota poliittisten erimielisyyksien takia."
+      },
+      {
+        "id": 11,
+        "type": "multiple_choice",
+        "question": "Mitä seurauksia oli kieltolain kumoamisella Suomessa?",
+        "options": [
+          "A: Vähensi salakuljetusta",
+          "B: Lisäsi alkoholin kulutusta",
+          "C: Paransi kansanterveyttä",
+          "D: Lisäsi valtion tuloja"
+        ],
+        "correct_answer": "A: Vähensi salakuljetusta",
+        "explanation": "Kieltolain kumoaminen Suomessa vähensi salakuljetusta."
+      },
+      {
+        "id": 12,
+        "type": "multiple_choice",
+        "question": "Miksi Yhdysvalloissa syntyi paljon uutta jazz-musiikkia ja Hollywood-elokuvia 1920-luvulla?",
+        "options": [
+          "A: Ihmiset halusivat unohtaa sodan",
+          "B: Valtio tuki taiteilijoita",
+          "C: Euroopasta muutti paljon taiteilijoita",
+          "D: Tekniikka kehittyi"
+        ],
+        "correct_answer": "A: Ihmiset halusivat unohtaa sodan",
+        "explanation": "Yhdysvalloissa syntyi paljon uutta jazz-musiikkia ja Hollywood-elokuvia, koska ihmiset halusivat unohtaa sodan."
+      },
+      {
+        "id": 13,
+        "type": "multiple_choice",
+        "question": "Kuka oli Carl Gustaf Emil Mannerheim?",
+        "options": [
+          "A: Kirjailija",
+          "B: Kenraali",
+          "C: Presidentti",
+          "D: Säveltäjä"
+        ],
+        "correct_answer": "B: Kenraali",
+        "explanation": "Carl Gustaf Emil Mannerheim oli kenraali."
+      },
+      {
+        "id": 14,
+        "type": "multiple_choice",
+        "question": "Kuka oli presidentti Ståhlberg?",
+        "options": [
+          "A: Suomen ensimmäinen presidentti",
+          "B: Ruotsin kuningas",
+          "C: Neuvosto-Venäjän johtaja",
+          "D: Saksalainen kenraali"
+        ],
+        "correct_answer": "A: Suomen ensimmäinen presidentti",
+        "explanation": "Presidentti Ståhlberg oli Suomen ensimmäinen presidentti."
+      },
+      {
+        "id": 15,
+        "type": "multiple_choice",
+        "question": "Kuka oli Lenin?",
+        "options": [
+          "A: Yhdysvaltain presidentti",
+          "B: Suomalainen kirjailija",
+          "C: Neuvosto-Venäjän johtaja",
+          "D: Saksalainen tiedemies"
+        ],
+        "correct_answer": "C: Neuvosto-Venäjän johtaja",
+        "explanation": "Lenin oli Neuvosto-Venäjän johtaja."
+      }
+    ],
+    "summary": {
+      "introduction": "Ensimmäisen maailmansodan jälkeen Eurooppa ja maailma muuttuivat monin tavoin. Uusia valtioita syntyi, ja taloudelliset suhteet muuttuivat. Suomessa käytiin sisällissota, ja maa itsenäistyi. Yhdysvallat vaurastui ja kulttuuri kukoisti. Nämä muutokset vaikuttivat ihmisten elämään ja yhteiskuntaan ympäri maailmaa. Tutustumme nyt tarkemmin näihin tapahtumiin ja niiden seurauksiin.",
+      "key_concepts": "Suomen sisällissota oli traaginen tapahtuma, jossa suomalaiset taistelivat toisiaan vastaan. Sodan syitä olivat poliittiset ja sosiaaliset erimielisyydet. Sodan seurauksena oli paljon kuolemia ja tuhoa, ja se jätti syvät arvet suomalaiseen yhteiskuntaan. Tarton rauha oli tärkeä Suomelle, sillä siinä Neuvosto-Venäjä tunnusti Suomen itsenäisyyden. 1920-luvulla Saksassa koettiin hyperinflaatio, joka romahdutti talouden. Yhdysvalloissa koettiin nousukausi, ja syntyi uutta kulttuuria, kuten jazz-musiikkia ja Hollywood-elokuvia. Suomessa oli kieltolaki, joka kielsi alkoholin valmistuksen ja myynnin.",
+      "examples_and_applications": "Sisällissota opetti suomalaisille, kuinka tärkeää on ratkaista erimielisyydet rauhanomaisesti. Hyperinflaatio Saksassa osoitti, kuinka tärkeää on pitää talous vakaana. Yhdysvaltojen nousukausi osoitti, mitä voi tapahtua, kun talous kasvaa ja ihmiset ovat optimistisia. Kieltolaki Suomessa osoitti, että lait eivät aina toimi toivotulla tavalla, ja että ihmiset voivat etsiä keinoja kiertää niitä.",
+      "summary_conclusion": "Ensimmäisen maailmansodan jälkeiset vuosikymmenet olivat mullistavia aikaa. Suomi itsenäistyi ja kävi läpi sisällissodan. Euroopassa syntyi uusia valtioita ja taloudelliset suhteet muuttuivat. Yhdysvallat vaurastui ja kulttuuri kukoisti. Nämä tapahtumat muokkasivat maailmaa ja vaikuttivat ihmisten elämään monin tavoin. On tärkeää muistaa nämä tapahtumat, jotta voimme oppia niistä ja välttää samojen virheiden toistamista.",
+      "total_word_count": 384,
+      "language": "fi"
+    }
+  }
+}
