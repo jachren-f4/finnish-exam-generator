@@ -534,144 +534,120 @@ Begin generating the pedagogically sound exam now.`
   },
 
   getHistoryPrompt: (grade?: number, language: string = 'en'): string => {
-    return `Create a history exam for grade ${grade || 'appropriate'} elementary/middle school students.
+    return `You are creating a history exam for grade ${grade || 8} students.
 
-🎯 PRIMARY OBJECTIVE: Create clear, direct questions about the historical content in the textbook.
+🎯 CRITICAL RULES - READ FIRST:
 
-⚠️ CRITICAL LANGUAGE REQUIREMENT:
-- Use the SAME language as the textbook
-- Auto-detect the language from the images
-- ALL content MUST be in the detected language (Finnish, Swedish, English, German, etc.)
+1️⃣ QUESTION TYPES - Generate EXACTLY:
+   - 2 terminology questions ("What does X mean?") - NO MORE, NO LESS
+   - 6+ event questions ("What happened? When? Where?")
+   - 4+ cause/consequence questions ("Why? What were the results?")
+   - 2+ people questions ("Who? What did they do?")
 
-📚 ELEMENTARY SCHOOL QUESTION STYLE:
-✅ Write questions naturally and directly - like a teacher would ask in class
-✅ Use simple, clear language that students understand
-✅ Avoid academic phrases like "according to the material" or "the text states"
-✅ Make questions conversational and age-appropriate
+2️⃣ NATURAL STYLE - Write like a teacher talking to students:
+   ✅ "When did Finland become independent?"
+   ❌ "When did Finland become independent according to the material?"
 
-CRITICAL RULES:
-1. ✅ Questions MUST focus on the MAIN TOPICS and EVENTS in the textbook
-2. ✅ Questions MUST be factually accurate (verify dates, names, events)
-3. ✅ Questions should sound natural, not academic or formal
-4. ❌ AVOID generic vocabulary questions unless the term is central to the topic
-5. ❌ NEVER include facts not present in the textbook
-6. ❌ NEVER use phrases like "materiaalin mukaan", "tekstissä mainitaan", "materiaaliin viitaten"
+   NEVER use: "materiaalin mukaan", "tekstissä mainitaan", "materiaaliin viitaten"
 
-CONTENT ANALYSIS FIRST:
-Before generating questions, read the textbook carefully:
-- What is the main historical event/period/concept?
-- What is the central narrative or story?
-- Who are the main people/groups involved?
-- What happened (chronological events)?
-- When did it happen (dates/periods)?
-- Why did it happen (causes)?
-- What were the results/consequences?
+3️⃣ TERMINOLOGY RULES:
+   - ONLY ask "What does X mean?" for historical terms (hyperinflation, civil war, prohibition)
+   - NEVER ask about common words (independence, democracy, war, peace)
+   - If you wrote 3+ terminology questions, DELETE the generic ones
 
-QUESTION DISTRIBUTION:
-1. **Main Events** (40%): What happened? When? Key turning points?
-2. **Causes & Results** (30%): Why did it happen? What were the consequences?
-3. **Key People & Groups** (20%): Who was involved? What did they do?
-4. **Important Terms** (10%): Only terms central to understanding the topic
+4️⃣ CONTENT FOCUS:
+   - Read the FULL textbook, not just timeline pages
+   - Ask about events in main chapters, not only dates
+   - Balance questions across all major topics
 
-⚠️ CRITICAL - ENFORCE QUESTION DISTRIBUTION:
-Before finalizing your exam, COUNT each question type:
-□ You MUST have at least 6 questions about main events, causes, or key people
-□ You MUST NOT have more than 2-3 terminology questions (13-20% maximum)
-□ If you have too many "What does X mean?" questions, REPLACE them with event/cause questions
-□ Prioritize WHAT HAPPENED over definitions
+5️⃣ LANGUAGE:
+   - Auto-detect language from textbook images
+   - Write ALL content in the same language as the textbook
 
-NATURAL QUESTION STYLE - Write questions directly:
-✅ Ask "Who was involved?" not "Who was involved according to the text?"
-✅ Ask "When did [event] happen?" not "When did [event] happen according to the material?"
-✅ Ask "Why did [event] happen?" not "What does the text say about why [event] happened?"
-✅ Ask "Who was [person]?" not "What does the material say about [person]?"
-✅ Ask "What does [term] mean?" not "What does the text define [term] as?" (only if central concept)
+---
 
-❌ NEVER USE THESE PHRASES IN QUESTIONS:
-❌ "according to the material", "the text states", "the material says"
-❌ "referring to the material", "based on what you read"
-❌ "as mentioned in the text", "as described in the material"
+📚 CONTENT ANALYSIS:
 
-Write questions as if you're a teacher asking students directly - no references to the textbook.
+Before writing questions, identify:
+- Main historical event/period (the chapter topic)
+- Key people and groups involved
+- What happened (chronological events)
+- Why it happened (causes)
+- What resulted (consequences)
+- Important specialized terms (2-3 maximum)
 
-FORBIDDEN:
-❌ Generic vocabulary questions not tied to the topic
-❌ Facts not in the textbook
-❌ Visual references ("in the image", "on page X")
-❌ Outside knowledge questions
-❌ Academic or formal phrasing
+---
 
-FACTUAL ACCURACY REQUIREMENTS:
-Before finalizing EACH question:
-□ Verify dates are exactly right
-□ Verify names are spelled correctly
-□ Verify the fact is clearly in the textbook
-□ If uncertain about ANY fact, SKIP that question
-□ If the textbook doesn't clearly state something, DON'T ask about it
+✍️ QUESTION WRITING GUIDELINES:
 
-CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
+GOOD QUESTIONS:
+✅ "What happened in Finland in 1918?" (event)
+✅ "Why did the civil war start?" (cause)
+✅ "Who were the opposing sides?" (people)
+✅ "What does 'hyperinflation' mean?" (specialized term)
 
-Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions following this JSON format:
+BAD QUESTIONS:
+❌ "What does 'independence' mean?" (common word)
+❌ "What does the text say about X?" (refers to material)
+❌ "According to the material, when...?" (awkward phrase)
+❌ "What is democracy?" (too generic)
+
+---
+
+🔍 BEFORE FINALIZING:
+
+Count your questions:
+- Terminology ("What does X mean?"): Should be EXACTLY 2
+- Event/Cause/People: Should be 13+
+- Generic vocabulary: Should be ZERO
+
+If you have 3+ terminology questions → DELETE the most generic ones
+If you have 0-1 terminology questions → ADD one specialized term
+
+---
+
+📋 OUTPUT FORMAT:
+
+Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions in this JSON format:
 
 {
   "questions": [
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "[Question about SPECIFIC content - in SAME language as source material]",
+      "question": "[Natural question in source language]",
       "options": [
         "[Option A in source language]",
         "[Option B in source language]",
         "[Option C in source language]",
         "[Option D in source language]"
       ],
-      "correct_answer": "[Exact match from options - in source language]",
-      "explanation": "[1-2 sentence explanation in SAME language as source material]"
+      "correct_answer": "[Exact match from options]",
+      "explanation": "[1-2 sentences in source language]"
     }
   ],
   "summary": {
-    "introduction": "[100-250 word introduction to the SPECIFIC topic in the SAME language as source material]",
-    "key_concepts": "[250-500 word explanation focusing on the MAIN NARRATIVE in the SAME language]",
-    "examples_and_applications": "[200-400 word section on understanding this historical topic in the SAME language]",
-    "summary_conclusion": "[100-250 word conclusion in the SAME language]",
-    "total_word_count": [approximate word count],
-    "language": "[ISO 639-1 code - e.g., 'fi' for Finnish, 'en' for English, 'sv' for Swedish]"
+    "introduction": "[100-250 words introducing the specific historical topic]",
+    "key_concepts": "[250-500 words explaining the main narrative]",
+    "examples_and_applications": "[200-400 words on understanding this topic]",
+    "summary_conclusion": "[100-250 words conclusion]",
+    "total_word_count": [number],
+    "language": "[ISO 639-1 code: fi, en, sv, de, etc.]"
   }
 }
 
-SUMMARY REQUIREMENTS:
-- Write in the SAME language as the source material
-- Target audience: Grade ${grade || 'appropriate'} students
-- Total length: ~1000 words
-- Structure: 4 sections as specified in the JSON format
-- Educational tone: clear, pedagogical, age-appropriate
-- Focus on the SPECIFIC historical topic from the material (not generic history concepts)
-- Use proper formatting: **bold** for key terms, numbered lists where appropriate
+---
 
-CRITICAL - LANGUAGE DETECTION:
-1. Examine the textbook images carefully
-2. Identify the source language (Finnish, Swedish, English, German, etc.)
-3. Generate ALL content in that detected language
-4. Match the language naturally - if the textbook is in Finnish, write in Finnish; if Swedish, write in Swedish, etc.
+⚠️ FINAL REMINDERS:
 
-QUALITY CHECKLIST (verify before finalizing):
-□ At least 60% of questions focus on main events, causes, or key figures
-□ Generic definition questions are < 20% of total
-□ All facts are present in the textbook
-□ All dates, names, events verified for accuracy
-□ Questions are natural and direct (no "according to the material" phrases)
-□ Questions are conversational and age-appropriate for elementary/middle school
-□ No references to images, pages, or visual elements
-□ Summary focuses on the specific historical topic
-□ ALL content is in the SAME language as the textbook
-□ Questions sound like something a teacher would naturally ask
+- EXACTLY 2 terminology questions (not 3, not 5, not 8)
+- NO references to "the material" or "the text"
+- NO generic vocabulary questions
+- Focus on main chapters, not just timelines
+- Natural, conversational style
+- All content in the same language as textbook
 
-IMPORTANT:
-- The correct_answer field must contain the exact text from the options array
-- The summary must be in the SAME language as the questions and source material
-- Do not reference visual elements in the summary either
-
-Begin analysis and question generation now.`
+Begin generating the exam now.`
   }
 } as const
 
