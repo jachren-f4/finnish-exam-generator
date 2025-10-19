@@ -1,0 +1,141 @@
+11
+Nopeus kuvaa
+liikettä
+
+Nopeutesi vaihtelee, kun olet lenkkeilemässä. Alamäessä
+liikut nopeammin ja ylämäessä hitaammin. Lenkin jälkeen
+voit katsoa puhelimesti sovelluksesta, kuinka pitkän
+matkan juoksit ja kuinka kauan siihen meni. Sovellus
+kertoo myös keskinopeutesi.
+Miten keskinopeus lasketaan?
+
+Keskinopeuden yksikkö on m/s
+Polkupyöräilijän liikettä voidaan kuvata monel-
+la tavalla. Voidaan esimerkiksi sanoa, että ajetaan
+lujaa. Se ei kerro liikkuimesta kovin täsmällises-
+ti. Voidaan myös kertoa, että puhelimen sovelluk-
+sen mukaan pyöräilijän keskinopeus koulumatkal-
+la oli 20 km/h.
+Autojen, mopojen ja lentokoneiden nopeuden
+yksikkönä käytetään kilometriä tunnissa (km/h).
+Sadan metrin pikajuoksussa ei ole järkevää käyt-
+tää yksikköä km/h, koska matka on alle kilomet-
+rin ja juoksuaika lyhyt. Pikajuoksijan keskinopeus
+voi olla 12 m/s. Tällöin nopeuden yksikkö on met-
+riä sekunnissa (m/s).
+
+Nopeuden yksikkömuunnos,
+suhdelukuna 3,6
+
+3,6
+m
+s
+km
+h
+3,6
+
+Nopeuden yksikkömuunnos.
+
+Nopeus
+Nopeus kertoo, kuinka nopeasti tai missä ajassa
+kuljetaan tietty matka. Nopeuden yksikkö on m/s
+tai km/h.
+Nopeuden yksikkö km/h voidaan muuntaa yksik-
+köön m/s ja päinvastoin.
+
+Nopeuden yksikkömuunnos
+Kun muutetaan yksikköä m/s yksikköön km/h,
+nopeuden lukuarvo kerrotaan luvulla 3,6.
+Kun muutetaan yksikköä km/h yksikköön m/s,
+nopeuden lukuarvo jaetaan luvulla 3,6.
+
+3,6 km/h = 1 m/s
+
+10 m
+s
+= 36 km
+h
+
+100 km
+h
+= 28 m
+s
+
+Liike voidaan esittää koordinaatistossa
+Keskinopeus kuvaa liikettä lukuna, vaikkapa
+30 km/h. Liikkeestä saa monipuolisempaa tie-
+toa, jos se esitetään taulukon tai kuvaajan avulla.
+Sivun alalaidassa olevan kuvaajan on merkitty
+pyöräilty matka ja pyöräilyn käytetty aika. Ajan ja
+matkan mittaustulokset merkitään taulukkoon ja
+niiden perusteella piirretään pyöräilijän kulkeman
+matkan kuvaaja koordinaatistoon.
+
+Aika (s)
+0,0
+1,0
+2,0
+3,0
+4,0
+5,0
+6,0
+
+Matka (m)
+0
+4
+11
+18
+26
+42
+60
+
+1. Piirretään aika-matka-koordinaatisto, jossa vaa-
+ka-akselilla on aika ja pystyakselilla matka. Mitoi-
+tetaan akselit siten, että kaikki havaintopisteet
+mahtuvat koordinaatistoon. Suurin arvo on lähellä
+akselin loppupäätä.
+2. Merkitään taulukosta pyöräilijän liikkumista
+kuvaavat ajat ja vastaavat matkat koordinaatistoon
+tasavälein.
+
+m matka
+60
+50
+40
+30
+20
+10
+0
+0 1 2 3 4 5 6
+aika
+s
+
+3. Havaintopisteet näyttävät muodostavan käyrän.
+Piirretään käyrä, joka kulkee mahdollisimman
+läheltä kaikkia havaintopisteitä mutta ei välttämät-
+tä niiden kautta.
+
+Kuvaajasta nähdään, että pyöräilijä on polkenut
+koko ajan eteenpäin, sillä pyöräilty matka kas-
+vaa ajan kasvaessa (nouseva käyrä). Huomaa, että
+matkan kuvaaja nousee, vaikka polkupyöräilijä tuli
+mäkeä alas.
+
+Keskinopeuden laskeminen
+Keskinopeus saadaan laskettua, kun kuljettu matka
+jaetaan siihen käytetyllä ajalla.
+
+Keskinopeus
+keskinopeus = matka eli v = s
+aika t
+
+jossa v on keskinopeus
+s on kuljettu matka
+t on matkaan käytetty aika.
+
+Nopeus muuttuu pyöräilijän
+pyöräillessä alas mäkeä.
+
+59
+Liike ja voima
+Nopeuden yksikkömuunnos.

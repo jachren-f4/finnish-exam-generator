@@ -1,0 +1,31 @@
+{
+  "testDate": "2025-10-09T10:17:13.519Z",
+  "hires": {
+    "path": "/Users/joakimachren/Desktop/gemini-ocr/assets/images/physics/kpl15a 1500 comp.jpeg",
+    "sizeKB": "487.00",
+    "processingTimeMs": 7693,
+    "textLength": 3558,
+    "wordCount": 490,
+    "finnishChars": [
+      "ä",
+      "ö"
+    ]
+  },
+  "midres": {
+    "path": "/Users/joakimachren/Desktop/gemini-ocr/assets/images/physics/kpl15a 1150 comp.jpeg",
+    "sizeKB": "337.15",
+    "processingTimeMs": 6631,
+    "textLength": 3472,
+    "wordCount": 474,
+    "finnishChars": [
+      "ä",
+      "ö"
+    ]
+  },
+  "comparison": {
+    "textLengthDiff": 86,
+    "wordCountDiff": 16,
+    "sizeDiff": "149.85 KB",
+    "compressionRatio": "69.23%"
+  }
+}

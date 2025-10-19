@@ -38,64 +38,80 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
  * 3. Requires questions about main narrative/events
  * 4. Demands factual accuracy verification
  */
-function getHistoryPrompt(grade: number = 8): string {
-  return `You are creating a history exam for grade ${grade} elementary/middle school students.
+function getHistoryPrompt(grade: number = 5): string {
+  return `You are creating a history exam for grade ${grade} students based on educational material.
 
-🎯 PRIMARY OBJECTIVE: Create clear, direct questions about the historical content in the textbook.
+🎯 PRIMARY OBJECTIVE: Test understanding of the SPECIFIC historical content shown in the material.
 
 ⚠️ CRITICAL LANGUAGE REQUIREMENT:
-- Use the SAME language as the textbook
-- Auto-detect the language from the images
-- ALL content MUST be in the detected language (Finnish, Swedish, English, German, etc.)
+- Use the SAME language as the source material
+- Auto-detect the language from the textbook images
+- ALL questions, options, explanations, and summary MUST be in the detected language
+- Do NOT default to English if material is in another language (Finnish, Swedish, German, etc.)
 
-📚 ELEMENTARY SCHOOL QUESTION STYLE:
-✅ Write questions naturally and directly
-✅ Ask simple, clear questions that a student would understand
-✅ Avoid academic phrases like "according to the material" or "the text states"
-✅ Make questions conversational and age-appropriate
+CRITICAL RULES:
+1. ✅ Questions MUST focus on the MAIN TOPICS and EVENTS described in the material
+2. ✅ Questions MUST test comprehension of the SPECIFIC narrative/story presented
+3. ✅ Questions MUST be factually accurate (verify dates, names, events)
+4. ❌ AVOID generic vocabulary/definition questions unless the term is central to understanding the topic
+5. ❌ NEVER include facts not present in the source material
+6. ❌ NEVER make assumptions about content not shown
 
-CONTENT ANALYSIS:
-First, read the textbook carefully and identify:
-- What historical event/period is covered?
-- Who are the main people/groups?
-- What happened (key events in order)?
-- When did it happen?
-- Why did it happen?
-- What were the results?
+CONTENT ANALYSIS PROCESS:
+Before generating questions, analyze the material:
 
-QUESTION DISTRIBUTION:
-1. **Main Events** (40%): What happened? When? Key turning points?
-2. **Causes & Results** (30%): Why did it happen? What were the consequences?
-3. **Key People & Groups** (20%): Who was involved? What did they do?
-4. **Important Terms** (10%): Only terms central to understanding the topic
+Step 1: IDENTIFY THE MAIN TOPIC
+- What historical event/period/concept is this about?
+- What is the central narrative or story?
 
-QUESTION STYLE - NATURAL AND DIRECT:
-✅ "Ketkä olivat sisällissodan osapuolet?"
-✅ "Milloin tapahtui suuri lama?"
-✅ "Miksi sodan jälkeen syntyi uusia valtioita?"
-✅ "Kuka oli Saksan johtaja 1930-luvulla?"
-✅ "Mitä tarkoittaa 'hyperinflaatio'?" (only if central concept)
+Step 2: EXTRACT KEY FACTS
+- Who are the main people/groups involved?
+- What happened (chronological events)?
+- When did it happen (dates/periods)?
+- Where did it happen (locations)?
+- Why did it happen (causes)?
+- What were the results/consequences?
 
-❌ AVOID THESE AWKWARD PHRASES:
-❌ "materiaalin mukaan" (according to the material)
-❌ "tekstissä mainitaan" (the text mentions)
-❌ "materiaaliin viitaten" (referring to the material)
-❌ "lukemasi perusteella" (based on what you read)
+Step 3: IDENTIFY SUPPORTING CONCEPTS
+- What terms/vocabulary are explained?
+- What context is provided?
+- What perspectives are presented?
 
-Just ask directly what happened, who did it, when, why, etc.
+QUESTION PRIORITY (focus on these in order):
+1. **Main Events** (40%): What happened? Chronology, key turning points
+2. **Causes & Consequences** (30%): Why did it happen? What resulted?
+3. **Key Figures & Groups** (20%): Who was involved? What roles did they play?
+4. **Context & Terms** (10%): Supporting vocabulary ONLY if central to understanding
 
-FORBIDDEN:
-❌ Generic vocabulary questions not tied to the topic
-❌ Facts not in the textbook
-❌ Visual references ("in the image", "on page X")
-❌ Outside knowledge questions
+FORBIDDEN QUESTION TYPES:
+❌ Generic definitions not tied to the specific topic (e.g., "What is democracy?")
+❌ Questions about concepts mentioned only briefly
+❌ Historical facts NOT present in the material
+❌ "Which of these is true?" questions without clear focus
+❌ Questions requiring outside knowledge beyond the material
 
-FACTUAL ACCURACY:
-Before finalizing each question:
-□ Verify dates are exactly right
+GOOD QUESTION EXAMPLES:
+✅ "What were the main causes of [the event] according to the material?"
+✅ "Which groups/people were involved in [the event]?"
+✅ "When did [the event] take place?"
+✅ "What was the outcome of [the event]?"
+✅ "Why did [cause] lead to [consequence]?"
+✅ "How did [person/group] contribute to [event]?"
+
+BAD QUESTION EXAMPLES:
+❌ "What does 'democracy' mean?" (too generic unless central to the narrative)
+❌ "What is a political system?" (generic definition)
+❌ "What is international cooperation?" (not about the main topic)
+❌ "What is the capital of [country]?" (random fact, not from material)
+
+FACTUAL ACCURACY REQUIREMENTS:
+Before finalizing EACH question:
+□ Verify dates are correct
 □ Verify names are spelled correctly
-□ Verify the fact is clearly in the textbook
-□ If unsure about anything, SKIP that question
+□ Verify cause-effect relationships are accurate
+□ Verify the fact appears in the source material
+□ If uncertain about ANY fact, SKIP that question
+□ If material doesn't clearly state something, DON'T ask about it
 
 Generate exactly 15 questions following this JSON format:
 
@@ -146,19 +162,24 @@ CRITICAL - LANGUAGE DETECTION:
 1. Examine the textbook images carefully
 2. Identify the source language (Finnish, Swedish, English, German, etc.)
 3. Generate ALL content in that detected language
-4. Match the language naturally - if the textbook is in Finnish, write in Finnish; if Swedish, write in Swedish, etc.
+4. Common patterns to help detect:
+   - Finnish: "Suomen sisällissota", "vuonna", "punaisten", "valkoisten"
+   - Swedish: "finska inbördeskriget", "år", "röda", "vita"
+   - English: "civil war", "year", "reds", "whites"
+   - German: "Bürgerkrieg", "Jahr", "Roten", "Weißen"
 
 QUALITY CHECKLIST (verify before finalizing):
 □ At least 60% of questions focus on main events, causes, or key figures
 □ Generic definition questions are < 20% of total
-□ All facts are present in the textbook
+□ All facts are present in the source material
 □ All dates, names, events verified for accuracy
-□ Questions are natural and direct (no "according to the material" phrases)
-□ Questions are conversational and age-appropriate for elementary/middle school
+□ Questions follow logical progression through the topic
 □ No references to images, pages, or visual elements
-□ Summary focuses on the specific historical topic
-□ ALL content is in the SAME language as the textbook
-□ Questions sound like something a teacher would naturally ask
+□ Summary focuses on the specific topic (not generic history concepts)
+□ ALL questions are in the SAME language as the source material
+□ ALL options are in the SAME language as the source material
+□ ALL explanations are in the SAME language as the source material
+□ Summary sections are in the SAME language as the source material
 
 Begin analysis and question generation now.`
 }
@@ -337,8 +358,8 @@ async function main() {
   console.log('================================\n')
 
   // Configuration
-  const IMAGE_FOLDER = 'assets/images/history_8th_compr'
-  const GRADE = 8
+  const IMAGE_FOLDER = 'assets/images/history-test'
+  const GRADE = 5
 
   console.log(`📚 Configuration:`)
   console.log(`  Grade: ${GRADE}`)

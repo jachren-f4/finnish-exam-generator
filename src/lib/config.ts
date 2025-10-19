@@ -559,7 +559,6 @@ Begin generating the pedagogically sound exam now.`
    - Read the FULL textbook, not just timeline pages
    - Ask about events in main chapters, not only dates
    - Balance questions across all major topics
-   - TIMELINE RULE: If using a timeline date, ask about the EVENT shown for that date (not other events)
 
 5️⃣ LANGUAGE:
    - Auto-detect language from textbook images
