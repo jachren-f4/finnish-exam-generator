@@ -555,6 +555,13 @@ Create a **history exam for grade ${grade || 8} students** based *only* on the u
 - 3 people questions ("Who? What did they do?")
 → Total = 15 questions
 
+### 🔒 VISUAL CONFIRMATION RULE
+- Only use names, dates, or events that you see in the textbook images.
+- If a fact is true in history but not visible, do not include it.
+- Example: If the page shows "Finland became independent in 1917" but does not name a president, you cannot ask who was president in 1918.
+- Example: If the page shows "Herbert Hoover" but not the 1929 crash, do not connect Hoover to it.
+- Always double-check that each question's topic appears visibly in the text or timeline.
+
 ### 2️⃣ Grounding
 - Every fact must appear in the textbook.
 - If unsure, skip it — never invent.
@@ -577,6 +584,8 @@ Create a **history exam for grade ${grade || 8} students** based *only* on the u
 - Exactly 2 terminology questions.
 - No generic vocabulary or invented names.
 - All 15 questions grounded, clear, and answerable from the pages.
+- Double-check: each question must mention at least one word, date, or name that appears verbatim in the textbook text or timeline.
+- If not, delete or rewrite the question.
 
 ---
 

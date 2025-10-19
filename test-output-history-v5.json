@@ -1,0 +1,218 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-10-19T10:40:57.528Z",
+    "version": "v5-visual-confirmation",
+    "prompt_source": "V5 - Visual Confirmation Rule",
+    "model": "gemini-2.0-flash-exp",
+    "temperature": 0,
+    "duration_ms": 19342
+  },
+  "prompt_used": "SYSTEM INSTRUCTION (prepend this before any user content):\nYou must treat the uploaded textbook images as your *only factual source*.\nUse only facts visible in those images. Do not invent, guess, or rely on external knowledge.\nIf something is missing, omit it. All output must be consistent with the textbook only.\n\n---\n\n## 🎓 Task\nCreate a **history exam for grade 8 students** based *only* on the uploaded textbook pages.\n\n---\n\n## 🎯 RULES\n\n### 1️⃣ Question Counts (exact)\n- 2 terminology questions (\"What does X mean?\")\n- 6 event questions (\"What happened? When? Where?\")\n- 4 cause/consequence questions (\"Why? What resulted?\")\n- 3 people questions (\"Who? What did they do?\")\n→ Total = 15 questions\n\n### 🔒 VISUAL CONFIRMATION RULE\n- Only use names, dates, or events that you see in the textbook images.\n- If a fact is true in history but not visible, do not include it.\n- Example: If the page shows \"Finland became independent in 1917\" but does not name a president, you cannot ask who was president in 1918.\n- Example: If the page shows \"Herbert Hoover\" but not the 1929 crash, do not connect Hoover to it.\n- Always double-check that each question's topic appears visibly in the text or timeline.\n\n### 2️⃣ Grounding\n- Every fact must appear in the textbook.\n- If unsure, skip it — never invent.\n- Timeline dates → ask only about that exact event.\n\n### 3️⃣ Language\n- Auto-detect textbook language and use it everywhere.\n- No translation, no mixing.\n\n### 4️⃣ Style\n- Write like a teacher talking to students.\n- Never mention \"the text\", \"material\", or \"chapter\".\n- Natural tone, short and clear sentences.\n\n### 5️⃣ Terminology Rule\n- Only ask meanings of *specialized historical terms* (e.g. hyperinflation, civil war).\n- Never ask about common words (independence, democracy, war, peace).\n\n### 6️⃣ Validation\n- Exactly 2 terminology questions.\n- No generic vocabulary or invented names.\n- All 15 questions grounded, clear, and answerable from the pages.\n- Double-check: each question must mention at least one word, date, or name that appears verbatim in the textbook text or timeline.\n- If not, delete or rewrite the question.\n\n---\n\n## 🧩 JSON OUTPUT\n\n{\n  \"questions\": [\n    {\n      \"id\": 1,\n      \"type\": \"multiple_choice\",\n      \"question\": \"[Natural question in source language]\",\n      \"options\": [\"A\", \"B\", \"C\", \"D\"],\n      \"correct_answer\": \"[Exact match from options]\",\n      \"explanation\": \"[1–2 sentences, factual and concise]\"\n    }\n  ],\n  \"summary\": {\n    \"introduction\": \"[100–200 words – introduce the historical topic from the text]\",\n    \"key_concepts\": \"[250–400 words – main events, causes, results]\",\n    \"examples_and_applications\": \"[150–250 words – help students understand significance]\",\n    \"summary_conclusion\": \"[80–150 words – wrap up clearly]\",\n    \"total_word_count\": [number],\n    \"language\": \"[ISO 639-1 code]\"\n  }\n}\n\n---\n\n## ⚠️ FINAL CHECKLIST\n✅ 15 total questions\n✅ 2 terminology exactly\n✅ No \"material/text\" references\n✅ No invented facts or external info\n✅ All in one language\n✅ Natural, student-friendly phrasing",
+  "gemini_response": {
+    "questions": [
+      {
+        "id": 1,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa hyperinflaatio?",
+        "options": [
+          "Nopeaa rahan arvon nousua",
+          "Nopeaa rahan arvon laskua",
+          "Rahan arvon pysymistä samana",
+          "Rahan arvon hidasta nousua"
+        ],
+        "correct_answer": "Nopeaa rahan arvon laskua",
+        "explanation": "Hyperinflaatio tarkoittaa nopeaa rahan arvon laskua, mikä tekee tavaroista ja palveluista kalliimpia."
+      },
+      {
+        "id": 2,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'oppivelvollisuus'?",
+        "options": [
+          "Vapaaehtoista koulunkäyntiä",
+          "Velvollisuutta käydä töissä",
+          "Pakollista koulunkäyntiä",
+          "Velvollisuutta maksaa veroja"
+        ],
+        "correct_answer": "Pakollista koulunkäyntiä",
+        "explanation": "Oppivelvollisuus tarkoittaa pakollista koulunkäyntiä, eli kaikkien lasten on käytävä koulua."
+      },
+      {
+        "id": 3,
+        "type": "multiple_choice",
+        "question": "Mitä tapahtui vuonna 1917?",
+        "options": [
+          "Suomi itsenäistyi",
+          "Neuvostoliitto perustettiin",
+          "Saksan hyperinflaatio",
+          "Yhdysvaltojen pörssiromahdus"
+        ],
+        "correct_answer": "Suomi itsenäistyi",
+        "explanation": "Vuonna 1917 Suomi itsenäistyi."
+      },
+      {
+        "id": 4,
+        "type": "multiple_choice",
+        "question": "Mitä tapahtui Suomessa vuonna 1918?",
+        "options": [
+          "Suomen itsenäistyminen",
+          "Suomen sisällissota",
+          "Neuvostoliiton perustaminen",
+          "Saksan hyperinflaatio"
+        ],
+        "correct_answer": "Suomen sisällissota",
+        "explanation": "Vuonna 1918 Suomessa käytiin sisällissota."
+      },
+      {
+        "id": 5,
+        "type": "multiple_choice",
+        "question": "Milloin Neuvostoliitto perustettiin?",
+        "options": [
+          "1917",
+          "1922",
+          "1929",
+          "1932"
+        ],
+        "correct_answer": "1922",
+        "explanation": "Neuvostoliitto perustettiin vuonna 1922."
+      },
+      {
+        "id": 6,
+        "type": "multiple_choice",
+        "question": "Milloin Saksassa oli hyperinflaatio?",
+        "options": [
+          "1917",
+          "1918",
+          "1923",
+          "1929"
+        ],
+        "correct_answer": "1923",
+        "explanation": "Saksassa oli hyperinflaatio vuonna 1923."
+      },
+      {
+        "id": 7,
+        "type": "multiple_choice",
+        "question": "Milloin Yhdysvalloissa tapahtui pörssiromahdus?",
+        "options": [
+          "1917",
+          "1922",
+          "1923",
+          "1929"
+        ],
+        "correct_answer": "1929",
+        "explanation": "Yhdysvalloissa tapahtui pörssiromahdus vuonna 1929."
+      },
+      {
+        "id": 8,
+        "type": "multiple_choice",
+        "question": "Milloin kieltolaki päättyi Suomessa?",
+        "options": [
+          "1917",
+          "1922",
+          "1929",
+          "1932"
+        ],
+        "correct_answer": "1932",
+        "explanation": "Kieltolaki päättyi Suomessa vuonna 1932."
+      },
+      {
+        "id": 9,
+        "type": "multiple_choice",
+        "question": "Miksi Suomessa käytiin sisällissota vuonna 1918?",
+        "options": [
+          "Koska Suomi itsenäistyi",
+          "Koska Neuvostoliitto hyökkäsi",
+          "Koska punaiset ja valkoiset taistelivat vallasta",
+          "Koska Saksassa oli hyperinflaatio"
+        ],
+        "correct_answer": "Koska punaiset ja valkoiset taistelivat vallasta",
+        "explanation": "Suomen sisällissota syttyi, koska punaiset ja valkoiset taistelivat vallasta."
+      },
+      {
+        "id": 10,
+        "type": "multiple_choice",
+        "question": "Mitä seurauksia hyperinflaatiolla oli Saksassa vuonna 1923?",
+        "options": [
+          "Rahan arvo nousi",
+          "Ihmiset köyhtyivät",
+          "Työttömyys väheni",
+          "Kaupankäynti helpottui"
+        ],
+        "correct_answer": "Ihmiset köyhtyivät",
+        "explanation": "Hyperinflaation seurauksena Saksassa ihmiset köyhtyivät, koska rahan arvo laski nopeasti."
+      },
+      {
+        "id": 11,
+        "type": "multiple_choice",
+        "question": "Mitä seurauksia Yhdysvaltojen pörssiromahduksella oli vuonna 1929?",
+        "options": [
+          "Työttömyys väheni",
+          "Hyvinvointi lisääntyi",
+          "Lama alkoi",
+          "Inflaatio kiihtyi"
+        ],
+        "correct_answer": "Lama alkoi",
+        "explanation": "Yhdysvaltojen pörssiromahduksen seurauksena alkoi lama."
+      },
+      {
+        "id": 12,
+        "type": "multiple_choice",
+        "question": "Miksi Suomessa säädettiin oppivelvollisuus?",
+        "options": [
+          "Jotta kaikki lapset oppisivat lukemaan ja kirjoittamaan",
+          "Jotta työttömyys vähenisi",
+          "Jotta inflaatio saataisiin kuriin",
+          "Jotta sisällissota ei toistuisi"
+        ],
+        "correct_answer": "Jotta kaikki lapset oppisivat lukemaan ja kirjoittamaan",
+        "explanation": "Oppivelvollisuus säädettiin, jotta kaikki lapset oppisivat lukemaan ja kirjoittamaan."
+      },
+      {
+        "id": 13,
+        "type": "multiple_choice",
+        "question": "Kuka oli Carl Gustaf Emil Mannerheim?",
+        "options": [
+          "Säveltäjä",
+          "Kenraali",
+          "Kirjailija",
+          "Presidentti"
+        ],
+        "correct_answer": "Kenraali",
+        "explanation": "Carl Gustaf Emil Mannerheim oli kenraali."
+      },
+      {
+        "id": 14,
+        "type": "multiple_choice",
+        "question": "Kuka oli Lenin?",
+        "options": [
+          "Suomen presidentti",
+          "Neuvostoliiton johtaja",
+          "Saksan keisari",
+          "Yhdysvaltojen presidentti"
+        ],
+        "correct_answer": "Neuvostoliiton johtaja",
+        "explanation": "Lenin oli Neuvostoliiton johtaja."
+      },
+      {
+        "id": 15,
+        "type": "multiple_choice",
+        "question": "Kuka oli R.J. Ståhlberg?",
+        "options": [
+          "Neuvostoliiton johtaja",
+          "Saksan keisari",
+          "Ensimmäinen presidentti",
+          "Yhdysvaltojen presidentti"
+        ],
+        "correct_answer": "Ensimmäinen presidentti",
+        "explanation": "R.J. Ståhlberg oli Suomen ensimmäinen presidentti."
+      }
+    ],
+    "summary": {
+      "introduction": "Hei kaikki! Tänään tutustumme Suomen ja maailman historiaan ensimmäisten vuosikymmenten aikana suuren sodan jälkeen. Tarkastelemme, miten Suomi itsenäistyi ja mitä sen jälkeen tapahtui. Käymme läpi Suomen sisällissodan ja sen vaikutuksia. Lisäksi tutkimme, miten maailma muuttui ensimmäisen maailmansodan jälkeen, erityisesti Saksassa ja Yhdysvalloissa. Opimme myös, mitä hyperinflaatio tarkoittaa ja miten se vaikutti ihmisten elämään. Lopuksi katsomme, miten Suomi alkoi rakentaa omaa tulevaisuuttaan.",
+      "key_concepts": "Ensimmäisen maailmansodan jälkeen Eurooppa ja maailma kokivat suuria muutoksia. Suomi itsenäistyi vuonna 1917, mutta heti sen jälkeen maassa syttyi sisällissota vuonna 1918 punaisten ja valkoisten välillä. Sisällissota jätti syvät arvet suomalaiseen yhteiskuntaan. Saksassa koettiin hyperinflaatio vuonna 1923, jolloin rahan arvo laski erittäin nopeasti, mikä köyhdytti monia ihmisiä. Yhdysvalloissa pörssiromahdus vuonna 1929 aloitti suuren laman, joka vaikutti maailmantalouteen pitkään. Suomessa säädettiin oppivelvollisuus, jotta kaikki lapset saisivat peruskoulutuksen. Tärkeitä henkilöitä tältä ajalta olivat Carl Gustaf Emil Mannerheim, Lenin ja R.J. Ståhlberg.",
+      "examples_and_applications": "Kuvitelkaa, että olette saksalaisia vuonna 1923. Yhtenä päivänä leipä maksaa yhden markan, mutta seuraavana päivänä se maksaa jo sata markkaa. Tämä on hyperinflaatiota! Tai miettikää, että olette suomalaisia vuonna 1918. Naapurinne on eri puolella sisällissodassa, ja joudutte valitsemaan, kenen puolella olette. Nämä tapahtumat ovat tärkeitä, koska ne opettavat meille, miten suuret mullistukset voivat vaikuttaa tavallisten ihmisten elämään ja miten tärkeää on pyrkiä rauhaan ja oikeudenmukaisuuteen.",
+      "summary_conclusion": "Tämän oppitunnin jälkeen ymmärrätte paremmin, miten Suomi ja maailma muuttuivat ensimmäisen maailmansodan jälkeen. Tiedätte, mitä sisällissota, hyperinflaatio ja lama tarkoittavat. Muistakaa, että historia on täynnä tärkeitä opetuksia, jotka auttavat meitä ymmärtämään nykypäivää ja rakentamaan parempaa tulevaisuutta. Toivottavasti opitte paljon uutta ja kiinnostuitte historiasta vielä enemmän!",
+      "total_word_count": 381,
+      "language": "fi"
+    }
+  }
+}
