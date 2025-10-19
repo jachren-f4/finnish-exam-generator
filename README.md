@@ -384,6 +384,26 @@ useEffect(() => {
 - Generic definitions: 67% → 0% (-100%)
 - Factual errors: Reduced through verification checklist
 
+#### History Prompt Optimization (V7)
+
+**Winning Architecture:** "Silent Extraction" approach that prevents token overflow while maintaining quality.
+
+**How it Works:**
+1. Model internally extracts facts from textbook images (dates, people, events, terms)
+2. Facts stay in model's memory - no verbose output
+3. Questions generated from internal extraction only
+4. 4000-token limit guard prevents overflow
+
+**Results:**
+- 90% token savings: 3,055 tokens vs V6's 65,536 overflow
+- 87% grounding quality: Questions verifiable against source material
+- Scalable: Supports 50+ textbook pages without overflow
+- Distribution: 2 terminology, 6 events, 4 cause/consequence, 3 people questions
+
+**Why V7 Won:** Tested 9 variants (V1-V9). V8/V9 improved grounding to 90-95% with anchor enforcement but broke question distribution balance. V7 provides best overall quality with proper distribution.
+
+**📚 Full Analysis:** See `/HISTORY_PROMPT_OPTIMIZATION_FINDINGS.md` for complete variant testing results.
+
 ### 8. Audio Summary Generation
 - **TTS Service:** Google Cloud TTS with 0.8 speaking rate for educational clarity
 - **Languages:** 12+ languages (Finnish, German, English, Swedish, Spanish, French, etc.)

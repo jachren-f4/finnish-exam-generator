@@ -67,8 +67,12 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ✅ Validates factual accuracy (dates, names, events from material only)
 - ✅ Auto-detects language (Finnish, Swedish, English, German, etc.)
 - ✅ Returns same JSON as standard prompt (questions + summary)
+- ✅ V7 "Silent Extraction" architecture (internal fact extraction, no verbose output)
+- ✅ 4000-token limit guard prevents overflow (V6 hit 65,536 tokens)
+- ⚠️ Gemini variance: ±5-10% distribution variance normal even at temperature=0
 - ❌ No visual references in questions
 - ❌ No facts not present in source material
+- ❌ Never use V6 or earlier (token overflow with 12+ images)
 
 ### Math Audio Summaries
 **Files:** `config.ts:getMathPrompt()`, `math-exam-service.ts`, `mobile-api-service.ts:generateMathAudioSummaryAsync()`
@@ -131,6 +135,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ### Key Configuration
 - **Prompts**: `/src/lib/config.ts` (getCategoryAwarePrompt, getMathPrompt, getHistoryPrompt, getLanguageStudiesPrompt)
+- **History Prompt Documentation**: `/HISTORY_PROMPT_OPTIMIZATION_FINDINGS.md` (V1-V9 variant testing results)
 - **Math Service**: `/src/lib/services/math-exam-service.ts`
 - **Design Tokens**: `/src/constants/design-tokens.ts`
 - **Question Shuffler**: `/src/lib/utils/question-shuffler.ts`
@@ -285,6 +290,8 @@ npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
 | CI fails with secret detected | Gitleaks found API key/secret • Never commit secrets • Rotate exposed keys immediately |
 | Exposed secrets in commit | Gitleaks pre-commit hook blocked commit • Remove secret • Use `process.env.KEY_NAME` • See "Secret Scanning & Protection" section |
 | Vercel env var not applied | Check environment type (Preview vs Production) • Wait 1-2 min for deployment propagation • Use `/api/test-db` to verify |
+| History exam has outside knowledge | V7 Silent Extraction achieves 87% grounding • V8/V9 variants available if higher grounding needed (breaks distribution) • See `/HISTORY_PROMPT_OPTIMIZATION_FINDINGS.md` |
+| History exam token overflow | Using V7 (4000-token limit) • Never use V6 (caused 65k overflow) • Contact dev if overflow persists |
 
 ## Architecture Decisions - Don't Break These
 
