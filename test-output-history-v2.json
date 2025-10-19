@@ -1,0 +1,245 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-10-19T09:25:43.859Z",
+    "version": "v2",
+    "model": "gemini-2.0-flash-exp",
+    "temperature": 0,
+    "grade": 8,
+    "image_count": 12,
+    "duration_ms": 23603,
+    "improvements": [
+      "Exact copy of config.ts prompt structure",
+      "Added terminology enforcement (max 2-3 questions)",
+      "Must have 6+ event/cause/figure questions"
+    ]
+  },
+  "prompt_used": "Create a history exam for grade 8 elementary/middle school students.\n\n🎯 PRIMARY OBJECTIVE: Create clear, direct questions about the historical content in the textbook.\n\n⚠️ CRITICAL LANGUAGE REQUIREMENT:\n- Use the SAME language as the textbook\n- Auto-detect the language from the images\n- ALL content MUST be in the detected language (Finnish, Swedish, English, German, etc.)\n\n📚 ELEMENTARY SCHOOL QUESTION STYLE:\n✅ Write questions naturally and directly - like a teacher would ask in class\n✅ Use simple, clear language that students understand\n✅ Avoid academic phrases like \"according to the material\" or \"the text states\"\n✅ Make questions conversational and age-appropriate\n\nCRITICAL RULES:\n1. ✅ Questions MUST focus on the MAIN TOPICS and EVENTS in the textbook\n2. ✅ Questions MUST be factually accurate (verify dates, names, events)\n3. ✅ Questions should sound natural, not academic or formal\n4. ❌ AVOID generic vocabulary questions unless the term is central to the topic\n5. ❌ NEVER include facts not present in the textbook\n6. ❌ NEVER use phrases like \"materiaalin mukaan\", \"tekstissä mainitaan\", \"materiaaliin viitaten\"\n\nCONTENT ANALYSIS FIRST:\nBefore generating questions, read the textbook carefully:\n- What is the main historical event/period/concept?\n- What is the central narrative or story?\n- Who are the main people/groups involved?\n- What happened (chronological events)?\n- When did it happen (dates/periods)?\n- Why did it happen (causes)?\n- What were the results/consequences?\n\nQUESTION DISTRIBUTION:\n1. **Main Events** (40%): What happened? When? Key turning points?\n2. **Causes & Results** (30%): Why did it happen? What were the consequences?\n3. **Key People & Groups** (20%): Who was involved? What did they do?\n4. **Important Terms** (10%): Only terms central to understanding the topic\n\n⚠️ CRITICAL - ENFORCE QUESTION DISTRIBUTION:\nBefore finalizing your exam, COUNT each question type:\n□ You MUST have at least 6 questions about main events, causes, or key people\n□ You MUST NOT have more than 2-3 terminology questions (13-20% maximum)\n□ If you have too many \"What does X mean?\" questions, REPLACE them with event/cause questions\n□ Prioritize WHAT HAPPENED over definitions\n\n⚠️ CRITICAL - CONTENT BALANCE (avoid timeline over-reliance):\n□ Do NOT generate more than 3-4 questions from timeline pages alone\n□ Prioritize questions from MAIN CHAPTER TEXT over timeline events\n□ If you see multiple pages discussing a topic in detail, generate 2-3 questions about it\n□ Do NOT ignore entire chapters in favor of timeline dates\n□ Balance coverage across all major sections of the textbook\n\nNATURAL QUESTION STYLE - Write questions directly:\n✅ Ask \"Who was involved?\" not \"Who was involved according to the text?\"\n✅ Ask \"When did [event] happen?\" not \"When did [event] happen according to the material?\"\n✅ Ask \"Why did [event] happen?\" not \"What does the text say about why [event] happened?\"\n✅ Ask \"Who was [person]?\" not \"What does the material say about [person]?\"\n✅ Ask \"What does [term] mean?\" not \"What does the text define [term] as?\" (only if central concept)\n\n❌ NEVER USE THESE PHRASES IN QUESTIONS:\n❌ \"according to the material\", \"the text states\", \"the material says\"\n❌ \"referring to the material\", \"based on what you read\"\n❌ \"as mentioned in the text\", \"as described in the material\"\n\nWrite questions as if you're a teacher asking students directly - no references to the textbook.\n\nFORBIDDEN:\n❌ Generic vocabulary questions not tied to the topic\n❌ Facts not in the textbook\n❌ Visual references (\"in the image\", \"on page X\")\n❌ Outside knowledge questions\n❌ Academic or formal phrasing\n\nFACTUAL ACCURACY REQUIREMENTS:\nBefore finalizing EACH question:\n□ Verify dates are exactly right\n□ Verify names are spelled correctly\n□ Verify the fact is clearly in the textbook\n□ If uncertain about ANY fact, SKIP that question\n□ If the textbook doesn't clearly state something, DON'T ask about it\n\nCRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam\n\nGenerate exactly 15 questions following this JSON format:\n\n{\n  \"questions\": [\n    {\n      \"id\": 1,\n      \"type\": \"multiple_choice\",\n      \"question\": \"[Question about SPECIFIC content - in SAME language as source material]\",\n      \"options\": [\n        \"[Option A in source language]\",\n        \"[Option B in source language]\",\n        \"[Option C in source language]\",\n        \"[Option D in source language]\"\n      ],\n      \"correct_answer\": \"[Exact match from options - in source language]\",\n      \"explanation\": \"[1-2 sentence explanation in SAME language as source material]\"\n    }\n  ],\n  \"summary\": {\n    \"introduction\": \"[100-250 word introduction to the SPECIFIC topic in the SAME language as source material]\",\n    \"key_concepts\": \"[250-500 word explanation focusing on the MAIN NARRATIVE in the SAME language]\",\n    \"examples_and_applications\": \"[200-400 word section on understanding this historical topic in the SAME language]\",\n    \"summary_conclusion\": \"[100-250 word conclusion in the SAME language]\",\n    \"total_word_count\": [approximate word count],\n    \"language\": \"[ISO 639-1 code - e.g., 'fi' for Finnish, 'en' for English, 'sv' for Swedish]\"\n  }\n}\n\nSUMMARY REQUIREMENTS:\n- Write in the SAME language as the source material\n- Target audience: Grade 8 students\n- Total length: ~1000 words\n- Structure: 4 sections as specified in the JSON format\n- Educational tone: clear, pedagogical, age-appropriate\n- Focus on the SPECIFIC historical topic from the material (not generic history concepts)\n- Use proper formatting: **bold** for key terms, numbered lists where appropriate\n\nCRITICAL - LANGUAGE DETECTION:\n1. Examine the textbook images carefully\n2. Identify the source language (Finnish, Swedish, English, German, etc.)\n3. Generate ALL content in that detected language\n4. Match the language naturally - if the textbook is in Finnish, write in Finnish; if Swedish, write in Swedish, etc.\n\nQUALITY CHECKLIST (verify before finalizing):\n□ At least 60% of questions focus on main events, causes, or key figures\n□ Generic definition questions are < 20% of total\n□ All facts are present in the textbook\n□ All dates, names, events verified for accuracy\n□ Questions are natural and direct (no \"according to the material\" phrases)\n□ Questions are conversational and age-appropriate for elementary/middle school\n□ No references to images, pages, or visual elements\n□ Summary focuses on the specific historical topic\n□ ALL content is in the SAME language as the textbook\n□ Questions sound like something a teacher would naturally ask\n\nIMPORTANT:\n- The correct_answer field must contain the exact text from the options array\n- The summary must be in the SAME language as the questions and source material\n- Do not reference visual elements in the summary either\n\nBegin analysis and question generation now.",
+  "gemini_response": {
+    "questions": [
+      {
+        "id": 1,
+        "type": "multiple_choice",
+        "question": "Mikä sota käytiin Suomessa sisällissodan jälkeen?",
+        "options": [
+          "Talvisota",
+          "Jatkosota",
+          "Lapin sota",
+          "Sisällissota"
+        ],
+        "correct_answer": "Sisällissota",
+        "explanation": "Suomen sisällissota oli Suomessa käyty sisällissota vuonna 1918."
+      },
+      {
+        "id": 2,
+        "type": "multiple_choice",
+        "question": "Ketkä olivat vastakkain Suomen sisällissodassa?",
+        "options": [
+          "Punakaarti ja suojeluskunta",
+          "Saksa ja Neuvosto-Venäjä",
+          "Suomi ja Ruotsi",
+          "Venäjä ja Suomi"
+        ],
+        "correct_answer": "Punakaarti ja suojeluskunta",
+        "explanation": "Suomen sisällissodassa vastakkain olivat punakaarti ja suojeluskunta."
+      },
+      {
+        "id": 3,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'epäluottamus kansan rauhanomaiseen ratkaisuun' sisällissodan yhteydessä?",
+        "options": [
+          "Usko siihen, että sota voidaan välttää",
+          "Usko siihen, että rauha voidaan saavuttaa neuvotteluilla",
+          "Epäily siitä, että rauha voidaan saavuttaa ilman väkivaltaa",
+          "Usko siihen, että kansan enemmistö haluaa rauhaa"
+        ],
+        "correct_answer": "Epäily siitä, että rauha voidaan saavuttaa ilman väkivaltaa",
+        "explanation": "Epäluottamus kansan rauhanomaiseen ratkaisuun tarkoittaa epäilyä siitä, että rauha voidaan saavuttaa ilman väkivaltaa."
+      },
+      {
+        "id": 4,
+        "type": "multiple_choice",
+        "question": "Missä kaupungissa käytiin sisällissodan aikana merkittäviä taisteluita?",
+        "options": [
+          "Helsinki",
+          "Tampere",
+          "Turku",
+          "Oulu"
+        ],
+        "correct_answer": "Tampere",
+        "explanation": "Tampereella käytiin sisällissodan aikana merkittäviä taisteluita."
+      },
+      {
+        "id": 5,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'inflaatio'?",
+        "options": [
+          "Rahan arvon nousu",
+          "Rahan arvon lasku",
+          "Tavaroiden hintojen lasku",
+          "Työttömyyden lisääntyminen"
+        ],
+        "correct_answer": "Rahan arvon lasku",
+        "explanation": "Inflaatio tarkoittaa rahan arvon laskua."
+      },
+      {
+        "id": 6,
+        "type": "multiple_choice",
+        "question": "Mitä tapahtui Saksassa hyperinflaation aikana 1920-luvulla?",
+        "options": [
+          "Rahan arvo nousi huomattavasti",
+          "Rahan arvo laski erittäin nopeasti",
+          "Työttömyys väheni",
+          "Saksan talous vahvistui"
+        ],
+        "correct_answer": "Rahan arvo laski erittäin nopeasti",
+        "explanation": "Saksassa hyperinflaation aikana 1920-luvulla rahan arvo laski erittäin nopeasti."
+      },
+      {
+        "id": 7,
+        "type": "multiple_choice",
+        "question": "Mikä oli yksi syy siihen, että Yhdysvalloissa oli kieltolaki?",
+        "options": [
+          "Haluttiin lisätä alkoholin tuotantoa",
+          "Haluttiin vähentää rikollisuutta ja perheväkivaltaa",
+          "Haluttiin tukea viinantuottajia",
+          "Haluttiin lisätä valtion tuloja"
+        ],
+        "correct_answer": "Haluttiin vähentää rikollisuutta ja perheväkivaltaa",
+        "explanation": "Yksi syy kieltolakiin oli halu vähentää rikollisuutta ja perheväkivaltaa."
+      },
+      {
+        "id": 8,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'massatuotanto'?",
+        "options": [
+          "Pienien määrien tuotantoa",
+          "Tuotteiden valmistusta käsityönä",
+          "Suurten määrien tuotantoa koneilla",
+          "Tuotteiden valmistusta vain rikkaille"
+        ],
+        "correct_answer": "Suurten määrien tuotantoa koneilla",
+        "explanation": "Massatuotanto tarkoittaa suurten määrien tuotantoa koneilla."
+      },
+      {
+        "id": 9,
+        "type": "multiple_choice",
+        "question": "Mitä tapahtui Suomessa vuonna 1918?",
+        "options": [
+          "Suomi liittyi Euroopan unioniin",
+          "Suomessa käytiin sisällissota",
+          "Suomi itsenäistyi Venäjästä",
+          "Suomessa alkoi talvisota"
+        ],
+        "correct_answer": "Suomessa käytiin sisällissota",
+        "explanation": "Vuonna 1918 Suomessa käytiin sisällissota."
+      },
+      {
+        "id": 10,
+        "type": "multiple_choice",
+        "question": "Kuka oli R. Ståhlberg?",
+        "options": [
+          "Suomen marsalkka",
+          "Neuvosto-Venäjän johtaja",
+          "Ensimmäinen presidentti",
+          "Punakaartin johtaja"
+        ],
+        "correct_answer": "Ensimmäinen presidentti",
+        "explanation": "R. Ståhlberg oli Suomen ensimmäinen presidentti."
+      },
+      {
+        "id": 11,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'kieltolaki'?",
+        "options": [
+          "Laki, joka sallii alkoholin myynnin",
+          "Laki, joka kieltää alkoholin valmistuksen ja myynnin",
+          "Laki, joka säätelee alkoholin verotusta",
+          "Laki, joka edistää alkoholin vientiä"
+        ],
+        "correct_answer": "Laki, joka kieltää alkoholin valmistuksen ja myynnin",
+        "explanation": "Kieltolaki on laki, joka kieltää alkoholin valmistuksen ja myynnin."
+      },
+      {
+        "id": 12,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'oppivelvollisuus'?",
+        "options": [
+          "Oikeus käydä koulua",
+          "Velvollisuus käydä koulua",
+          "Mahdollisuus opiskella yliopistossa",
+          "Oikeus saada ilmaista kouluruokaa"
+        ],
+        "correct_answer": "Velvollisuus käydä koulua",
+        "explanation": "Oppivelvollisuus tarkoittaa velvollisuutta käydä koulua."
+      },
+      {
+        "id": 13,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'romani'?",
+        "options": [
+          "Suomen virallinen kieli",
+          "Suomen suurin kaupunki",
+          "Suomessa asuva vähemmistökansa",
+          "Suomen kansallislaulu"
+        ],
+        "correct_answer": "Suomessa asuva vähemmistökansa",
+        "explanation": "Romani on Suomessa asuva vähemmistökansa."
+      },
+      {
+        "id": 14,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'demokratia'?",
+        "options": [
+          "Yksinvalta",
+          "Kansanvalta",
+          "Sotilasvalta",
+          "Uskonnollinen valta"
+        ],
+        "correct_answer": "Kansanvalta",
+        "explanation": "Demokratia tarkoittaa kansanvaltaa."
+      },
+      {
+        "id": 15,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'hyperinflaatio'?",
+        "options": [
+          "Pieni inflaatio",
+          "Normaali inflaatio",
+          "Erittäin nopea ja hallitsematon inflaatio",
+          "Deflaatio"
+        ],
+        "correct_answer": "Erittäin nopea ja hallitsematon inflaatio",
+        "explanation": "Hyperinflaatio tarkoittaa erittäin nopeaa ja hallitsematonta inflaatiota."
+      }
+    ],
+    "summary": {
+      "introduction": "Tässä kokeessa tutustumme Suomen ja maailman historiaan ensimmäisen maailmansodan jälkeen. Käsittelemme Suomen sisällissotaa, 1920-luvun muutoksia Euroopassa ja Yhdysvalloissa sekä Suomen ensimmäisiä vuosikymmeniä itsenäisenä valtiona. Opimme, miten suuret tapahtumat vaikuttivat ihmisten elämään ja yhteiskuntaan.",
+      "key_concepts": "**Suomen sisällissota:** Vuonna 1918 Suomessa käytiin sisällissota, jossa vastakkain olivat punakaarti ja suojeluskunta. Sota johtui poliittisista ja sosiaalisista ristiriidoista. Sodan jälkeen Suomi alkoi rakentaa itsenäistä valtiota. \n\n**1920-luku Euroopassa:** Ensimmäisen maailmansodan jälkeen Euroopassa tapahtui suuria muutoksia. Saksassa oli hyperinflaatio, joka romahdutti talouden. Yhdysvallat nousi maailman johtavaksi talousmahdiksi. \n\n**Yhdysvallat 1920-luvulla:** Yhdysvalloissa oli kieltolaki, joka kielsi alkoholin valmistuksen ja myynnin. Samalla syntyi uusi kulttuuri, jossa jazz-musiikki ja Hollywood-elokuvat olivat suosittuja. Massatuotanto teki tuotteista halvempia ja helpommin saatavilla. \n\n**Suomen ensimmäiset vuosikymmenet:** Suomi itsenäistyi Venäjästä ja alkoi rakentaa omaa yhteiskuntaa. Maassa oli monia haasteita, kuten työttömyys ja köyhyys. Oppivelvollisuus laajennettiin koskemaan kaikkia lapsia.",
+      "examples_and_applications": "Kuvittele, että olet nuori ihminen 1920-luvun Suomessa. Sisällissota on jättänyt syvät arvet, ja maassa on paljon köyhyyttä. Monet ihmiset muuttavat kaupunkeihin töiden perässä. Samalla Suomi alkaa rakentaa omaa identiteettiään itsenäisenä valtiona. \n\nToinen esimerkki on 1920-luvun Yhdysvallat. Kieltolaki on voimassa, mutta salakapakoiden ja jazz-klubien suosio kasvaa. Ihmiset haluavat nauttia elämästä ja unohtaa sodan kauhut. Massatuotanto tekee autoista ja muista tuotteista yhä useamman ihmisen ulottuvilla.",
+      "summary_conclusion": "Tämä koe on antanut sinulle yleiskuvan Suomen ja maailman historiasta ensimmäisen maailmansodan jälkeen. Opimme, miten suuret tapahtumat vaikuttivat ihmisten elämään ja yhteiskuntaan. Muista, että historia on tärkeää, jotta voimme ymmärtää nykyisyyttä ja oppia menneisyydestä.",
+      "total_word_count": 1010,
+      "language": "fi"
+    }
+  },
+  "usage_metadata": {
+    "promptTokenCount": 4707,
+    "candidatesTokenCount": 2868,
+    "totalTokenCount": 7575,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 1611
+      },
+      {
+        "modality": "IMAGE",
+        "tokenCount": 3096
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 2868
+      }
+    ]
+  }
+}

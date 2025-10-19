@@ -1,0 +1,279 @@
+🔧 Loading environment from: /Users/joakimachren/Desktop/gemini-ocr/.env.local.staging
+[dotenv@17.2.2] injecting env (8) from .env.local.staging -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+✅ Connected to: https://tdrtybjaeugxhtcagluy.supabase.co
+🔑 Using: SERVICE_ROLE_KEY (write operations enabled)
+
+📊 Executing: SELECT * FROM examgenie_questions LIMIT 15
+
+✅ Found 15 record(s)
+
+━━━ Record 1 ━━━
+  id: 2a5f4ce7-1a76-40b2-a5b4-998fe1505596
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 7
+  question_text: Mitä tarkoittaa termi 'valkoinen terrori' Suomen sisällissodan yhteydessä?
+  question_type: multiple_choice
+  options: [
+      "Valkoisten harjoittamaa väkivaltaa ja kostotoimia",
+      "Ulkomaisten joukkojen harjoittamaa väkivaltaa",
+      "Siviilien väkivaltaa poliittisia vastustajia kohtaan",
+      "Punaisten harjoittamaa väkivaltaa ja kostotoimia"
+    ]
+  correct_answer: Valkoisten harjoittamaa väkivaltaa ja kostotoimia
+  explanation: Valkoinen terrori viittaa valkoisten harjoittamaan väkivaltaan ja kostotoimiin sisällissodan aikana.
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 2 ━━━
+  id: 38ec6067-7c76-411e-83f5-07a753c91133
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 14
+  question_text: Mitä materiaali kertoo "Suomen suuruuden aikakaudesta"?
+  question_type: multiple_choice
+  options: [
+      "Se viittaa Suomen liittymiseen Euroopan unioniin",
+      "Se viittaa Suomen itsenäisyyden alkuvuosiin ja sen vakiintumiseen",
+      "Se viittaa Suomen taloudelliseen romahdukseen",
+      "Se viittaa Suomen sotilaalliseen voittoon ensimmäisessä maailmansodassa"
+    ]
+  correct_answer: Se viittaa Suomen itsenäisyyden alkuvuosiin ja sen vakiintumiseen
+  explanation: Suomen suuruuden aika viittaa materiaalin mukaan Suomen itsenäisyyden alkuvuosiin ja maan vakiintumi... (126 chars)
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 3 ━━━
+  id: e4832abf-6e5e-4386-9d3b-1ec23d96a10d
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 3
+  question_text: Milloin Suomen sisällissota käytiin?
+  question_type: multiple_choice
+  options: [
+      "1919-1920",
+      "1920-1921",
+      "1918-1919",
+      "1917-1918"
+    ]
+  correct_answer: 1918-1919
+  explanation: Materiaalin mukaan Suomen sisällissota käytiin vuonna 1918, ja sen jälkiseuraukset jatkuivat vuoteen... (106 chars)
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 4 ━━━
+  id: d1347531-2036-4567-a13e-c82653a4d4d0
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 6
+  question_text: Mitä tarkoittaa termi 'punainen terrori' Suomen sisällissodan yhteydessä?
+  question_type: multiple_choice
+  options: [
+      "Siviilien väkivaltaa poliittisia vastustajia kohtaan",
+      "Ulkomaisten joukkojen harjoittamaa väkivaltaa",
+      "Punaisten harjoittamaa väkivaltaa ja kostotoimia",
+      "Valkoisten harjoittamaa väkivaltaa ja kostotoimia"
+    ]
+  correct_answer: Punaisten harjoittamaa väkivaltaa ja kostotoimia
+  explanation: Punainen terrori viittaa punaisten harjoittamaan väkivaltaan ja kostotoimiin sisällissodan aikana.
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 5 ━━━
+  id: 44a323f6-557d-4f4a-a2a0-8687ec57edf3
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 10
+  question_text: Mitä materiaali kertoo "Yhdyysvaltojen pörssiromahduksesta" vuonna 1929?
+  question_type: multiple_choice
+  options: [
+      "Se oli lyhytaikainen taloudellinen takaisku",
+      "Se johti maailmanlaajuiseen lamaan ja vaikutti myös Eurooppaan",
+      "Se ei vaikuttanut merkittävästi kansainväliseen talouteen",
+      "Se aloitti uuden nousukauden Yhdysvaltain taloudessa"
+    ]
+  correct_answer: Se johti maailmanlaajuiseen lamaan ja vaikutti myös Eurooppaan
+  explanation: Yhdysvaltain pörssiromahdus vuonna 1929 käynnisti suuren laman, joka levisi maailmanlaajuisesti ja v... (132 chars)
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 6 ━━━
+  id: d858019c-f339-4c40-b461-1c75508942e8
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 13
+  question_text: Mitä tarkoittaa "Neuvosto-Venäjän ja Suomen välinen "Tarton rauha"?
+  question_type: multiple_choice
+  options: [
+      "Sopimus, joka vahvisti Suomen ja Neuvosto-Venäjän väliset rajat ja rauhanehdot",
+      "Sopimus, joka liitti Suomen Neuvostoliittoon",
+      "Sopimus, joka koski maiden välistä sotilaallista yhteistyötä",
+      "Sopimus, joka päätti Suomen sisällissodan"
+    ]
+  correct_answer: Sopimus, joka vahvisti Suomen ja Neuvosto-Venäjän väliset rajat ja rauhanehdot
+  explanation: Tarton rauha vuonna 1920 oli sopimus Suomen ja Neuvosto-Venäjän välillä, joka vahvisti maiden välise... (123 chars)
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 7 ━━━
+  id: eb931035-40fc-4906-90f1-6b24c6225f22
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 1
+  question_text: Mikä oli Suomen sisällissodan pääasiallinen syy materiaalin mukaan?
+  question_type: multiple_choice
+  options: [
+      "Taloudelliset erimielisyydet punaisten ja valkoisten välillä",
+      "Poliittinen kiista Venäjän vallankumouksen seurauksena",
+      "Ulkomaisten joukkojen hyökkäys Suomeen",
+      "Kansainvälinen puuttuminen Suomen asioihin"
+    ]
+  correct_answer: Poliittinen kiista Venäjän vallankumouksen seurauksena
+  explanation: Materiaalin mukaan Suomen sisällissodan taustalla oli poliittinen kiista, joka liittyi Venäjän valla... (140 chars)
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 8 ━━━
+  id: e1a2bca4-c84e-4f51-b267-172f8f494c2a
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 2
+  question_text: Ketkä olivat Suomen sisällissodan pääosapuolet?
+  question_type: multiple_choice
+  options: [
+      "Tasavaltalaiset ja monarkistit",
+      "Punaiset ja siniset",
+      "Kansallismieliset ja sosialistit",
+      "Valkoiset ja punaiset"
+    ]
+  correct_answer: Valkoiset ja punaiset
+  explanation: Suomen sisällissodan pääosapuolet olivat valkoiset, joita johti C.G.E. Mannerheim, ja punaiset, joit... (124 chars)
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 9 ━━━
+  id: 3e79f6d7-0734-4a0e-806e-6f5b1a233af0
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 4
+  question_text: Kuka oli valkoisten joukkojen ylipäällikkö Suomen sisällissodassa?
+  question_type: multiple_choice
+  options: [
+      "P.E. Svinhufvud",
+      "C.G.E. Mannerheim",
+      "Kullervo Manner",
+      "V.V. Viita"
+    ]
+  correct_answer: C.G.E. Mannerheim
+  explanation: C.G.E. Mannerheim toimi valkoisten joukkojen ylipäällikkönä Suomen sisällissodassa.
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 10 ━━━
+  id: c5d2367d-e6f7-40ac-b729-6c169d1cef8a
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 5
+  question_text: Mitä tapahtui Neuvosto-Venäjällä vuonna 1917?
+  question_type: multiple_choice
+  options: [
+      "Venäjä liittyi ensimmäiseen maailmansotaan",
+      "Venäjällä tapahtui vallankumous",
+      "Venäjä jakautui useisiin pienempiin valtioihin",
+      "Venäjä julistautui itsenäiseksi"
+    ]
+  correct_answer: Venäjällä tapahtui vallankumous
+  explanation: Materiaalin mukaan Neuvosto-Venäjällä tapahtui vallankumous vuonna 1917, mikä vaikutti merkittävästi... (121 chars)
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 11 ━━━
+  id: 1c6f691e-2541-4f42-883f-3505001f0139
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 8
+  question_text: Mitä materiaali kertoo Suomen sisällissodan seurauksista?
+  question_type: multiple_choice
+  options: [
+      "Se aiheutti pitkäaikaisen ulkomaiden miehityksen",
+      "Se johti Suomen nopeaan taloudelliseen kasvuun",
+      "Se vahvisti Suomen itsenäisyyttä ja johti uudenlaiseen yhteiskuntaan",
+      "Se johti Suomen liittymiseen Neuvostoliittoon"
+    ]
+  correct_answer: Se vahvisti Suomen itsenäisyyttä ja johti uudenlaiseen yhteiskuntaan
+  explanation: Sisällissota vahvisti Suomen itsenäisyyttä ja johti uudenlaisen yhteiskunnan rakentamiseen, vaikka s... (140 chars)
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 12 ━━━
+  id: 377b821e-e0e8-4ddc-b023-3fd86091e133
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 9
+  question_text: Mitä oli "Saksan hyperinflaatio" vuonna 1923?
+  question_type: multiple_choice
+  options: [
+      "Saksan valuutan arvon raju lasku ja hintojen nousu",
+      "Saksan liittyminen uuteen talousliittoon",
+      "Saksan talouden nopea kasvu ensimmäisen maailmansodan jälkeen",
+      "Saksan sotakorvausten maksamisen aloittaminen"
+    ]
+  correct_answer: Saksan valuutan arvon raju lasku ja hintojen nousu
+  explanation: Saksan hyperinflaatio vuonna 1923 tarkoitti Saksan markan arvon romahtamista ja hintojen nopeaa nous... (150 chars)
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 13 ━━━
+  id: 6e65e8ac-1cd1-4906-8c7f-2d3d94a31047
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 11
+  question_text: Mitä tarkoittaa "jazz-aika" tai "jazz-kulttuuri" materiaalin yhteydessä?
+  question_type: multiple_choice
+  options: [
+      "Aikakausi, jolloin jazzmusiikki oli vain harvojen suosiossa",
+      "Aikakausi, jolloin jazzmusiikki ja uudet elokuvat olivat suosittuja ja kuvastivat modernia aikaa",
+      "Aikakausi, jolloin jazzmusiikki oli kiellettyä",
+      "Aikakausi, jolloin jazzmusiikki oli vain Yhdysvalloissa tunnettua"
+    ]
+  correct_answer: Aikakausi, jolloin jazzmusiikki ja uudet elokuvat olivat suosittuja ja kuvastivat modernia aikaa
+  explanation: Jazz-aika viittaa 1920-luvun ilmiöihin, kuten jazzmusiikin ja elokuvien suosioon, jotka kuvastivat u... (126 chars)
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 14 ━━━
+  id: 69eb4218-a7af-4374-8c6a-ba2673949235
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 12
+  question_text: Mitä materiaali kertoo naisten äänioikeuden kehityksestä Suomessa?
+  question_type: multiple_choice
+  options: [
+      "Naiset saivat äänioikeuden vasta 1930-luvulla",
+      "Naiset saivat äänioikeuden vasta ensimmäisen maailmansodan jälkeen",
+      "Suomi oli yksi ensimmäisistä maista, jotka myönsivät naisille täyden äänioikeuden",
+      "Naiset saivat äänioikeuden vasta 1950-luvulla"
+    ]
+  correct_answer: Suomi oli yksi ensimmäisistä maista, jotka myönsivät naisille täyden äänioikeuden
+  explanation: Materiaalin mukaan Suomi oli edelläkävijä naisten äänioikeuden myöntämisessä, antaen täyden äänioike... (120 chars)
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+
+━━━ Record 15 ━━━
+  id: baadea6e-1585-4092-a01d-823d435c3c03
+  exam_id: 7b57119c-cb44-42b4-b339-9340603a0b47
+  question_number: 15
+  question_text: Mitä materiaali kertoo "Vaurastumisen ja puutteen Yhdysvalloissa"?
+  question_type: multiple_choice
+  options: [
+      "Se kuvaa Yhdysvaltain poliittista epävakautta",
+      "Se kuvaa Yhdysvaltain taloudellista taantumaa ja sen vaikutusta kulttuuriin",
+      "Se kuvaa Yhdysvaltain taloudellista nousua ja sen vaikutusta kulttuuriin",
+      "Se kuvaa Yhdysvaltain sotilaallista ylivaltaa"
+    ]
+  correct_answer: Se kuvaa Yhdysvaltain taloudellista nousua ja sen vaikutusta kulttuuriin
+  explanation: Luku "Vaurastumisen ja puutteen Yhdysvalloissa" käsittelee Yhdysvaltain taloudellista nousua 1920-lu... (157 chars)
+  max_points: 2
+  is_selected: true
+  created_at: 2025-10-18T14:39:22.993964+00:00
+

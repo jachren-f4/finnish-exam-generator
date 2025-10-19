@@ -1,0 +1,232 @@
+
+> gemini-ocr@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.0.3
+   - Local:        http://localhost:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1658ms
+ ○ Compiling /api/mobile/exam-questions ...
+ ✓ Compiled /api/mobile/exam-questions in 3.1s (898 modules)
+⏱️  [TIMER] ExamGenie Mobile API Processing started at 2025-10-18T13:59:06.905Z
+ POST /api/mobile/exam-questions 400 in 3332ms
+⏱️  [TIMER] ExamGenie Mobile API Processing started at 2025-10-18T13:59:23.088Z
+[RateLimiter] Initialized with limits: 10/hour, 50/day
+[RateLimit] User test-local-user - Remaining: 9/10
+[Auth] JWT provided: false, Source: body
+=== IMAGE VALIDATION START ===
+=== IMAGE VALIDATION PASSED ===
+=== MOBILE API REQUEST DETAILS ===
+Processing ID: 72c1aee0-7990-44fa-9bdf-33a127be7418
+Image count: 1
+Category: not specified
+Subject: Historia
+Grade: 5
+User ID (final): test-local-user
+User ID (from JWT): not provided
+User ID (from body): test-local-user
+Auth Method: Body
+Language: en
+Client IP: ::1
+User Agent: curl/8.7.1
+=== END REQUEST DETAILS ===
+⏱️  [TIMER] ExamGenie Mobile API Processing started at 2025-10-18T13:59:23.093Z
+=== EXAMGENIE MOBILE API ENDPOINT CALLED ===
+Processing ID: 72c1aee0-7990-44fa-9bdf-33a127be7418
+Category: not specified
+Subject: Historia
+Grade: 5
+User ID: test-local-user
+Language: en
+⏱️  [TIMER] Starting File Processing
+Processing 1 images:
+  - Total size: 812.2 KB
+  - Average size: 812.2 KB
+  - MIME types: image/jpeg(1)
+  Image 1: sivu12.jpeg (812.2 KB)
+⏱️  [TIMER] File Processing completed: 2ms
+Using prompt type: HISTORY(subject-Historia, grade-5)
+=== FULL PROMPT SENT TO GEMINI ===
+Create a history exam for grade 5 students based on educational material.
+
+🎯 PRIMARY OBJECTIVE: Test understanding of the SPECIFIC historical content shown in the material.
+
+⚠️ CRITICAL LANGUAGE REQUIREMENT:
+- Use the SAME language as the source material
+- Auto-detect the language from the textbook images
+- ALL questions, options, explanations, and summary MUST be in the detected language
+- Do NOT default to English if material is in another language (Finnish, Swedish, German, etc.)
+
+CRITICAL RULES:
+1. ✅ Questions MUST focus on the MAIN TOPICS and EVENTS described in the material
+2. ✅ Questions MUST test comprehension of the SPECIFIC narrative/story presented
+3. ✅ Questions MUST be factually accurate (verify dates, names, events)
+4. ❌ AVOID generic vocabulary/definition questions unless the term is central to understanding the topic
+5. ❌ NEVER include facts not present in the source material
+6. ❌ NEVER make assumptions about content not shown
+
+CONTENT ANALYSIS FIRST:
+Before generating questions, analyze the material:
+- What is the main historical event/period/concept?
+- What is the central narrative or story?
+- Who are the main people/groups involved?
+- What happened (chronological events)?
+- When did it happen (dates/periods)?
+- Why did it happen (causes)?
+- What were the results/consequences?
+
+QUESTION PRIORITY (focus on these in order):
+1. **Main Events** (40%): What happened? Chronology, key turning points
+2. **Causes & Consequences** (30%): Why did it happen? What resulted?
+3. **Key Figures & Groups** (20%): Who was involved? What roles did they play?
+4. **Context & Terms** (10%): Supporting vocabulary ONLY if central to understanding
+
+FORBIDDEN QUESTION TYPES:
+❌ Generic definitions not tied to the specific topic (e.g., "What is democracy?")
+❌ Questions about concepts mentioned only briefly
+❌ Historical facts NOT present in the material
+❌ "Which of these is true?" questions without clear focus
+❌ Questions requiring outside knowledge beyond the material
+❌ References to visual elements (images, graphs, diagrams, page numbers)
+
+GOOD QUESTION EXAMPLES:
+✅ "What were the main causes of [the event] according to the material?"
+✅ "Which groups/people were involved in [the event]?"
+✅ "When did [the event] take place?"
+✅ "What was the outcome of [the event]?"
+✅ "Why did [cause] lead to [consequence]?"
+✅ "How did [person/group] contribute to [event]?"
+
+BAD QUESTION EXAMPLES:
+❌ "What does 'democracy' mean?" (too generic unless central to the narrative)
+❌ "What is a political system?" (generic definition)
+❌ "What is international cooperation?" (not about the main topic)
+❌ "What is the capital of [country]?" (random fact, not from material)
+
+FACTUAL ACCURACY REQUIREMENTS:
+Before finalizing EACH question:
+□ Verify dates are correct
+□ Verify names are spelled correctly
+□ Verify cause-effect relationships are accurate
+□ Verify the fact appears in the source material
+□ If uncertain about ANY fact, SKIP that question
+□ If material doesn't clearly state something, DON'T ask about it
+
+CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
+
+Generate exactly 15 questions following this JSON format:
+
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "[Question about SPECIFIC content - in SAME language as source material]",
+      "options": [
+        "[Option A in source language]",
+        "[Option B in source language]",
+        "[Option C in source language]",
+        "[Option D in source language]"
+      ],
+      "correct_answer": "[Exact match from options - in source language]",
+      "explanation": "[1-2 sentence explanation in SAME language as source material]"
+    }
+  ],
+  "summary": {
+    "introduction": "[100-250 word introduction to the SPECIFIC topic in the SAME language as source material]",
+    "key_concepts": "[250-500 word explanation focusing on the MAIN NARRATIVE in the SAME language]",
+    "examples_and_applications": "[200-400 word section on understanding this historical topic in the SAME language]",
+    "summary_conclusion": "[100-250 word conclusion in the SAME language]",
+    "total_word_count": [approximate word count],
+    "language": "[ISO 639-1 code - e.g., 'fi' for Finnish, 'en' for English, 'sv' for Swedish]"
+  }
+}
+
+SUMMARY REQUIREMENTS:
+- Write in the SAME language as the source material
+- Target audience: Grade 5 students
+- Total length: ~1000 words
+- Structure: 4 sections as specified in the JSON format
+- Educational tone: clear, pedagogical, age-appropriate
+- Focus on the SPECIFIC historical topic from the material (not generic history concepts)
+- Use proper formatting: **bold** for key terms, numbered lists where appropriate
+
+CRITICAL - LANGUAGE DETECTION:
+1. Examine the textbook images carefully
+2. Identify the source language (Finnish, Swedish, English, German, etc.)
+3. Generate ALL content in that detected language
+4. Common patterns to help detect:
+   - Finnish: "Suomen sisällissota", "vuonna", "punaisten", "valkoisten"
+   - Swedish: "finska inbördeskriget", "år", "röda", "vita"
+   - English: "civil war", "year", "reds", "whites"
+   - German: "Bürgerkrieg", "Jahr", "Roten", "Weißen"
+
+QUALITY CHECKLIST (verify before finalizing):
+□ At least 60% of questions focus on main events, causes, or key figures
+□ Generic definition questions are < 20% of total
+□ All facts are present in the source material
+□ All dates, names, events verified for accuracy
+□ Questions follow logical progression through the topic
+□ No references to images, pages, or visual elements
+□ Summary focuses on the specific topic (not generic history concepts)
+□ ALL questions are in the SAME language as the source material
+□ ALL options are in the SAME language as the source material
+□ ALL explanations are in the SAME language as the source material
+□ Summary sections are in the SAME language as the source material
+
+IMPORTANT:
+- The correct_answer field must contain the exact text from the options array
+- The summary must be in the SAME language as the questions and source material
+- Do not reference visual elements in the summary either
+
+Begin analysis and question generation now.
+=== END PROMPT ===
+Prompt length: 6152 characters
+Starting Gemini processing...
+⏱️  [TIMER] Gemini processing started with prompt length: 6152 chars
+⏱️  [TIMER] Gemini processing completed: 158782ms
+⏱️  [TIMER] Gemini tokens - Input: 1751, Output: 65536, Cost: $0.026389
+=== ATTEMPTING TO CREATE EXAMGENIE EXAM ===
+Raw text length: 208148
+Raw text preview: ```json
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Mitä tapahtui pian Suomen itsenäistymisen jälkeen?",
+      "options": [
+        "Suomeen perustettii
+⏱️  [TIMER] Starting ExamGenie Exam Creation
+💾 Saved repaired JSON to debug-repaired.txt for inspection
+Failed to parse Gemini JSON response: Failed to parse JSON after trying all strategies. Original text length: 208148
+Parse method attempted: failed
+Response preview: ```json
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Mitä tapahtui pian Suomen itsenäistymisen jälkeen?",
+      "options": [
+        "Suomeen perustettiin uusi kuningaskunta.",
+        "Suomessa syttyi sisällissota.",
+        "Suomi liittyi osaksi Venäjää.",
+        "Suomi julistautui osaksi Ruotsia."
+      ],
+      "correct_answer": "Suomessa syttyi sisällissota.",
+      "explanation": "Tekstin mukaan pian Suomen itsenäistymisen jälkeen Suomessa sy
+⏱️  [TIMER] Starting File Cleanup
+Cleaned up 1 files
+⏱️  [TIMER] File Cleanup completed: 1ms
+⏱️  [TIMER] === EXAMGENIE MOBILE API PROCESSING COMPLETED: 158791ms ===
+⏱️  [TIMER] Performance breakdown:
+⏱️  [TIMER] - File Processing: 2ms (0%)
+⏱️  [TIMER] - File Cleanup: 1ms (0%)
+⏱️  [TIMER] Metadata: imageCount: 1, promptType: default, geminiProcessingTime: 158782, examCreated: false
+[RequestLogger] Initialized (enabled: true)
+ POST /api/mobile/exam-questions 200 in 158813ms
+[RequestLogger] Failed to insert log: Invalid API key
+[?25h

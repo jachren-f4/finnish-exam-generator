@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Scanning for secrets before commit..."
+
+# Run gitleaks to detect secrets
+if command -v gitleaks &> /dev/null; then
+  gitleaks protect --staged --verbose
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ SECRET DETECTED! Commit blocked."
+    echo "🔒 Gitleaks found potential secrets in your staged files."
+    echo ""
+    echo "Next steps:"
+    echo "  1. Review the output above to identify the secret"
+    echo "  2. Remove the secret from your code"
+    echo "  3. Use environment variables instead (process.env.KEY_NAME)"
+    echo "  4. If this is a false positive, add to .gitleaksignore"
+    echo ""
+    exit 1
+  fi
+  echo "✅ No secrets detected. Proceeding with commit."
+else
+  echo "⚠️  WARNING: gitleaks not installed - secret scanning skipped!"
+  echo "   Install gitleaks: https://github.com/gitleaks/gitleaks#installing"
+  echo ""
+  echo "   macOS: brew install gitleaks"
+  echo "   Linux: Download from releases"
+  echo "   Windows: Download from releases or use WSL"
+  echo ""
+  echo "   Proceeding with commit (CI will still scan)..."
+fi
