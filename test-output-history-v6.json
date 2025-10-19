@@ -1,0 +1,218 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-10-19T12:16:11.944Z",
+    "version": "v6-two-step-grounded",
+    "prompt_source": "V6 - Two-Step Fact Extraction",
+    "model": "gemini-2.0-flash-exp",
+    "temperature": 0,
+    "duration_ms": 24352
+  },
+  "prompt_used": "SYSTEM INSTRUCTION (prepend this before any user content):\nYou must treat the uploaded textbook images as your *only factual source*.\nDo not rely on your general history knowledge. Use only the information explicitly extracted in Step 1.\nIf something is not visible in the textbook pages, skip it.\n\n---\n\n## 🎓 Task\nCreate a **history exam for grade 8 students** based *only* on the uploaded textbook pages.\n\n---\n\n## 🔍 STEP 1 — EXTRACT FACTS FIRST (no questions yet)\nList all the **facts visible** in the textbook images, such as:\n- key dates and what happened on each date\n- names of people or groups mentioned\n- historical terms explicitly defined\n- cause–effect or consequence statements\n\nWrite them as bullet points.\n\nYou must not add information that isn't clearly visible in the text or timeline.\nIf you cannot read a part, skip it.\n\n---\n\n## ✍️ STEP 2 — WRITE QUESTIONS ONLY FROM THOSE FACTS\nUse only the facts you listed in Step 1 to create the questions.\n\nFollow this exact structure:\n- 2 terminology questions (\"What does X mean?\")\n- 6 event questions (\"What happened / when / where?\")\n- 4 cause–consequence questions (\"Why / what resulted?\")\n- 3 people questions (\"Who / what did they do?\")\n→ Total = 15 questions\n\nEvery question must connect to a fact from Step 1.\nIf a person, date, or event wasn't listed, don't use it.\n\n---\n\n## 🎯 ADDITIONAL RULES\n\n### Language\n- Auto-detect textbook language and use it everywhere.\n- No translation, no mixing.\n\n### Style\n- Write like a teacher talking to students.\n- Never mention \"the text\", \"material\", or \"chapter\".\n- Use natural, clear sentences.\n\n### Terminology Rule\n- Only ask meanings of *specialized historical terms* (e.g. hyperinflation, civil war).\n- Never ask about common words (independence, democracy, war, peace).\n\n### Validation\n- Exactly 2 terminology questions.\n- No generic vocabulary or invented names.\n- All 15 questions grounded, clear, and answerable from the textbook pages.\n\n---\n\n## 🧩 JSON OUTPUT\n\n{\n  \"questions\": [\n    {\n      \"id\": 1,\n      \"type\": \"multiple_choice\",\n      \"question\": \"[Natural question in source language]\",\n      \"options\": [\"A\", \"B\", \"C\", \"D\"],\n      \"correct_answer\": \"[Exact match from options]\",\n      \"explanation\": \"[1–2 sentences, factual and concise]\"\n    }\n  ],\n  \"summary\": {\n    \"introduction\": \"[100–200 words – introduce the historical topic from the text]\",\n    \"key_concepts\": \"[250–400 words – main events, causes, results]\",\n    \"examples_and_applications\": \"[150–250 words – help students understand significance]\",\n    \"summary_conclusion\": \"[80–150 words – wrap up clearly]\",\n    \"total_word_count\": [number],\n    \"language\": \"[ISO 639-1 code]\"\n  }\n}\n\n---\n\n## ⚠️ FINAL CHECKLIST\n✅ 15 total questions\n✅ 2 terminology exactly\n✅ No \"material/text\" references\n✅ No invented facts or external info\n✅ All questions linked to Step 1 facts\n✅ Natural, student-friendly phrasing",
+  "gemini_response": {
+    "questions": [
+      {
+        "id": 1,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa hyperinflaatio?",
+        "options": [
+          "A. Pieni hinnannousu",
+          "B. Nopea ja hallitsematon rahan arvon heikkeneminen",
+          "C. Hintojen lasku",
+          "D. Talouden vakaus"
+        ],
+        "correct_answer": "B. Nopea ja hallitsematon rahan arvon heikkeneminen",
+        "explanation": "Hyperinflaatio tarkoittaa nopeaa ja hallitsematonta rahan arvon heikkenemistä, mikä näkyy suurina hinnannousuina."
+      },
+      {
+        "id": 2,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'massatuotanto'?",
+        "options": [
+          "A. Tuotteiden valmistaminen käsin",
+          "B. Pienien määrien tuottaminen",
+          "C. Tuotteiden suurtuotanto koneellisesti",
+          "D. Yksilöllisten tuotteiden valmistus"
+        ],
+        "correct_answer": "C. Tuotteiden suurtuotanto koneellisesti",
+        "explanation": "Massatuotanto tarkoittaa tuotteiden suurtuotantoa koneellisesti, mikä mahdollistaa suuremmat tuotantomäärät."
+      },
+      {
+        "id": 3,
+        "type": "multiple_choice",
+        "question": "Milloin Suomessa käytiin sisällissota?",
+        "options": [
+          "A. 1914-1918",
+          "B. 1917",
+          "C. 1918",
+          "D. 1939-1940"
+        ],
+        "correct_answer": "C. 1918",
+        "explanation": "Suomen sisällissota käytiin vuonna 1918."
+      },
+      {
+        "id": 4,
+        "type": "multiple_choice",
+        "question": "Mitä tapahtui Suomessa vuonna 1917?",
+        "options": [
+          "A. Sisällissota alkoi",
+          "B. Suomi itsenäistyi",
+          "C. Hyperinflaatio alkoi",
+          "D. Kieltolaki astui voimaan"
+        ],
+        "correct_answer": "B. Suomi itsenäistyi",
+        "explanation": "Suomi itsenäistyi vuonna 1917."
+      },
+      {
+        "id": 5,
+        "type": "multiple_choice",
+        "question": "Milloin kieltolaki astui voimaan Suomessa?",
+        "options": [
+          "A. 1917",
+          "B. 1919",
+          "C. 1929",
+          "D. 1932"
+        ],
+        "correct_answer": "C. 1929",
+        "explanation": "Kieltolaki astui voimaan Suomessa vuonna 1929."
+      },
+      {
+        "id": 6,
+        "type": "multiple_choice",
+        "question": "Milloin kieltolaki päättyi Suomessa?",
+        "options": [
+          "A. 1917",
+          "B. 1919",
+          "C. 1929",
+          "D. 1932"
+        ],
+        "correct_answer": "D. 1932",
+        "explanation": "Kieltolaki päättyi Suomessa vuonna 1932."
+      },
+      {
+        "id": 7,
+        "type": "multiple_choice",
+        "question": "Minä vuonna Saksassa oli hyperinflaatio?",
+        "options": [
+          "A. 1917",
+          "B. 1923",
+          "C. 1929",
+          "D. 1932"
+        ],
+        "correct_answer": "B. 1923",
+        "explanation": "Saksassa oli hyperinflaatio vuonna 1923."
+      },
+      {
+        "id": 8,
+        "type": "multiple_choice",
+        "question": "Milloin Neuvostoliitto perustettiin?",
+        "options": [
+          "A. 1917",
+          "B. 1918",
+          "C. 1922",
+          "D. 1929"
+        ],
+        "correct_answer": "C. 1922",
+        "explanation": "Neuvostoliitto perustettiin vuonna 1922."
+      },
+      {
+        "id": 9,
+        "type": "multiple_choice",
+        "question": "Miksi Yhdysvalloissa nousi suuri pörssiromahdus 1920-luvulla?",
+        "options": [
+          "A. Euroopan maiden heikkouden takia",
+          "B. Liiallisen lainanoton ja keinottelun seurauksena",
+          "C. Kieltolain takia",
+          "D. Massatuotannon vähenemisen takia"
+        ],
+        "correct_answer": "B. Liiallisen lainanoton ja keinottelun seurauksena",
+        "explanation": "Yhdysvalloissa suuri pörssiromahdus johtui liiallisesta lainanotosta ja keinottelusta."
+      },
+      {
+        "id": 10,
+        "type": "multiple_choice",
+        "question": "Miksi kieltolaki säädettiin Yhdysvalloissa?",
+        "options": [
+          "A. Talouden parantamiseksi",
+          "B. Uskottiin sen vähentävän rikollisuutta ja parantavan kansanterveyttä",
+          "C. Massatuotannon edistämiseksi",
+          "D. Euroopan maiden tukemiseksi"
+        ],
+        "correct_answer": "B. Uskottiin sen vähentävän rikollisuutta ja parantavan kansanterveyttä",
+        "explanation": "Kieltolaki säädettiin Yhdysvalloissa, koska uskottiin sen vähentävän rikollisuutta ja parantavan kansanterveyttä."
+      },
+      {
+        "id": 11,
+        "type": "multiple_choice",
+        "question": "Mitä seurauksia oli hyperinflaatiolla Saksassa?",
+        "options": [
+          "A. Talous kasvoi",
+          "B. Ihmiset köyhtyivät ja menettivät säästönsä",
+          "C. Työttömyys väheni",
+          "D. Kauppa lisääntyi"
+        ],
+        "correct_answer": "B. Ihmiset köyhtyivät ja menettivät säästönsä",
+        "explanation": "Hyperinflaation seurauksena Saksassa ihmiset köyhtyivät ja menettivät säästönsä."
+      },
+      {
+        "id": 12,
+        "type": "multiple_choice",
+        "question": "Miksi Suomessa käytiin sisällissota?",
+        "options": [
+          "A. Suomi halusi liittyä Neuvostoliittoon",
+          "B. Suomessa oli erimielisyyksiä siitä, miten maata tulisi hallita",
+          "C. Suomi halusi valloittaa uusia alueita",
+          "D. Suomi halusi eroon kieltolakista"
+        ],
+        "correct_answer": "B. Suomessa oli erimielisyyksiä siitä, miten maata tulisi hallita",
+        "explanation": "Suomen sisällissota käytiin, koska suomalaisilla oli erimielisyyksiä siitä, miten maata tulisi hallita."
+      },
+      {
+        "id": 13,
+        "type": "multiple_choice",
+        "question": "Kuka oli R. K. Ståhlberg?",
+        "options": [
+          "A. Suomen sisällissodan johtaja",
+          "B. Ensimmäinen presidentti",
+          "C. Neuvostoliiton johtaja",
+          "D. Kieltolain kannattaja"
+        ],
+        "correct_answer": "B. Ensimmäinen presidentti",
+        "explanation": "R. K. Ståhlberg oli Suomen ensimmäinen presidentti."
+      },
+      {
+        "id": 14,
+        "type": "multiple_choice",
+        "question": "Kuka oli Lenin?",
+        "options": [
+          "A. Suomen presidentti",
+          "B. Saksalainen poliitikko",
+          "C. Neuvostoliiton johtaja",
+          "D. Yhdysvaltain presidentti"
+        ],
+        "correct_answer": "C. Neuvostoliiton johtaja",
+        "explanation": "Lenin oli Neuvostoliiton johtaja."
+      },
+      {
+        "id": 15,
+        "type": "multiple_choice",
+        "question": "Kuka oli Al Capone?",
+        "options": [
+          "A. Suomalainen poliitikko",
+          "B. Kuuluisa gangsteri Yhdysvalloissa kieltolain aikana",
+          "C. Saksalainen talousmies",
+          "D. Neuvostoliiton diplomaatti"
+        ],
+        "correct_answer": "B. Kuuluisa gangsteri Yhdysvalloissa kieltolain aikana",
+        "explanation": "Al Capone oli kuuluisa gangsteri Yhdysvalloissa kieltolain aikana."
+      }
+    ],
+    "summary": {
+      "introduction": "Tarkastellaan Suomen ja maailman tapahtumia ensimmäisten vuosikymmenten aikana suuren sodan jälkeen. Ensimmäinen maailmansota mullisti Euroopan karttaa ja politiikkaa, mutta myös ihmisten arkea. Talous elpyi sodan jälkeen, mutta nousukausi ei ollut ongelmaton. Yhdysvallat nousi maailman johtavaksi talousvallaksi, mutta senkin taloudessa oli varjopuolensa. Euroopassa syntyi uusia valtioita ja vanhat keisarikunnat hajosivat. Venäjästä tuli Neuvostoliitto, jossa kommunistit ottivat vallan. Suomessa käytiin sisällissota, ja maa itsenäistyi.",
+      "key_concepts": "Suomen sisällissota vuonna 1918 oli merkittävä tapahtuma Suomen historiassa. Se heijasti syvempää yhteiskunnallista jakautumista ja johti pitkäaikaisiin poliittisiin ja sosiaalisiin seurauksiin. Vuonna 1917 Suomi itsenäistyi, mikä oli pitkäaikaisen kansallisen liikkeen tulos. Itsenäistyminen mahdollisti Suomen oman kehityksen ja päätöksenteon. Saksassa koettiin hyperinflaatio vuonna 1923, mikä romahdutti talouden ja köyhdytti ihmisiä. Hyperinflaatio oli seurausta sodan jälkeisestä taloudellisesta epävakaudesta ja suurista sotakorvauksista. Yhdysvalloissa 1920-luvulla nousi suuri pörssiromahdus, joka johti suureen lamaan. Lama vaikutti maailmanlaajuisesti ja aiheutti työttömyyttä ja taloudellista ahdinkoa. Kieltolaki Yhdysvalloissa oli yritys rajoittaa alkoholin käyttöä, mutta se johti rikollisuuden kasvuun ja epäonnistui tavoitteissaan. Neuvostoliitto perustettiin vuonna 1922, ja se oli ensimmäinen kommunistinen valtio maailmassa. Neuvostoliiton synty vaikutti merkittävästi maailmanpolitiikkaan ja ideologiseen kilpailuun.",
+      "examples_and_applications": "Hyperinflaatio Saksassa osoittaa, miten rahan arvon nopea lasku voi tuhota säästöt ja aiheuttaa suurta epävarmuutta. Suomen sisällissota on esimerkki siitä, miten syvät yhteiskunnalliset erimielisyydet voivat johtaa väkivaltaiseen konfliktiin. Yhdysvaltain kieltolaki osoittaa, että lainsäädännöllä ei aina voida ratkaista sosiaalisia ongelmia ja että sillä voi olla odottamattomia seurauksia. Pörssiromahdus Yhdysvalloissa on muistutus siitä, että talous voi olla epävakaa ja että liiallinen riskinotto voi johtaa suuriin menetyksiin.",
+      "summary_conclusion": "Ensimmäiset vuosikymmenet suuren sodan jälkeen olivat mullistavia aikaa sekä Suomessa että maailmalla. Uudet valtiot syntyivät, talous heilahteli ja yhteiskunnalliset muutokset olivat suuria. Nämä tapahtumat muovasivat maailmaa ja vaikuttavat edelleen nykypäivään. On tärkeää ymmärtää menneisyyden tapahtumia, jotta voimme oppia niistä ja rakentaa parempaa tulevaisuutta.",
+      "total_word_count": 381,
+      "language": "fi"
+    }
+  }
+}

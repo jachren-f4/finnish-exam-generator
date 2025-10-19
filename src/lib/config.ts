@@ -536,8 +536,8 @@ Begin generating the pedagogically sound exam now.`
   getHistoryPrompt: (grade?: number, language: string = 'en'): string => {
     return `SYSTEM INSTRUCTION (prepend this before any user content):
 You must treat the uploaded textbook images as your *only factual source*.
-Use only facts visible in those images. Do not invent, guess, or rely on external knowledge.
-If something is missing, omit it. All output must be consistent with the textbook only.
+Do not rely on your general history knowledge. Use only the information explicitly extracted in Step 1.
+If something is not visible in the textbook pages, skip it.
 
 ---
 
@@ -546,46 +546,54 @@ Create a **history exam for grade ${grade || 8} students** based *only* on the u
 
 ---
 
-## 🎯 RULES
+## 🔍 STEP 1 — EXTRACT FACTS FIRST (no questions yet)
+List all the **facts visible** in the textbook images, such as:
+- key dates and what happened on each date
+- names of people or groups mentioned
+- historical terms explicitly defined
+- cause–effect or consequence statements
 
-### 1️⃣ Question Counts (exact)
+Write them as bullet points.
+
+You must not add information that isn't clearly visible in the text or timeline.
+If you cannot read a part, skip it.
+
+---
+
+## ✍️ STEP 2 — WRITE QUESTIONS ONLY FROM THOSE FACTS
+Use only the facts you listed in Step 1 to create the questions.
+
+Follow this exact structure:
 - 2 terminology questions ("What does X mean?")
-- 6 event questions ("What happened? When? Where?")
-- 4 cause/consequence questions ("Why? What resulted?")
-- 3 people questions ("Who? What did they do?")
+- 6 event questions ("What happened / when / where?")
+- 4 cause–consequence questions ("Why / what resulted?")
+- 3 people questions ("Who / what did they do?")
 → Total = 15 questions
 
-### 🔒 VISUAL CONFIRMATION RULE
-- Only use names, dates, or events that you see in the textbook images.
-- If a fact is true in history but not visible, do not include it.
-- Example: If the page shows "Finland became independent in 1917" but does not name a president, you cannot ask who was president in 1918.
-- Example: If the page shows "Herbert Hoover" but not the 1929 crash, do not connect Hoover to it.
-- Always double-check that each question's topic appears visibly in the text or timeline.
+Every question must connect to a fact from Step 1.
+If a person, date, or event wasn't listed, don't use it.
 
-### 2️⃣ Grounding
-- Every fact must appear in the textbook.
-- If unsure, skip it — never invent.
-- Timeline dates → ask only about that exact event.
+---
 
-### 3️⃣ Language
+## 🎯 ADDITIONAL RULES
+
+### Language
 - Auto-detect textbook language and use it everywhere.
 - No translation, no mixing.
 
-### 4️⃣ Style
+### Style
 - Write like a teacher talking to students.
 - Never mention "the text", "material", or "chapter".
-- Natural tone, short and clear sentences.
+- Use natural, clear sentences.
 
-### 5️⃣ Terminology Rule
+### Terminology Rule
 - Only ask meanings of *specialized historical terms* (e.g. hyperinflation, civil war).
 - Never ask about common words (independence, democracy, war, peace).
 
-### 6️⃣ Validation
+### Validation
 - Exactly 2 terminology questions.
 - No generic vocabulary or invented names.
-- All 15 questions grounded, clear, and answerable from the pages.
-- Double-check: each question must mention at least one word, date, or name that appears verbatim in the textbook text or timeline.
-- If not, delete or rewrite the question.
+- All 15 questions grounded, clear, and answerable from the textbook pages.
 
 ---
 
@@ -619,7 +627,7 @@ Create a **history exam for grade ${grade || 8} students** based *only* on the u
 ✅ 2 terminology exactly
 ✅ No "material/text" references
 ✅ No invented facts or external info
-✅ All in one language
+✅ All questions linked to Step 1 facts
 ✅ Natural, student-friendly phrasing`
   }
 } as const
