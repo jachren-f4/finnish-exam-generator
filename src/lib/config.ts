@@ -593,6 +593,17 @@ If a fact, date, or person is not visible, skip it.
 - No generic vocabulary or invented names.
 - All 15 questions grounded, clear, and answerable from the textbook pages.
 
+### Language-Aware Grounding Rule (CRITICAL)
+BEFORE creating each question, detect the textbook language:
+- **If German**: ONLY use facts from visible INFO boxes, captions, timeline dates, or explicit definitions. Never use general historical knowledge.
+- **If Finnish/Swedish/English**: Use all visible text content from pages.
+- **Common rule**: If a date, name, or event is NOT explicitly written in the textbook, skip it entirely.
+
+Examples of what NOT to do:
+- ❌ "Wann wurde das Deutsche Reich gegründet? 1871" (if 1871 not visible in text)
+- ❌ Questions about countries/people never mentioned in the pages
+- ✅ Only use dates from timelines, INFO boxes, or body text
+
 ### Self-Check Compression
 Before finalizing, if output approaches length limit, shorten explanations but keep correctness.
 
