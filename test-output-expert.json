@@ -1,0 +1,218 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-10-19T10:16:06.798Z",
+    "version": "expert-flash-lite",
+    "prompt_source": "Gemini Flash-Lite expert",
+    "model": "gemini-2.0-flash-exp",
+    "temperature": 0,
+    "duration_ms": 21891
+  },
+  "prompt_used": "SYSTEM INSTRUCTION (prepend this before any user content):\nYou must treat the uploaded textbook images as your *only factual source*.\nUse only facts visible in those images. Do not invent, guess, or rely on external knowledge.\nIf something is missing, omit it. All output must be consistent with the textbook only.\n\n---\n\n## 🎓 Task\nCreate a **history exam for grade 8 students** based *only* on the uploaded textbook pages.\n\n---\n\n## 🎯 RULES\n\n### 1️⃣ Question Counts (exact)\n- 2 terminology questions (\"What does X mean?\")\n- 6 event questions (\"What happened? When? Where?\")\n- 4 cause/consequence questions (\"Why? What resulted?\")\n- 3 people questions (\"Who? What did they do?\")\n→ Total = 15 questions\n\n### 2️⃣ Grounding\n- Every fact must appear in the textbook.\n- If unsure, skip it — never invent.\n- Timeline dates → ask only about that exact event.\n\n### 3️⃣ Language\n- Auto-detect textbook language and use it everywhere.\n- No translation, no mixing.\n\n### 4️⃣ Style\n- Write like a teacher talking to students.\n- Never mention \"the text\", \"material\", or \"chapter\".\n- Natural tone, short and clear sentences.\n\n### 5️⃣ Terminology Rule\n- Only ask meanings of *specialized historical terms* (e.g. hyperinflation, civil war).\n- Never ask about common words (independence, democracy, war, peace).\n\n### 6️⃣ Validation\n- Exactly 2 terminology questions.\n- No generic vocabulary or invented names.\n- All 15 questions grounded, clear, and answerable from the pages.\n\n---\n\n## 🧩 JSON OUTPUT\n\n{\n  \"questions\": [\n    {\n      \"id\": 1,\n      \"type\": \"multiple_choice\",\n      \"question\": \"[Natural question in source language]\",\n      \"options\": [\"A\", \"B\", \"C\", \"D\"],\n      \"correct_answer\": \"[Exact match from options]\",\n      \"explanation\": \"[1–2 sentences, factual and concise]\"\n    }\n  ],\n  \"summary\": {\n    \"introduction\": \"[100–200 words – introduce the historical topic from the text]\",\n    \"key_concepts\": \"[250–400 words – main events, causes, results]\",\n    \"examples_and_applications\": \"[150–250 words – help students understand significance]\",\n    \"summary_conclusion\": \"[80–150 words – wrap up clearly]\",\n    \"total_word_count\": [number],\n    \"language\": \"[ISO 639-1 code]\"\n  }\n}\n\n---\n\n## ⚠️ FINAL CHECKLIST\n✅ 15 total questions\n✅ 2 terminology exactly\n✅ No \"material/text\" references\n✅ No invented facts or external info\n✅ All in one language\n✅ Natural, student-friendly phrasing",
+  "gemini_response": {
+    "questions": [
+      {
+        "id": 1,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'hyperinflaatio'?",
+        "options": [
+          "A: Pieni hinnannousu",
+          "B: Nopea ja hallitsematon rahan arvon lasku",
+          "C: Hinnat pysyvät samoina",
+          "D: Rahan arvo nousee"
+        ],
+        "correct_answer": "B: Nopea ja hallitsematon rahan arvon lasku",
+        "explanation": "Hyperinflaatio tarkoittaa tilannetta, jossa rahan arvo laskee erittäin nopeasti ja hallitsemattomasti."
+      },
+      {
+        "id": 2,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa 'massatuotanto'?",
+        "options": [
+          "A: Tuotanto on hidasta",
+          "B: Tuotanto on kallista",
+          "C: Tuotanto on nopeaa ja suuria määriä",
+          "D: Tuotanto on pientä"
+        ],
+        "correct_answer": "C: Tuotanto on nopeaa ja suuria määriä",
+        "explanation": "Massatuotanto tarkoittaa suurten tuotemäärien nopeaa valmistusta."
+      },
+      {
+        "id": 3,
+        "type": "multiple_choice",
+        "question": "Missä maassa hyperinflaatio oli vuonna 1923?",
+        "options": [
+          "A: Suomessa",
+          "B: Yhdysvalloissa",
+          "C: Saksassa",
+          "D: Neuvosto-Venäjällä"
+        ],
+        "correct_answer": "C: Saksassa",
+        "explanation": "Saksassa oli hyperinflaatio vuonna 1923."
+      },
+      {
+        "id": 4,
+        "type": "multiple_choice",
+        "question": "Milloin Suomessa oli sisällissota?",
+        "options": [
+          "A: 1914",
+          "B: 1918",
+          "C: 1920",
+          "D: 1923"
+        ],
+        "correct_answer": "B: 1918",
+        "explanation": "Suomen sisällissota oli vuonna 1918."
+      },
+      {
+        "id": 5,
+        "type": "multiple_choice",
+        "question": "Mitä tapahtui Virossa vuonna 1918?",
+        "options": [
+          "A: Se liittyi Neuvosto-Venäjään",
+          "B: Se itsenäistyi",
+          "C: Siellä alkoi sisällissota",
+          "D: Se julistautui kommunistiseksi"
+        ],
+        "correct_answer": "B: Se itsenäistyi",
+        "explanation": "Viro itsenäistyi vuonna 1918."
+      },
+      {
+        "id": 6,
+        "type": "multiple_choice",
+        "question": "Mihin aikaan sijoittuu jazz-musiikin ja elokuvien nousukausi Yhdysvalloissa?",
+        "options": [
+          "A: 1910-luvulle",
+          "B: 1920-luvulle",
+          "C: 1930-luvulle",
+          "D: 1940-luvulle"
+        ],
+        "correct_answer": "B: 1920-luvulle",
+        "explanation": "Jazz-musiikin ja elokuvien nousukausi sijoittuu Yhdysvalloissa 1920-luvulle."
+      },
+      {
+        "id": 7,
+        "type": "multiple_choice",
+        "question": "Mitä kieltolaki aiheutti Yhdysvalloissa 1920-luvulla?",
+        "options": [
+          "A: Alkoholin myynti laillistettiin",
+          "B: Alkoholin salakuljetus lisääntyi",
+          "C: Kaikki rikollisuus väheni",
+          "D: Työttömyys väheni"
+        ],
+        "correct_answer": "B: Alkoholin salakuljetus lisääntyi",
+        "explanation": "Kieltolaki johti alkoholin salakuljetuksen lisääntymiseen Yhdysvalloissa."
+      },
+      {
+        "id": 8,
+        "type": "multiple_choice",
+        "question": "Mitä Suomi joutui tekemään Neuvosto-Venäjän kanssa sisällissodan jälkeen?",
+        "options": [
+          "A: Liittoutumaan",
+          "B: Tekemään rauhan",
+          "C: Julistamaan sodan",
+          "D: Luovuttamaan alueita"
+        ],
+        "correct_answer": "B: Tekemään rauhan",
+        "explanation": "Suomen piti tehdä rauha Neuvosto-Venäjän kanssa sisällissodan jälkeen."
+      },
+      {
+        "id": 9,
+        "type": "multiple_choice",
+        "question": "Miksi Yhdysvallat vaurastui 1920-luvulla?",
+        "options": [
+          "A: Sodan takia",
+          "B: Massatuotannon takia",
+          "C: Kieltolain takia",
+          "D: Hyperinflaation takia"
+        ],
+        "correct_answer": "B: Massatuotannon takia",
+        "explanation": "Yhdysvallat vaurastui massatuotannon ansiosta 1920-luvulla."
+      },
+      {
+        "id": 10,
+        "type": "multiple_choice",
+        "question": "Miksi Suomessa käytiin sisällissota vuonna 1918?",
+        "options": [
+          "A: Koska Suomi halusi liittyä Venäjään",
+          "B: Koska Suomi halusi itsenäistyä",
+          "C: Koska punaiset ja valkoiset taistelivat vallasta",
+          "D: Koska Saksa hyökkäsi Suomeen"
+        ],
+        "correct_answer": "C: Koska punaiset ja valkoiset taistelivat vallasta",
+        "explanation": "Suomen sisällissota käytiin, koska punaiset ja valkoiset taistelivat vallasta."
+      },
+      {
+        "id": 11,
+        "type": "multiple_choice",
+        "question": "Mitä seurauksia kieltolain kumoamisella oli Yhdysvalloissa?",
+        "options": [
+          "A: Rikollisuus lisääntyi",
+          "B: Valtion tulot kasvoivat",
+          "C: Työttömyys lisääntyi",
+          "D: Alkoholin salakuljetus lisääntyi"
+        ],
+        "correct_answer": "B: Valtion tulot kasvoivat",
+        "explanation": "Kieltolain kumoamisen jälkeen valtion tulot kasvoivat alkoholin verotuksen myötä."
+      },
+      {
+        "id": 12,
+        "type": "multiple_choice",
+        "question": "Mitä Lenin teki Venäjällä?",
+        "options": [
+          "A: Hän johti sisällissotaa",
+          "B: Hän johti itsenäistymistä",
+          "C: Hän johti vallankumousta",
+          "D: Hän johti kieltolakia"
+        ],
+        "correct_answer": "C: Hän johti vallankumousta",
+        "explanation": "Lenin johti vallankumousta Venäjällä."
+      },
+      {
+        "id": 13,
+        "type": "multiple_choice",
+        "question": "Kuka oli presidentti Ståhlberg?",
+        "options": [
+          "A: Ruotsin kuningas",
+          "B: Suomen ensimmäinen presidentti",
+          "C: Neuvosto-Venäjän johtaja",
+          "D: Saksan keisari"
+        ],
+        "correct_answer": "B: Suomen ensimmäinen presidentti",
+        "explanation": "Presidentti Ståhlberg oli Suomen ensimmäinen presidentti."
+      },
+      {
+        "id": 14,
+        "type": "multiple_choice",
+        "question": "Kuka oli Al Capone?",
+        "options": [
+          "A: Yhdysvaltain presidentti",
+          "B: Tunnettu gangsteri",
+          "C: Suomalainen poliitikko",
+          "D: Saksan keisari"
+        ],
+        "correct_answer": "B: Tunnettu gangsteri",
+        "explanation": "Al Capone oli tunnettu gangsteri kieltolain aikana Yhdysvalloissa."
+      },
+      {
+        "id": 15,
+        "type": "multiple_choice",
+        "question": "Kuka oli presidentti F.D. Roosevelt?",
+        "options": [
+          "A: Suomen presidentti",
+          "B: Yhdysvaltain presidentti",
+          "C: Neuvosto-Venäjän johtaja",
+          "D: Saksan presidentti"
+        ],
+        "correct_answer": "B: Yhdysvaltain presidentti",
+        "explanation": "F.D. Roosevelt oli Yhdysvaltain presidentti."
+      }
+    ],
+    "summary": {
+      "introduction": "Hei kaikki! Tänään katsomme Suomen sisällissotaa ja muutoksia Euroopassa ja Yhdysvalloissa ensimmäisen maailmansodan jälkeen. Suomen sisällissota oli traaginen tapahtuma, jossa punaiset ja valkoiset taistelivat vallasta. Sodan jälkeen Suomi joutui rakentamaan itsenäisyyttään ja tekemään rauhan Neuvosto-Venäjän kanssa. Samalla Euroopassa monet maat itsenäistyivät ja Yhdysvalloissa elettiin vaurasta 1920-lukua, mutta myös kieltolain aiheuttamia ongelmia.",
+      "key_concepts": "Ensimmäisen maailmansodan jälkeen Euroopassa tapahtui suuria muutoksia. Monet maat itsenäistyivät, kuten Viro vuonna 1918. Saksassa oli hyperinflaatio vuonna 1923, mikä tarkoitti rahan arvon nopeaa laskua. Yhdysvalloissa 1920-lukua kutsutaan 'jazz-musiikin ja ilonpidon' aikakaudeksi, jolloin massatuotanto vauhditti taloutta. Kuitenkin kieltolaki aiheutti ongelmia, kuten alkoholin salakuljetuksen lisääntymisen. Suomessa sisällissota vuonna 1918 jakoi kansan, ja sodan jälkeen Suomen piti rakentaa itsenäisyyttään ja tehdä rauha Neuvosto-Venäjän kanssa. Presidentti Ståhlberg oli Suomen ensimmäinen presidentti ja Lenin johti vallankumousta Venäjällä. Al Capone oli tunnettu gangsteri Yhdysvalloissa kieltolain aikana ja F.D. Roosevelt oli Yhdysvaltain presidentti.",
+      "examples_and_applications": "Kuvitelkaa, että olette suomalaisia nuoria vuonna 1918. Sisällissota on juuri päättynyt ja maa on jakautunut. Tai miettikää, että olette Yhdysvalloissa 1920-luvulla. Autot yleistyvät, jazz-musiikki soi ja elokuvat ovat suosittuja, mutta alkoholia ei saa laillisesti ostaa. Nämä esimerkit auttavat ymmärtämään, miten suuria muutoksia maailmassa oli ensimmäisen maailmansodan jälkeen.",
+      "summary_conclusion": "Toivottavasti opitte uutta Suomen sisällissodasta ja 1920-luvun muutoksista Euroopassa ja Yhdysvalloissa. Muistakaa, että historia auttaa meitä ymmärtämään nykyisyyttä ja tulevaisuutta. Hyvää jatkoa opintoihin!",
+      "total_word_count": 384,
+      "language": "fi"
+    }
+  }
+}

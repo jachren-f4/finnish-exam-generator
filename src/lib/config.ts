@@ -534,81 +534,53 @@ Begin generating the pedagogically sound exam now.`
   },
 
   getHistoryPrompt: (grade?: number, language: string = 'en'): string => {
-    return `You are creating a history exam for grade ${grade || 8} students.
-
-🎯 CRITICAL RULES - READ FIRST:
-
-1️⃣ QUESTION TYPES - Generate EXACTLY:
-   - 2 terminology questions ("What does X mean?") - NO MORE, NO LESS
-   - 6+ event questions ("What happened? When? Where?")
-   - 4+ cause/consequence questions ("Why? What were the results?")
-   - 2+ people questions ("Who? What did they do?")
-
-2️⃣ NATURAL STYLE - Write like a teacher talking to students:
-   ✅ "When did Finland become independent?"
-   ❌ "When did Finland become independent according to the material?"
-
-   NEVER use: "materiaalin mukaan", "tekstissä mainitaan", "materiaaliin viitaten"
-
-3️⃣ TERMINOLOGY RULES:
-   - ONLY ask "What does X mean?" for historical terms (hyperinflation, civil war, prohibition)
-   - NEVER ask about common words (independence, democracy, war, peace)
-   - If you wrote 3+ terminology questions, DELETE the generic ones
-
-4️⃣ CONTENT FOCUS:
-   - Read the FULL textbook, not just timeline pages
-   - Ask about events in main chapters, not only dates
-   - Balance questions across all major topics
-
-5️⃣ LANGUAGE:
-   - Auto-detect language from textbook images
-   - Write ALL content in the same language as the textbook
+    return `SYSTEM INSTRUCTION (prepend this before any user content):
+You must treat the uploaded textbook images as your *only factual source*.
+Use only facts visible in those images. Do not invent, guess, or rely on external knowledge.
+If something is missing, omit it. All output must be consistent with the textbook only.
 
 ---
 
-📚 CONTENT ANALYSIS:
-
-Before writing questions, identify:
-- Main historical event/period (the chapter topic)
-- Key people and groups involved
-- What happened (chronological events)
-- Why it happened (causes)
-- What resulted (consequences)
-- Important specialized terms (2-3 maximum)
+## 🎓 Task
+Create a **history exam for grade ${grade || 8} students** based *only* on the uploaded textbook pages.
 
 ---
 
-✍️ QUESTION WRITING GUIDELINES:
+## 🎯 RULES
 
-GOOD QUESTIONS:
-✅ "What happened in Finland in 1918?" (event)
-✅ "Why did the civil war start?" (cause)
-✅ "Who were the opposing sides?" (people)
-✅ "What does 'hyperinflation' mean?" (specialized term)
+### 1️⃣ Question Counts (exact)
+- 2 terminology questions ("What does X mean?")
+- 6 event questions ("What happened? When? Where?")
+- 4 cause/consequence questions ("Why? What resulted?")
+- 3 people questions ("Who? What did they do?")
+→ Total = 15 questions
 
-BAD QUESTIONS:
-❌ "What does 'independence' mean?" (common word)
-❌ "What does the text say about X?" (refers to material)
-❌ "According to the material, when...?" (awkward phrase)
-❌ "What is democracy?" (too generic)
+### 2️⃣ Grounding
+- Every fact must appear in the textbook.
+- If unsure, skip it — never invent.
+- Timeline dates → ask only about that exact event.
+
+### 3️⃣ Language
+- Auto-detect textbook language and use it everywhere.
+- No translation, no mixing.
+
+### 4️⃣ Style
+- Write like a teacher talking to students.
+- Never mention "the text", "material", or "chapter".
+- Natural tone, short and clear sentences.
+
+### 5️⃣ Terminology Rule
+- Only ask meanings of *specialized historical terms* (e.g. hyperinflation, civil war).
+- Never ask about common words (independence, democracy, war, peace).
+
+### 6️⃣ Validation
+- Exactly 2 terminology questions.
+- No generic vocabulary or invented names.
+- All 15 questions grounded, clear, and answerable from the pages.
 
 ---
 
-🔍 BEFORE FINALIZING:
-
-Count your questions:
-- Terminology ("What does X mean?"): Should be EXACTLY 2
-- Event/Cause/People: Should be 13+
-- Generic vocabulary: Should be ZERO
-
-If you have 3+ terminology questions → DELETE the most generic ones
-If you have 0-1 terminology questions → ADD one specialized term
-
----
-
-📋 OUTPUT FORMAT:
-
-Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions in this JSON format:
+## 🧩 JSON OUTPUT
 
 {
   "questions": [
@@ -616,38 +588,30 @@ Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions in this JSON fo
       "id": 1,
       "type": "multiple_choice",
       "question": "[Natural question in source language]",
-      "options": [
-        "[Option A in source language]",
-        "[Option B in source language]",
-        "[Option C in source language]",
-        "[Option D in source language]"
-      ],
+      "options": ["A", "B", "C", "D"],
       "correct_answer": "[Exact match from options]",
-      "explanation": "[1-2 sentences in source language]"
+      "explanation": "[1–2 sentences, factual and concise]"
     }
   ],
   "summary": {
-    "introduction": "[100-250 words introducing the specific historical topic]",
-    "key_concepts": "[250-500 words explaining the main narrative]",
-    "examples_and_applications": "[200-400 words on understanding this topic]",
-    "summary_conclusion": "[100-250 words conclusion]",
+    "introduction": "[100–200 words – introduce the historical topic from the text]",
+    "key_concepts": "[250–400 words – main events, causes, results]",
+    "examples_and_applications": "[150–250 words – help students understand significance]",
+    "summary_conclusion": "[80–150 words – wrap up clearly]",
     "total_word_count": [number],
-    "language": "[ISO 639-1 code: fi, en, sv, de, etc.]"
+    "language": "[ISO 639-1 code]"
   }
 }
 
 ---
 
-⚠️ FINAL REMINDERS:
-
-- EXACTLY 2 terminology questions (not 3, not 5, not 8)
-- NO references to "the material" or "the text"
-- NO generic vocabulary questions
-- Focus on main chapters, not just timelines
-- Natural, conversational style
-- All content in the same language as textbook
-
-Begin generating the exam now.`
+## ⚠️ FINAL CHECKLIST
+✅ 15 total questions
+✅ 2 terminology exactly
+✅ No "material/text" references
+✅ No invented facts or external info
+✅ All in one language
+✅ Natural, student-friendly phrasing`
   }
 } as const
 
