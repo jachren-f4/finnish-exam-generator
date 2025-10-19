@@ -69,6 +69,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ✅ Returns same JSON as standard prompt (questions + summary)
 - ✅ V7 "Silent Extraction" architecture (internal fact extraction, no verbose output)
 - ✅ 4000-token limit guard prevents overflow (V6 hit 65,536 tokens)
+- ✅ **Language-aware grounding**: German requires INFO boxes/captions/timelines, others use all visible text
 - ⚠️ Gemini variance: ±5-10% distribution variance normal even at temperature=0
 - ❌ No visual references in questions
 - ❌ No facts not present in source material
@@ -290,8 +291,9 @@ npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
 | CI fails with secret detected | Gitleaks found API key/secret • Never commit secrets • Rotate exposed keys immediately |
 | Exposed secrets in commit | Gitleaks pre-commit hook blocked commit • Remove secret • Use `process.env.KEY_NAME` • See "Secret Scanning & Protection" section |
 | Vercel env var not applied | Check environment type (Preview vs Production) • Wait 1-2 min for deployment propagation • Use `/api/test-db` to verify |
-| History exam has outside knowledge | V7 Silent Extraction achieves 87% grounding • V8/V9 variants available if higher grounding needed (breaks distribution) • See `/HISTORY_PROMPT_OPTIMIZATION_FINDINGS.md` |
+| History exam has outside knowledge | V7 Silent Extraction achieves 87% grounding • Language-aware rule prevents fabricated questions (German: INFO boxes only) • See `/HISTORY_PROMPT_OPTIMIZATION_FINDINGS.md` |
 | History exam token overflow | Using V7 (4000-token limit) • Never use V6 (caused 65k overflow) • Contact dev if overflow persists |
+| German history exam fabricates facts | Language-aware grounding rule requires visible INFO boxes/captions/timelines for German text • Prevents outside knowledge insertion • Finnish/Swedish/English use all visible text |
 
 ## Architecture Decisions - Don't Break These
 

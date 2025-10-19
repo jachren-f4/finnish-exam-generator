@@ -402,6 +402,12 @@ useEffect(() => {
 
 **Why V7 Won:** Tested 9 variants (V1-V9). V8/V9 improved grounding to 90-95% with anchor enforcement but broke question distribution balance. V7 provides best overall quality with proper distribution.
 
+**Language-Aware Grounding Enhancement:**
+- German textbooks: Stricter grounding (INFO boxes, captions, timeline dates only)
+- Finnish/Swedish/English: Uses all visible text content
+- Prevents fabricated questions (e.g., questions about countries/people never mentioned)
+- Universal rule: Skip any fact/date/event not explicitly written in textbook
+
 **📚 Full Analysis:** See `/HISTORY_PROMPT_OPTIMIZATION_FINDINGS.md` for complete variant testing results.
 
 ### 8. Audio Summary Generation
