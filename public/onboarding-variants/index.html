@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Onboarding Variants - ExamGenie</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      color: white;
+      margin-bottom: 48px;
+    }
+
+    h1 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+
+    .variants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .variant-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .variant-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+    }
+
+    .variant-preview {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      background: linear-gradient(135deg, #f5f5f7 0%, #e5e5e7 100%);
+    }
+
+    .variant-content {
+      padding: 24px;
+    }
+
+    .variant-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1d1d1f;
+      margin-bottom: 8px;
+    }
+
+    .variant-subtitle {
+      font-size: 14px;
+      color: #667eea;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .variant-description {
+      font-size: 15px;
+      line-height: 1.5;
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .pro {
+      color: #34c759;
+    }
+
+    .con {
+      color: #ff3b30;
+    }
+
+    .best-for {
+      background: #f5f5f7;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    .best-for strong {
+      color: #1d1d1f;
+    }
+
+    .view-button {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: #667eea;
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: background 0.2s;
+    }
+
+    .view-button:hover {
+      background: #5568d3;
+    }
+
+    .info-section {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    .info-section h2 {
+      font-size: 24px;
+      color: #1d1d1f;
+      margin-bottom: 16px;
+    }
+
+    .info-section p {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .info-section ul {
+      margin-left: 20px;
+      margin-bottom: 16px;
+    }
+
+    .info-section li {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #667eea;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 12px;
+      margin-left: 8px;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 28px;
+      }
+      .variants-grid {
+        grid-template-columns: 1fr;
+      }
+      .pros-cons {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>📚 Exam Onboarding - Prototype Variants</h1>
+      <p class="subtitle">Choose your preferred first-time user experience</p>
+    </header>
+
+    <div class="variants-grid">
+      <!-- Variant 1 -->
+      <div class="variant-card">
+        <div class="variant-preview">📱</div>
+        <div class="variant-content">
+          <h3 class="variant-title">Variant 1: Full-Screen Carousel</h3>
+          <p class="variant-subtitle">Instagram Story Style</p>
+          <p class="variant-description">
+            Immersive full-screen experience with gradient background and large animated icons.
+          </p>
+          <div class="pros-cons">
+            <div>
+              <div class="pro">✓ Maximum impact</div>
+              <div class="pro">✓ Familiar pattern</div>
+              <div class="pro">✓ Large visuals</div>
+            </div>
+            <div>
+              <div class="con">✗ Blocks exam view</div>
+              <div class="con">✗ Might feel heavy</div>
+            </div>
+          </div>
+          <div class="best-for">
+            <strong>Best for:</strong> First-time users needing clear, focused guidance
+          </div>
+          <a href="variant-1-fullscreen-carousel.html" class="view-button">
+            View Prototype →
+          </a>
+        </div>
+      </div>
+
+      <!-- Variant 2 -->
+      <div class="variant-card">
+        <div class="variant-preview">🪟</div>
+        <div class="variant-content">
+          <h3 class="variant-title">Variant 2: Modal Overlay <span class="badge">Recommended</span></h3>
+          <p class="variant-subtitle">Centered Dialog with Backdrop</p>
+          <p class="variant-description">
+            Balanced modal dialog with blurred exam visible behind. Desktop and mobile friendly.
+          </p>
+          <div class="pros-cons">
+            <div>
+              <div class="pro">✓ Less intrusive</div>
+              <div class="pro">✓ Desktop-friendly</div>
+              <div class="pro">✓ Shows context</div>
+            </div>
+            <div>
+              <div class="con">✗ Smaller space</div>
+              <div class="con">✗ Less mobile-native</div>
+            </div>
+          </div>
+          <div class="best-for">
+            <strong>Best for:</strong> Balanced experience for all users and devices
+          </div>
+          <a href="variant-2-modal-overlay.html" class="view-button">
+            View Prototype →
+          </a>
+        </div>
+      </div>
+
+      <!-- Variant 3 -->
+      <div class="variant-card">
+        <div class="variant-preview">📲</div>
+        <div class="variant-content">
+          <h3 class="variant-title">Variant 3: Bottom Sheet</h3>
+          <p class="variant-subtitle">Slide-up Drawer (Mobile Native)</p>
+          <p class="variant-description">
+            Minimal bottom sheet that matches ExamGenie's existing retake UI pattern.
+          </p>
+          <div class="pros-cons">
+            <div>
+              <div class="pro">✓ Minimal intrusion</div>
+              <div class="pro">✓ Pattern consistency</div>
+              <div class="pro">✓ Quick dismiss</div>
+            </div>
+            <div>
+              <div class="con">✗ Less space</div>
+              <div class="con">✗ Might be missed</div>
+            </div>
+          </div>
+          <div class="best-for">
+            <strong>Best for:</strong> Mobile users wanting minimal disruption
+          </div>
+          <a href="variant-3-bottom-sheet.html" class="view-button">
+            View Prototype →
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <h2>🎯 How to Test</h2>
+      <p><strong>Desktop:</strong></p>
+      <ul>
+        <li>Use arrow keys (← →) to navigate between slides</li>
+        <li>Press Space or Enter to advance</li>
+        <li>Press ESC to dismiss the onboarding</li>
+        <li>Click buttons for manual navigation</li>
+      </ul>
+
+      <p><strong>Mobile:</strong></p>
+      <ul>
+        <li>Swipe left to go to next slide</li>
+        <li>Swipe right to go to previous slide</li>
+        <li>Tap buttons for manual navigation</li>
+        <li>Tap backdrop or close button to dismiss</li>
+      </ul>
+
+      <p><strong>What to Evaluate:</strong></p>
+      <ul>
+        <li>Does it feel natural and intuitive?</li>
+        <li>Is the content clear and helpful?</li>
+        <li>Does it work smoothly on your device?</li>
+        <li>Would you prefer to skip it or watch it?</li>
+        <li>Which variant matches ExamGenie's brand best?</li>
+      </ul>
+
+      <h2 style="margin-top: 32px;">📋 Next Steps</h2>
+      <p>
+        After reviewing all variants:
+      </p>
+      <ol style="margin-left: 20px;">
+        <li>Choose your preferred approach</li>
+        <li>Review the implementation plan in <code>PLAN.md</code></li>
+        <li>Proceed to building the React component</li>
+        <li>Integrate into the exam taking page</li>
+      </ol>
+    </div>
+  </div>
+
+</body>
+</html>

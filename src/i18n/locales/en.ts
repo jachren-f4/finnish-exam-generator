@@ -42,7 +42,7 @@ export const en: Translations = {
     soon: 'Soon',
     learn: 'Learn',
     gradeInfo: 'Grade {grade} • {count} questions',
-    questionsCount: '{count} Q',
+    questionsCount: '{count} questions',
     rewardAmount: '+{amount}',
     audioDescription: 'Listen to an overview of the material before taking the exam',
     startExam: 'Start Exam',
@@ -223,6 +223,19 @@ export const en: Translations = {
     faqLeaderboard: 'When is the Leaderboard coming?',
     faqLeaderboardContent:
       'The Leaderboard feature is coming soon! It will let you compare your scores with friends and classmates to add a friendly competitive element to studying.',
+  },
+
+  onboarding: {
+    slide1Title: 'Welcome to Your Exam!',
+    slide1Description: 'First time here? Let\'s show you around in 30 seconds. From the menu, you can listen to audio, take the exam, or view results.',
+    slide2Title: 'Navigate Questions',
+    slide2Description: 'Use the arrow buttons at the bottom to move between questions. You can go back anytime to change your answers.',
+    slide3Title: 'Earn Genie Dollars',
+    slide3Description: 'Complete exams and listen to audio summaries to earn Genie Dollars! Listen to 80% of audio for +5 dollars, complete exams for +10 dollars.',
+    slide4Title: 'Submit & Get Results',
+    slide4Description: 'Answer all questions, then tap Submit to see your results with detailed feedback!',
+    gotIt: 'Start Exam 🚀',
+    swipeHint: 'Swipe left/right or use buttons to navigate',
   },
 
   api: {

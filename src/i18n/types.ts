@@ -198,6 +198,19 @@ export interface Translations {
     faqLeaderboardContent: string
   }
 
+  onboarding: {
+    slide1Title: string
+    slide1Description: string
+    slide2Title: string
+    slide2Description: string
+    slide3Title: string
+    slide3Description: string
+    slide4Title: string
+    slide4Description: string
+    gotIt: string
+    swipeHint: string
+  }
+
   api: {
     errors: {
       userIdRequired: string

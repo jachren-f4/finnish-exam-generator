@@ -8,6 +8,8 @@ import { EXAM_UI } from '@/constants/exam-ui'
 import { ICONS } from '@/constants/exam-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
 import { getTotalGenieDollars, getExamCompletionStatus, GENIE_DOLLAR_REWARDS, awardExamRetakeDollars } from '@/lib/utils/genie-dollars'
+import { hasSeenOnboarding, markOnboardingSeen } from '@/lib/utils/onboarding'
+import { OnboardingOverlay } from '@/components/exam/OnboardingOverlay'
 
 const handleHelpClick = (examId: string, router: any) => {
   router.push(`/exam/${examId}/help`)
@@ -35,6 +37,7 @@ export default function ExamMenuPage() {
   const [error, setError] = useState('')
   const [totalGenieDollars, setTotalGenieDollars] = useState(0)
   const [wrongQuestionCount, setWrongQuestionCount] = useState(0)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const [rewardStatus, setRewardStatus] = useState({
     audioEarned: false,
     examEarned: false,
@@ -53,6 +56,10 @@ export default function ExamMenuPage() {
       // Load Genie Dollars and reward status
       setTotalGenieDollars(getTotalGenieDollars())
       setRewardStatus(getExamCompletionStatus(examId))
+      // Check if user has seen onboarding for this exam
+      if (!hasSeenOnboarding(examId)) {
+        setShowOnboarding(true)
+      }
     }
   }, [examId])
 
@@ -99,6 +106,11 @@ export default function ExamMenuPage() {
 
   const handleViewResults = () => {
     router.push(`/grading/${examId}`)
+  }
+
+  const dismissOnboarding = () => {
+    markOnboardingSeen(examId)
+    setShowOnboarding(false)
   }
 
   const handleListenAudio = () => {
@@ -205,6 +217,9 @@ export default function ExamMenuPage() {
       display: 'flex',
       flexDirection: 'column',
     }}>
+      {/* Onboarding Overlay */}
+      {showOnboarding && <OnboardingOverlay onDismiss={dismissOnboarding} />}
+
       {/* Header */}
       <div style={{
         padding: SPACING.md,

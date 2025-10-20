@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Onboarding Variant 1: Full-Screen Carousel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f7;
+      overflow: hidden;
+    }
+
+    .onboarding-overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      color: white;
+    }
+
+    .skip-button {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+
+    .skip-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    .progress-bar {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .progress-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.3s;
+    }
+
+    .progress-dot.active {
+      width: 24px;
+      border-radius: 4px;
+      background: white;
+    }
+
+    .carousel {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .carousel-track {
+      display: flex;
+      width: 400%;
+      height: 100%;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .slide {
+      flex: 0 0 25%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      text-align: center;
+    }
+
+    .icon {
+      font-size: 96px;
+      margin-bottom: 32px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      max-width: 400px;
+    }
+
+    .description {
+      font-size: 18px;
+      line-height: 1.6;
+      opacity: 0.9;
+      max-width: 500px;
+    }
+
+    .navigation {
+      display: flex;
+      gap: 16px;
+      padding: 32px;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-button {
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      color: white;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-width: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .nav-button:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .nav-button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .nav-button.primary {
+      background: white;
+      color: #667eea;
+      border-color: white;
+    }
+
+    .nav-button.primary:hover {
+      background: #f0f0f0;
+    }
+
+    .swipe-hint {
+      position: absolute;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      opacity: 0.7;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.9; }
+    }
+
+    @media (max-width: 640px) {
+      .title {
+        font-size: 24px;
+      }
+      .description {
+        font-size: 16px;
+      }
+      .icon {
+        font-size: 72px;
+      }
+      .navigation {
+        flex-direction: column;
+      }
+      .nav-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="onboarding-overlay">
+    <button class="skip-button" onclick="dismissOnboarding()">Skip Tour</button>
+
+    <div class="progress-bar">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+    </div>
+
+    <div class="carousel">
+      <div class="carousel-track" id="carouselTrack">
+        <!-- Slide 1: Welcome -->
+        <div class="slide">
+          <div class="icon">👋</div>
+          <h1 class="title">Welcome to Your Exam!</h1>
+          <p class="description">
+            Let's take a quick 30-second tour to show you how to ace your exam.
+          </p>
+        </div>
+
+        <!-- Slide 2: Navigate -->
+        <div class="slide">
+          <div class="icon">⬅️ ➡️</div>
+          <h1 class="title">Navigate Questions</h1>
+          <p class="description">
+            Swipe left or right, or use the arrow buttons to move between questions.
+          </p>
+        </div>
+
+        <!-- Slide 3: Select Answers -->
+        <div class="slide">
+          <div class="icon">✅</div>
+          <h1 class="title">Select Your Answers</h1>
+          <p class="description">
+            Tap an option to select your answer. You can change it anytime before submitting.
+          </p>
+        </div>
+
+        <!-- Slide 4: Submit -->
+        <div class="slide">
+          <div class="icon">🎉</div>
+          <h1 class="title">Submit When Ready</h1>
+          <p class="description">
+            Once you've answered all questions, tap Submit to see your results and earn Genie Dollars!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="swipe-hint">← Swipe to navigate →</div>
+
+    <div class="navigation">
+      <button class="nav-button" id="prevBtn" onclick="previousSlide()" disabled>
+        ← Back
+      </button>
+      <button class="nav-button primary" id="nextBtn" onclick="nextSlide()">
+        Next →
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 0
+    const totalSlides = 4
+    const track = document.getElementById('carouselTrack')
+    const dots = document.querySelectorAll('.progress-dot')
+    const prevBtn = document.getElementById('prevBtn')
+    const nextBtn = document.getElementById('nextBtn')
+
+    // Touch handling
+    let touchStartX = 0
+    let touchEndX = 0
+
+    track.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX
+    })
+
+    track.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX
+      handleSwipe()
+    })
+
+    function handleSwipe() {
+      const swipeThreshold = 50
+      if (touchStartX - touchEndX > swipeThreshold) {
+        // Swiped left - next slide
+        nextSlide()
+      }
+      if (touchEndX - touchStartX > swipeThreshold) {
+        // Swiped right - previous slide
+        previousSlide()
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault()
+        if (currentSlide < totalSlides - 1) {
+          nextSlide()
+        } else {
+          dismissOnboarding()
+        }
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        previousSlide()
+      }
+      if (e.key === 'Escape') {
+        dismissOnboarding()
+      }
+    })
+
+    function updateSlide() {
+      // Update track position
+      track.style.transform = `translateX(-${currentSlide * 25}%)`
+
+      // Update progress dots
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentSlide)
+      })
+
+      // Update buttons
+      prevBtn.disabled = currentSlide === 0
+
+      if (currentSlide === totalSlides - 1) {
+        nextBtn.textContent = "Got it! 🚀"
+        nextBtn.classList.add('primary')
+      } else {
+        nextBtn.textContent = "Next →"
+        nextBtn.classList.add('primary')
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++
+        updateSlide()
+      } else {
+        dismissOnboarding()
+      }
+    }
+
+    function previousSlide() {
+      if (currentSlide > 0) {
+        currentSlide--
+        updateSlide()
+      }
+    }
+
+    function dismissOnboarding() {
+      // Fade out animation
+      document.querySelector('.onboarding-overlay').style.opacity = '0'
+      document.querySelector('.onboarding-overlay').style.transition = 'opacity 0.3s'
+
+      setTimeout(() => {
+        alert('Onboarding dismissed! In the real app, this would:\n\n1. Mark localStorage as seen\n2. Hide the overlay\n3. Let you start the exam')
+        location.reload()
+      }, 300)
+    }
+
+    // Initialize
+    updateSlide()
+  </script>
+
+</body>
+</html>

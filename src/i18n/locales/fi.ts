@@ -39,7 +39,7 @@ export const fi: Translations = {
     soon: 'Tulossa',
     learn: 'Opi',
     gradeInfo: 'Luokka {grade} • {count} kysymystä',
-    questionsCount: '{count} kys.',
+    questionsCount: '{count} kysymystä',
     rewardAmount: '+{amount}',
     audioDescription: 'Kuuntele yleiskatsaus materiaalista ennen kokeen aloittamista',
     startExam: 'Aloita koe',
@@ -221,6 +221,19 @@ export const fi: Translations = {
     faqLeaderboard: 'Milloin tulostaulukko tulee?',
     faqLeaderboardContent:
       'Tulostaulukko-ominaisuus tulee pian! Se antaa sinun vertailla tuloksiasi ystäviin ja luokkatovereihin lisätäksesi ystävällistä kilpailuhenkeä opiskeluun.',
+  },
+
+  onboarding: {
+    slide1Title: 'Tervetuloa kokeeseen!',
+    slide1Description: 'Ensimmäistä kertaa täällä? Näytetään sinulle 30 sekunnissa. Valikosta voit kuunnella ääntä, suorittaa kokeen tai tarkastella tuloksia.',
+    slide2Title: 'Selaa kysymyksiä',
+    slide2Description: 'Käytä alareunassa olevia nuolipainikkeita siirtyäksesi kysymysten välillä. Voit palata takaisin muuttaaksesi vastauksiasi.',
+    slide3Title: 'Ansaitse Genie-dollareita',
+    slide3Description: 'Suorita kokeita ja kuuntele ääniyhteenvetoja ansaitaksesi Genie-dollareita! Kuuntele 80% äänestä saadaksesi +5 dollaria, suorita kokeita saadaksesi +10 dollaria.',
+    slide4Title: 'Lähetä ja saa tulokset',
+    slide4Description: 'Vastaa kaikkiin kysymyksiin ja paina sitten Lähetä nähdäksesi tuloksesi yksityiskohtaisen palautteen kera!',
+    gotIt: 'Aloita koe 🚀',
+    swipeHint: 'Pyyhkäise vasemmalle/oikealle tai käytä painikkeita',
   },
 
   api: {
