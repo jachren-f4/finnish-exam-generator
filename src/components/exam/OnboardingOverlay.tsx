@@ -206,7 +206,6 @@ export function OnboardingOverlay({ onDismiss }: OnboardingOverlayProps) {
           style={{
             flex: 1,
             overflow: 'hidden',
-            padding: SPACING.lg,
           }}
         >
           <div
@@ -216,7 +215,7 @@ export function OnboardingOverlay({ onDismiss }: OnboardingOverlayProps) {
               display: 'flex',
               transition: TRANSITIONS.normal,
               transform: `translateX(-${currentSlide * 100}%)`,
-              width: '100%',
+              height: '100%',
             }}
           >
             {slides.map((slide, index) => (
@@ -225,6 +224,8 @@ export function OnboardingOverlay({ onDismiss }: OnboardingOverlayProps) {
                 style={{
                   flex: '0 0 100%',
                   minWidth: 0,
+                  padding: SPACING.lg,
+                  boxSizing: 'border-box',
                 }}
               >
                 <div
