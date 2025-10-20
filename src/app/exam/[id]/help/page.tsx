@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import type { ExamData } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
 import { HELP_CONTENT } from '@/constants/help-content'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
