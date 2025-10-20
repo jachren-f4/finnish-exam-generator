@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import type { ExamData, StudentAnswer } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
+import { useTranslation } from '@/i18n'
 import { ICONS } from '@/constants/exam-icons'
 import { NavigationDots } from '@/components/exam/NavigationDots'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
@@ -24,6 +25,7 @@ export default function ExamPage() {
   const examId = params?.id as string
   const examMode = searchParams.get('mode') || 'normal' // 'normal', 'retake', or 'wrong-only'
 
+  const { t } = useTranslation()
   const [exam, setExam] = useState<ExamState | null>(null)
   const [filteredQuestions, setFilteredQuestions] = useState<any[]>([])
   const [answers, setAnswers] = useState<{[questionId: string]: string}>({})
@@ -83,7 +85,7 @@ export default function ExamPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || EXAM_UI.LOAD_FAILED)
+        throw new Error(errorData.error || t('common.loadFailed'))
       }
 
       const responseData = await response.json()
@@ -135,7 +137,7 @@ export default function ExamPage() {
       }
     } catch (err) {
       console.error('Error fetching exam:', err)
-      setError(err instanceof Error ? err.message : EXAM_UI.LOAD_FAILED)
+      setError(err instanceof Error ? err.message : t('common.loadFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -256,7 +258,7 @@ export default function ExamPage() {
             marginTop: SPACING.lg,
             fontSize: TYPOGRAPHY.fontSize.sm,
             color: COLORS.primary.medium,
-          }}>{EXAM_UI.LOADING}</p>
+          }}>{t('common.loading')}</p>
         </div>
         <style jsx>{`
           @keyframes spin {
@@ -292,12 +294,12 @@ export default function ExamPage() {
               fontWeight: TYPOGRAPHY.fontWeight.bold,
               color: COLORS.primary.text,
               marginBottom: SPACING.md,
-            }}>{EXAM_UI.ERROR}</h1>
+            }}>{t('common.error')}</h1>
             <p style={{
               fontSize: TYPOGRAPHY.fontSize.base,
               color: COLORS.primary.medium,
               marginBottom: SPACING.lg,
-            }}>{error || EXAM_UI.NOT_FOUND}</p>
+            }}>{error || t('common.notFound')}</p>
             <button
               onClick={() => window.location.reload()}
               style={{
@@ -314,7 +316,7 @@ export default function ExamPage() {
                 transition: TRANSITIONS.normal,
               }}
             >
-              {EXAM_UI.RETRY}
+              {t('common.retry')}
             </button>
           </div>
         </div>
@@ -349,12 +351,12 @@ export default function ExamPage() {
               fontWeight: TYPOGRAPHY.fontWeight.bold,
               color: COLORS.primary.text,
               marginBottom: SPACING.md,
-            }}>{EXAM_UI.ERROR}</h1>
+            }}>{t('common.error')}</h1>
             <p style={{
               fontSize: TYPOGRAPHY.fontSize.base,
               color: COLORS.primary.medium,
               marginBottom: SPACING.lg,
-            }}>{examMode === 'wrong-only' ? 'No wrong answers to practice!' : EXAM_UI.NOT_FOUND}</p>
+            }}>{examMode === 'wrong-only' ? 'No wrong answers to practice!' : t('common.notFound')}</p>
           </div>
         </div>
       </div>
@@ -388,7 +390,7 @@ export default function ExamPage() {
               fontWeight: TYPOGRAPHY.fontWeight.bold,
               color: COLORS.primary.text,
               marginBottom: SPACING.md,
-            }}>{EXAM_UI.ERROR}</h1>
+            }}>{t('common.error')}</h1>
             <button
               onClick={() => setCurrentQuestion(0)}
               style={{
@@ -404,7 +406,7 @@ export default function ExamPage() {
                 cursor: 'pointer',
               }}
             >
-              {EXAM_UI.RETRY}
+              {t('common.retry')}
             </button>
           </div>
         </div>
@@ -549,15 +551,15 @@ export default function ExamPage() {
                 </div>
               ) : currentQ.question_type === 'true_false' ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.sm }}>
-                  {[EXAM_UI.TRUE, EXAM_UI.FALSE].map((option) => (
+                  {[t('examTaking.true'), t('examTaking.false')].map((option) => (
                     <label key={option} style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: SPACING.sm,
                       padding: `${SPACING.sm} ${SPACING.md}`,
-                      border: `2px solid ${answers[currentQ.id] === (option === EXAM_UI.TRUE ? 'true' : 'false') ? COLORS.primary.dark : COLORS.border.light}`,
+                      border: `2px solid ${answers[currentQ.id] === (option === t('examTaking.true') ? 'true' : 'false') ? COLORS.primary.dark : COLORS.border.light}`,
                       borderRadius: RADIUS.md,
-                      background: answers[currentQ.id] === (option === EXAM_UI.TRUE ? 'true' : 'false') ? COLORS.background.secondary : COLORS.background.primary,
+                      background: answers[currentQ.id] === (option === t('examTaking.true') ? 'true' : 'false') ? COLORS.background.secondary : COLORS.background.primary,
                       cursor: 'pointer',
                       minHeight: TOUCH_TARGETS.comfortable,
                       transition: TRANSITIONS.normal,
@@ -565,8 +567,8 @@ export default function ExamPage() {
                       <input
                         type="radio"
                         name={`question-${currentQ.id}`}
-                        value={option === EXAM_UI.TRUE ? 'true' : 'false'}
-                        checked={answers[currentQ.id] === (option === EXAM_UI.TRUE ? 'true' : 'false')}
+                        value={option === t('examTaking.true') ? 'true' : 'false'}
+                        checked={answers[currentQ.id] === (option === t('examTaking.true') ? 'true' : 'false')}
                         onChange={(e) => handleAnswerChange(currentQ.id, e.target.value)}
                         style={{
                           width: '20px',
@@ -586,7 +588,7 @@ export default function ExamPage() {
                 <textarea
                   value={answers[currentQ.id] || ''}
                   onChange={(e) => handleAnswerChange(currentQ.id, e.target.value)}
-                  placeholder={EXAM_UI.YOUR_ANSWER}
+                  placeholder={t('examTaking.yourAnswer')}
                   rows={5}
                   style={{
                     width: '100%',
@@ -630,7 +632,7 @@ export default function ExamPage() {
                     fontSize: TYPOGRAPHY.fontSize.lg,
                     color: COLORS.primary.medium,
                   }}>
-                    {exam.latestGrading.total_points} / {exam.latestGrading.max_total_points} {EXAM_UI.POINTS}
+                    {exam.latestGrading.total_points} / {exam.latestGrading.max_total_points} {t('examGrading.points', { points: '' })}
                     ({exam.latestGrading.percentage}%)
                   </p>
                 </div>
@@ -685,7 +687,7 @@ export default function ExamPage() {
                     <div style={{
                       fontSize: TYPOGRAPHY.fontSize.xs,
                       color: COLORS.primary.medium,
-                    }}>{EXAM_UI.TOTAL}</div>
+                    }}>{t('examGrading.total')}</div>
                   </div>
                 </div>
               </div>
@@ -703,11 +705,11 @@ export default function ExamPage() {
                   fontWeight: TYPOGRAPHY.fontWeight.semibold,
                   color: COLORS.primary.text,
                   marginBottom: SPACING.sm,
-                }}>{EXAM_UI.NO_RESULTS}</h3>
+                }}>{t('examTaking.noResults')}</h3>
                 <p style={{
                   color: COLORS.primary.medium,
                   marginBottom: SPACING.lg,
-                }}>{EXAM_UI.NOT_GRADED_DESC}</p>
+                }}>{t('examTaking.notGradedDesc')}</p>
                 <button
                   onClick={() => setMode('take')}
                   style={{
@@ -721,7 +723,7 @@ export default function ExamPage() {
                     cursor: 'pointer',
                   }}
                 >
-                  {EXAM_UI.START}
+                  {t('examTaking.start')}
                 </button>
               </div>
             )}
@@ -756,12 +758,12 @@ export default function ExamPage() {
                 fontWeight: TYPOGRAPHY.fontWeight.bold,
                 color: COLORS.primary.text,
                 marginBottom: SPACING.md,
-              }}>{EXAM_UI.CONFIRM_SUBMIT}</h3>
+              }}>{t('examTaking.confirmSubmit')}</h3>
               <p style={{
                 fontSize: TYPOGRAPHY.fontSize.base,
                 color: COLORS.primary.medium,
               }}>
-                {EXAM_UI.SUBMIT_WARNING}
+                {t('examTaking.submitWarning')}
               </p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.md }}>
@@ -780,7 +782,7 @@ export default function ExamPage() {
                   cursor: 'pointer',
                 }}
               >
-                {EXAM_UI.CANCEL}
+                {t('common.cancel')}
               </button>
               <button
                 onClick={submitAnswers}
@@ -799,7 +801,7 @@ export default function ExamPage() {
                   opacity: isSubmitting ? 0.5 : 1,
                 }}
               >
-                {isSubmitting ? EXAM_UI.SENDING : EXAM_UI.SUBMIT}
+                {isSubmitting ? t('examTaking.sending') : t('common.submit')}
               </button>
             </div>
           </div>
@@ -992,7 +994,7 @@ export default function ExamPage() {
                   gap: SPACING.xs,
                 }}
               >
-                {EXAM_UI.SUBMIT} {ICONS.CHECK}
+                {t('common.submit')} {ICONS.CHECK}
                 {!isAllAnswered() && (
                   <span style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>
                     ({getAnsweredIndices().size}/{activeQuestions.length})
@@ -1015,7 +1017,7 @@ export default function ExamPage() {
                   cursor: 'pointer',
                 }}
               >
-                {EXAM_UI.NEXT} {ICONS.ARROW_RIGHT}
+                {t('common.next')} {ICONS.ARROW_RIGHT}
               </button>
             )}
           </div>

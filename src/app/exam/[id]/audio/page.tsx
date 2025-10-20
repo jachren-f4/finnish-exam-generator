@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from '@/i18n'
 import { useParams, useRouter } from 'next/navigation'
 import type { ExamData } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
@@ -23,6 +24,7 @@ export default function AudioSummaryPage() {
   const router = useRouter()
   const examId = params?.id as string
 
+  const { t } = useTranslation()
   const [exam, setExam] = useState<AudioExamState | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -60,7 +62,7 @@ export default function AudioSummaryPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || EXAM_UI.LOAD_FAILED)
+        throw new Error(errorData.error || t('common.loadFailed'))
       }
 
       const responseData = await response.json()
@@ -73,7 +75,7 @@ export default function AudioSummaryPage() {
       }
     } catch (err) {
       console.error('Error fetching exam:', err)
-      setError(err instanceof Error ? err.message : EXAM_UI.LOAD_FAILED)
+      setError(err instanceof Error ? err.message : t('common.loadFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -176,7 +178,7 @@ export default function AudioSummaryPage() {
             marginTop: SPACING.lg,
             fontSize: TYPOGRAPHY.fontSize.sm,
             color: COLORS.primary.medium,
-          }}>{EXAM_UI.LOADING}</p>
+          }}>{t('common.loading')}</p>
         </div>
         <style jsx>{`
           @keyframes spin {
@@ -212,12 +214,12 @@ export default function AudioSummaryPage() {
               fontWeight: TYPOGRAPHY.fontWeight.bold,
               color: COLORS.primary.text,
               marginBottom: SPACING.md,
-            }}>{EXAM_UI.ERROR}</h1>
+            }}>{t('common.error')}</h1>
             <p style={{
               fontSize: TYPOGRAPHY.fontSize.base,
               color: COLORS.primary.medium,
               marginBottom: SPACING.lg,
-            }}>{error || EXAM_UI.NOT_FOUND}</p>
+            }}>{error || t('common.notFound')}</p>
             <button
               onClick={() => router.push(`/exam/${examId}`)}
               style={{

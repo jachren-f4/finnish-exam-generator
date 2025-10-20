@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from '@/i18n'
 import { useParams } from 'next/navigation'
 import type { GradingResult } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
@@ -14,6 +15,7 @@ export default function GradingPage() {
   // Results mode toggle - change this to 'story' or 'legacy'
   const RESULTS_MODE = 'story' as 'story' | 'legacy'
 
+  const { t } = useTranslation()
   const [grading, setGrading] = useState<GradingResult | null>(null)
   const [previousGrading, setPreviousGrading] = useState<GradingResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -69,7 +71,7 @@ export default function GradingPage() {
       setError('')
     } catch (err) {
       console.error('Error fetching grading:', err)
-      setError(err instanceof Error ? err.message : EXAM_UI.LOAD_FAILED)
+      setError(err instanceof Error ? err.message : t('common.loadFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -181,7 +183,7 @@ export default function GradingPage() {
             marginTop: SPACING.lg,
             fontSize: TYPOGRAPHY.fontSize.sm,
             color: COLORS.primary.medium,
-          }}>{EXAM_UI.LOADING}</p>
+          }}>{t('common.loading')}</p>
         </div>
         <style jsx>{`
           @keyframes spin {
@@ -217,12 +219,12 @@ export default function GradingPage() {
               fontWeight: TYPOGRAPHY.fontWeight.bold,
               color: COLORS.primary.text,
               marginBottom: SPACING.md,
-            }}>{EXAM_UI.ERROR}</h1>
+            }}>{t('common.error')}</h1>
             <p style={{
               fontSize: TYPOGRAPHY.fontSize.base,
               color: COLORS.primary.medium,
               marginBottom: SPACING.lg,
-            }}>{error || EXAM_UI.NO_RESULTS}</p>
+            }}>{error || t('examTaking.noResults')}</p>
             <button
               onClick={() => window.location.reload()}
               style={{
@@ -238,7 +240,7 @@ export default function GradingPage() {
                 cursor: 'pointer',
               }}
             >
-              {EXAM_UI.RETRY}
+              {t('common.retry')}
             </button>
           </div>
         </div>
@@ -472,7 +474,7 @@ export default function GradingPage() {
                           Your Answer
                         </div>
                         <div style={{ fontSize: TYPOGRAPHY.fontSize.base, lineHeight: TYPOGRAPHY.lineHeight.relaxed }}>
-                          {question.student_answer || EXAM_UI.YOUR_ANSWER}
+                          {question.student_answer || t('examTaking.yourAnswer')}
                         </div>
                       </div>
                       <div>
@@ -795,7 +797,7 @@ export default function GradingPage() {
               fontSize: TYPOGRAPHY.fontSize.xs,
               color: COLORS.primary.medium,
               marginTop: SPACING.xs,
-            }}>{EXAM_UI.TOTAL}</div>
+            }}>{t('examGrading.total')}</div>
           </div>
         </div>
 
@@ -947,7 +949,7 @@ export default function GradingPage() {
                         padding: SPACING.md,
                         borderRadius: RADIUS.sm,
                       }}>
-                        {question.student_answer || EXAM_UI.YOUR_ANSWER}
+                        {question.student_answer || t('examTaking.yourAnswer')}
                       </p>
                     </div>
                     <div>
@@ -1035,7 +1037,7 @@ export default function GradingPage() {
               cursor: 'pointer',
             }}
           >
-            🖨️ {EXAM_UI.PRINT_RESULTS}
+            🖨️ {t('examGrading.printResults')}
           </button>
           <button
             onClick={() => window.location.href = '/'}
@@ -1052,7 +1054,7 @@ export default function GradingPage() {
               cursor: 'pointer',
             }}
           >
-            📝 {EXAM_UI.NEW_EXAM}
+            📝 {t('examGrading.newExam')}
           </button>
         </div>
       </div>
