@@ -2,9 +2,11 @@
  * Help Content Constants
  *
  * All help text organized in sections for easy future i18n migration.
- * When localization system is implemented, move to:
- * /src/i18n/locales/en.ts under 'help.*' namespace
- * /src/i18n/locales/fi.ts for Finnish translations
+ * When localization system (Phase 0) is implemented, move to:
+ * - /src/i18n/locales/en.ts under 'help.*' namespace
+ * - /src/i18n/locales/fi.ts for Finnish translations
+ *
+ * For details, see: /LOCALIZATION_IMPLEMENTATION_PLAN.md
  */
 
 export const HELP_CONTENT = {
