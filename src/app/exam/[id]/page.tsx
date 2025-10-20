@@ -8,6 +8,10 @@ import { ICONS } from '@/constants/exam-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
 import { getTotalGenieDollars, getExamCompletionStatus, GENIE_DOLLAR_REWARDS, awardExamRetakeDollars } from '@/lib/utils/genie-dollars'
 
+const handleHelpClick = (examId: string, router: any) => {
+  router.push(`/exam/${examId}/help`)
+}
+
 interface ExamMenuState extends ExamData {
   canReuse: boolean
   hasBeenCompleted: boolean
@@ -662,6 +666,47 @@ export default function ExamMenuPage() {
               Soon
             </div>
           </div>
+
+          {/* Help Card */}
+          <div
+            onClick={() => handleHelpClick(examId, router)}
+            style={{
+              background: COLORS.background.primary,
+              border: `2px solid ${COLORS.border.light}`,
+              borderRadius: '12px',
+              padding: '12px 8px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              transition: TRANSITIONS.normal,
+            }}
+          >
+            <div style={{
+              fontSize: '28px',
+              marginBottom: '6px',
+            }}>
+              ❓
+            </div>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginBottom: '2px',
+              color: '#1a1a1a',
+            }}>
+              Help
+            </div>
+            <div style={{
+              display: 'inline-block',
+              background: '#dbeafe',
+              color: '#1e40af',
+              padding: '2px 6px',
+              borderRadius: '8px',
+              fontSize: '10px',
+              fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              marginTop: '4px',
+            }}>
+              Learn
+            </div>
+          </div>
           </div>
         ) : (
           /* Classic Vertical Layout */
@@ -1072,6 +1117,66 @@ export default function ExamMenuPage() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Help Card */}
+            <div
+              onClick={() => handleHelpClick(examId, router)}
+              style={{
+                background: COLORS.background.primary,
+                borderRadius: RADIUS.lg,
+                padding: SPACING.lg,
+                boxShadow: SHADOWS.card,
+                cursor: 'pointer',
+                transition: TRANSITIONS.normal,
+                border: `1px solid ${COLORS.border.light}`,
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: SPACING.md,
+                marginBottom: SPACING.md,
+              }}>
+                <div style={{ fontSize: '48px' }}>❓</div>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{
+                    fontSize: TYPOGRAPHY.fontSize.lg,
+                    fontWeight: TYPOGRAPHY.fontWeight.bold,
+                    color: COLORS.primary.text,
+                    margin: 0,
+                    marginBottom: SPACING.xs,
+                  }}>
+                    Help & FAQ
+                  </h3>
+                  <p style={{
+                    fontSize: TYPOGRAPHY.fontSize.sm,
+                    color: COLORS.primary.medium,
+                    margin: 0,
+                    lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+                  }}>
+                    Learn about ExamGenie, Genie Dollars, and get answers to common questions
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => handleHelpClick(examId, router)}
+                style={{
+                  width: '100%',
+                  background: COLORS.background.secondary,
+                  color: COLORS.primary.text,
+                  padding: BUTTONS.primary.padding,
+                  borderRadius: BUTTONS.primary.radius,
+                  border: `2px solid ${COLORS.border.medium}`,
+                  fontSize: TYPOGRAPHY.fontSize.base,
+                  fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                  minHeight: TOUCH_TARGETS.comfortable,
+                  cursor: 'pointer',
+                  transition: TRANSITIONS.normal,
+                }}
+              >
+                View Help
+              </button>
             </div>
           </div>
         )}
