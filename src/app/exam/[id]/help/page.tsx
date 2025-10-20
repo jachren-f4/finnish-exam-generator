@@ -176,7 +176,7 @@ export default function HelpPage() {
       const responseData = await response.json()
       const examData = responseData.data || responseData
       setExam(examData)
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error fetching exam:', err)
     } finally {
       setIsLoading(false)
@@ -382,7 +382,6 @@ export default function HelpPage() {
                       <div
                         style={{
                           padding: SPACING.md,
-                          paddingTop: 0,
                           borderTop: `1px solid ${COLORS.border.light}`,
                           backgroundColor: COLORS.background.secondary,
                           fontSize: TYPOGRAPHY.fontSize.sm,
