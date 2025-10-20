@@ -10,12 +10,126 @@
 
 ## 📋 Table of Contents
 
-1. [Overview](#overview)
-2. [Architecture Decisions](#architecture-decisions)
-3. [Task Breakdown](#task-breakdown)
-4. [Testing Strategy](#testing-strategy)
-5. [Timeline & Estimates](#timeline--estimates)
-6. [Success Criteria](#success-criteria)
+1. [Progress Log](#progress-log)
+2. [Overview](#overview)
+3. [Architecture Decisions](#architecture-decisions)
+4. [Task Breakdown](#task-breakdown)
+5. [Testing Strategy](#testing-strategy)
+6. [Timeline & Estimates](#timeline--estimates)
+7. [Success Criteria](#success-criteria)
+
+---
+
+## 🔄 Progress Log
+
+### ✅ Phase 0: Foundation Setup [COMPLETED - Oct 20, 2025]
+
+**Total Time**: 3 hours (as estimated)
+
+#### What Was Built
+
+**i18n Infrastructure** (6 files, 870+ lines of code):
+
+1. **`/src/i18n/types.ts`** (171 lines)
+   - TypeScript type definitions
+   - `Locale` type: `'en' | 'fi'`
+   - Complete `Translations` interface with all namespaces
+   - `NestedTranslationKey` type for autocomplete support
+
+2. **`/src/i18n/locales/en.ts`** (281 lines)
+   - Complete English translations
+   - Extracted from `/src/constants/exam-ui.ts`
+   - Extracted from `/src/constants/help-content.ts`
+   - Includes: common, examMenu, examTaking, examAudio, examGrading, sharedExam, help, api sections
+
+3. **`/src/i18n/locales/fi.ts`** (284 lines)
+   - Complete Finnish translations
+   - Professional translations for all English strings
+   - Preserves existing Finnish from API routes and shared exam page
+   - Same structure as English for type safety
+
+4. **`/src/i18n/locales/index.ts`** (16 lines)
+   - Central export point
+   - `locales: Record<Locale, Translations>`
+
+5. **`/src/i18n/index.ts`** (107 lines)
+   - Client-side `useTranslation()` hook
+   - Parameter interpolation support: `{grade}`, `{count}`, etc.
+   - Reads `NEXT_PUBLIC_LOCALE` environment variable
+   - Nested key access: `t('examMenu.title')`
+   - Fallback to key if translation missing
+
+6. **`/src/i18n/server.ts`** (96 lines)
+   - Server-side translation helpers for API routes
+   - `getServerTranslation(locale?)` - returns translation function
+   - `getServerTranslations(locale?)` - returns translations object
+   - `translateServer(key, params?, locale?)` - one-off translation helper
+
+**Environment Configuration**:
+- `.env.local`: `NEXT_PUBLIC_LOCALE=en` (already existed)
+- `.env.local.staging`: `NEXT_PUBLIC_LOCALE=fi` (added manually, not committed)
+- `.env.local.production`: `NEXT_PUBLIC_LOCALE=en` (added manually, not committed)
+
+**Git Commits**:
+- Commit 23e5da3: "feat: Implement Phase 0 i18n infrastructure"
+- Commit 4095ec9: "docs: Mark Phase 0 i18n as complete"
+
+#### Verification Completed
+
+✅ **Build Test**: `npm run build` passed with no TypeScript errors
+✅ **Type Safety**: Full autocomplete support for all translation keys
+✅ **Linting**: Only pre-existing warnings, no new issues
+✅ **Structure**: All 6 files created with correct exports
+
+#### What's Ready to Use
+
+**Client-side (React components)**:
+```typescript
+import { useTranslation } from '@/i18n'
+
+export function MyComponent() {
+  const { t, locale } = useTranslation()
+
+  return (
+    <div>
+      <h1>{t('examMenu.title')}</h1>
+      <p>{t('examMenu.gradeInfo', { grade: 5, count: 15 })}</p>
+    </div>
+  )
+}
+```
+
+**Server-side (API routes)**:
+```typescript
+import { getServerTranslation } from '@/i18n/server'
+
+export async function POST(request: Request) {
+  const t = getServerTranslation() // Reads NEXT_PUBLIC_LOCALE
+
+  return Response.json({
+    error: t('api.errors.userIdRequired')
+  })
+}
+```
+
+#### What's NOT Done Yet
+
+❌ **No components migrated** - All UI still uses hardcoded strings
+❌ **No API routes migrated** - Still using hardcoded Finnish error messages
+❌ **No testing** - Infrastructure untested in actual components
+❌ **No documentation** - README/CLAUDE.md not updated yet
+
+#### Next Steps
+
+**NEXT: Phase 1 - Critical API Error Messages** (6 hours estimated)
+1. Task 1.1: Extract API error messages (2 hours)
+2. Task 1.2: Update API routes with translations (3 hours)
+3. Task 1.3: Test API error messages (1 hour)
+
+**Key files to update**:
+- `/src/app/api/mobile/exam-questions/route.ts` (lines 83, 118, 124, 154, 162, 170)
+- `/src/app/api/exam/[id]/submit/route.ts`
+- Other API routes with user-facing errors
 
 ---
 
