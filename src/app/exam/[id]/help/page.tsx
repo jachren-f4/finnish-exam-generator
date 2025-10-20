@@ -176,8 +176,8 @@ export default function HelpPage() {
       const responseData = await response.json()
       const examData = responseData.data || responseData
       setExam(examData)
-    } catch (err: unknown) {
-      console.error('Error fetching exam:', err)
+    } catch (_err: unknown) {
+      // Silently catch error - exam data is optional for Help page
     } finally {
       setIsLoading(false)
     }
