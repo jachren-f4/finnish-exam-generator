@@ -197,8 +197,16 @@ export interface Translations {
 }
 
 export type TranslationKey = keyof Translations
-export type NestedTranslationKey = {
-  [K in keyof Translations]: keyof Translations[K] extends string
-    ? `${K}.${keyof Translations[K] & string}`
-    : never
-}[keyof Translations]
+
+// Helper type to extract nested keys (handles 2 levels deep)
+type DeepKeys<T> = T extends object
+  ? {
+      [K in keyof T]: K extends string
+        ? T[K] extends object
+          ? K | `${K}.${DeepKeys<T[K]> & string}`
+          : K
+        : never
+    }[keyof T]
+  : never
+
+export type NestedTranslationKey = DeepKeys<Translations>

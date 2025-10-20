@@ -496,6 +496,13 @@ Two layout systems allow easy switching between UI variants:
 
 **Why this design?** Works well with iOS Safari bottom address bar • Maximizes space for question content • Previous answer available but not intrusive • Tested across 17 variant prototypes (`/public/retake-variants/`)
 
+### 12. Modern Grading System (examgenie_grading)
+- **New Table:** `examgenie_grading` (replaces legacy `grading`)
+- **Grade Scale:** '4-10' (updated from '1-10')
+- **Attempt Tracking:** `attempt_number` field tracks retake counts
+- **Structure:** `grading_id`, `exam_id` (FK), `grade_scale`, `grading_json`, `final_grade`, `graded_at`, `attempt_number`
+- **Database:** Migrated to production Oct 2025 • All legacy tables removed • Foreign keys validated
+
 ## Common Tasks
 
 These are used to run tests directly from Claude Code.
@@ -579,6 +586,8 @@ vercel logs       # Production logs
 | **Math audio missing** | Check `[Math Audio]` logs in Vercel • Audio fails silently to not block exams • Verify `GOOGLE_CLOUD_CREDENTIALS_JSON` |
 | **Gemini 503 errors** | Verify `GEMINI_API_KEY` • Check `/prompttests/` logs • Retry logic handles overload |
 | **Database scripts not working** | Scripts call `db-query.ts` which must exist in project root • Requires `SUPABASE_SERVICE_ROLE_KEY` in env files |
+| **Legacy table query fails** | Tables `exams`, `grading`, `answers` no longer exist (dropped during Oct 2025 migration) • Use `examgenie_exams`, `examgenie_grading`, `examgenie_questions` instead |
+| **Grading returns wrong scale** | New system uses '4-10' not '1-10' • Old `grading` table removed • Use `examgenie_grading` table |
 
 ## Important Notes
 
@@ -607,6 +616,11 @@ vercel logs       # Production logs
 ## Current Status (October 2025)
 
 ✅ **Production Active:** https://examgenie.app
+✅ **Production Schema Aligned:** Migrated production database to match staging (Oct 20, 2025)
+  - New `examgenie_grading` table with attempt tracking
+  - Added language support to `students` table (`language`, `language_name`)
+  - Removed legacy tables: `exams`, `grading`, `answers`, `exam_status` type
+  - All foreign keys validated and working
 ✅ **Math Audio Summaries:** Spoken notation audio for mathematics exams with 5 sections + guided reflections
 ✅ **Genie Dollars System:** Gamification with 12-hour spaced repetition rewards
 ✅ **Audio Listening Validation:** 80% threshold prevents gaming the reward system

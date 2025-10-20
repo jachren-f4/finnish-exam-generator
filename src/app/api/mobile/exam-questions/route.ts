@@ -9,6 +9,7 @@ import { withOptionalAuth } from '@/middleware/auth'
 import { getRateLimiter } from '@/lib/services/rate-limiter'
 import { getRequestLogger } from '@/lib/services/request-logger'
 import { getJWTValidator } from '@/lib/services/jwt-validator'
+import { getServerTranslation } from '@/i18n/server'
 
 /**
  * ExamGenie MVP Mobile API Route - Handles subject-aware exam generation
@@ -18,6 +19,9 @@ export async function POST(request: NextRequest) {
   return withOptionalAuth(request, async (req, authContext) => {
     const processingId = uuidv4()
     const timer = new OperationTimer('ExamGenie Mobile API Processing')
+
+    // Get translation function for API error messages
+    const t = getServerTranslation()
 
     // Build error context for better debugging
     const clientInfo = RequestProcessor.getClientInfo(req)
@@ -79,7 +83,7 @@ export async function POST(request: NextRequest) {
       // Check rate limit BEFORE processing images to save resources
       if (!finalUserId) {
         return ApiResponseBuilder.validationError(
-          'user_id tai student_id vaaditaan', // Finnish: user_id or student_id required
+          t('api.errors.userIdRequired'),
           'Rate limiting requires user identification',
           { requestId: processingId }
         )
@@ -114,13 +118,15 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json(
           {
-            error: 'Päivittäinen koeraja saavutettu', // Finnish: Daily exam limit reached
+            error: t('api.errors.rateLimitExceeded'),
             error_code: 'RATE_LIMIT_EXCEEDED',
             limit: rateLimitResult.limit,
             remaining: 0,
             resetAt: rateLimitResult.resetAt.toISOString(),
             retryAfter: rateLimitResult.retryAfter,
-            details: `Voit luoda uuden kokeen ${Math.ceil((rateLimitResult.retryAfter || 0) / 60)} minuutin kuluttua.`, // You can create a new exam in X minutes
+            details: t('api.errors.rateLimitRetryAfter', {
+              minutes: Math.ceil((rateLimitResult.retryAfter || 0) / 60)
+            }),
             requestId: processingId
           },
           {
@@ -151,7 +157,7 @@ export async function POST(request: NextRequest) {
       const validCategories = ['mathematics', 'core_academics', 'language_studies']
       if (category && !validCategories.includes(category)) {
         return ApiResponseBuilder.validationError(
-          'Invalid category. Must be one of: mathematics, core_academics, language_studies',
+          t('api.errors.invalidCategory'),
           'Category determines the type of exam questions to generate.'
         )
       }
@@ -162,7 +168,7 @@ export async function POST(request: NextRequest) {
       // Validate grade if provided
       if (grade && (typeof grade !== 'number' || grade < 1 || grade > 9)) {
         return ApiResponseBuilder.validationError(
-          'Invalid grade. Must be between 1 and 9.',
+          t('api.errors.invalidGrade'),
           'Grade must be a number from 1 to 9 representing the student\'s school year.'
         )
       }

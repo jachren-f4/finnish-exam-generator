@@ -39,6 +39,14 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ❌ NEVER modify core prompt structure without user approval
 - ✅ ALWAYS use service layer pattern (no direct DB calls in API routes)
 
+### Production Database Migration (October 2025)
+- ✅ Production schema now matches staging (Oct 20, 2025)
+- ✅ New `examgenie_grading` table created with proper FKs
+- ❌ NEVER reference old tables: `exams`, `grading`, `answers` (DROPPED)
+- ❌ NEVER use `exam_status` type (DROPPED)
+- ⚠️ Grade scale changed: '1-10' → '4-10' (in new grading system)
+- **Migration Files:** `/supabase/staging_to_prod/` (02_main_migration.sql, 02_rollback.sql, validation queries)
+
 ## Critical Knowledge - Common Pitfalls
 
 ### Parameter Usage (Important!)
@@ -144,6 +152,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 - **Gemini Client**: `/src/lib/gemini.ts`
 - **Supabase Client**: `/src/lib/supabase.ts`
 - **Database Scripts**: `/db-query.ts` (CLI tool), `/scripts/db-query.sh`, `/scripts/db-latest-exams.sh`
+- **Migration Suite**: `/supabase/staging_to_prod/` (02_main_migration.sql, 02_rollback.sql, 04_validation_queries.sql, checklists)
 - **Scripts**: `/scripts/vercel-logs.sh`
 
 ### Security & Protection
@@ -294,6 +303,9 @@ npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
 | History exam has outside knowledge | V7 Silent Extraction achieves 87% grounding • Language-aware rule prevents fabricated questions (German: INFO boxes only) • See `/HISTORY_PROMPT_OPTIMIZATION_FINDINGS.md` |
 | History exam token overflow | Using V7 (4000-token limit) • Never use V6 (caused 65k overflow) • Contact dev if overflow persists |
 | German history exam fabricates facts | Language-aware grounding rule requires visible INFO boxes/captions/timelines for German text • Prevents outside knowledge insertion • Finnish/Swedish/English use all visible text |
+| Legacy table query fails | Tables `exams`, `grading`, `answers` dropped in Oct 2025 migration • Use `examgenie_exams`, `examgenie_grading`, `examgenie_questions` instead |
+| Grading returns wrong scale | New system uses '4-10' not '1-10' • Old `grading` table removed • Use `examgenie_grading` |
+| Query references `exam_status` type | Type dropped in Oct 2025 migration • No longer used |
 
 ## Architecture Decisions - Don't Break These
 

@@ -1,5 +1,5 @@
 /**
- * Test Script for V7 History Prompt (Hybrid Summarized Grounding)
+ * Test Script for V7 History Prompt - German History Textbook
  *
  * V7 fixes V6 token overflow by:
  * - Internal fact extraction (no bullet point output)
@@ -194,7 +194,7 @@ async function generateHybridHistoryExam(imageParts: Array<{ inlineData: { data:
       parsedResponse = JSON.parse(text)
     } catch (parseError) {
       console.error('❌ Failed to parse JSON response')
-      writeFileSync('test-output-history-v7-raw.txt', text)
+      writeFileSync('test-output-history-v7-german-raw.txt', text)
       throw parseError
     }
 
@@ -208,14 +208,14 @@ async function generateHybridHistoryExam(imageParts: Array<{ inlineData: { data:
 
       questions.forEach((q: any) => {
         const text = q.question.toLowerCase()
-        if (text.includes('mitä tarkoittaa') || text.includes('mitä tarkoitti') ||
+        if (text.includes('was bedeutet') || text.includes('was ist') ||
             text.includes('what does') || text.includes('what is')) {
           terminology++
           terminologyQuestions.push(q.question)
-        } else if (text.includes('miksi') || text.includes('why') ||
-                   text.includes('seurauksi') || text.includes('consequence')) {
+        } else if (text.includes('warum') || text.includes('why') ||
+                   text.includes('folge') || text.includes('consequence')) {
           causes++
-        } else if (text.includes('kuka') || text.includes('ketkä') || text.includes('who')) {
+        } else if (text.includes('wer') || text.includes('who')) {
           people++
         } else {
           events++
@@ -254,14 +254,15 @@ async function generateHybridHistoryExam(imageParts: Array<{ inlineData: { data:
         model: 'gemini-2.0-flash-exp',
         temperature: 0,
         maxOutputTokens: 4000,
-        duration_ms: duration
+        duration_ms: duration,
+        language: 'German'
       },
       prompt_used: prompt,
       gemini_response: parsedResponse
     }
 
-    writeFileSync('test-output-history-v7.json', JSON.stringify(output, null, 2))
-    console.log(`\n💾 Saved to: test-output-history-v7.json\n`)
+    writeFileSync('test-output-history-v7-german.json', JSON.stringify(output, null, 2))
+    console.log(`\n💾 Saved to: test-output-history-v7-german.json\n`)
 
   } catch (error) {
     console.error('❌ Error:', error)
@@ -270,11 +271,11 @@ async function generateHybridHistoryExam(imageParts: Array<{ inlineData: { data:
 }
 
 async function main() {
-  console.log('🏛️  V7 HISTORY PROMPT TESTER (Hybrid Summarized Grounding)')
+  console.log('🏛️  V7 HISTORY PROMPT TESTER - GERMAN TEXTBOOK')
   console.log('===========================================================\n')
 
   try {
-    const imageParts = loadTestImages('assets/images/history_8th_compr')
+    const imageParts = loadTestImages('assets/images/history_de')
     await generateHybridHistoryExam(imageParts)
     console.log('✅ Test completed!\n')
   } catch (error) {
