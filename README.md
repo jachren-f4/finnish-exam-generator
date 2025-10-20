@@ -410,6 +410,23 @@ useEffect(() => {
 
 **📚 Full Analysis:** See `/HISTORY_PROMPT_OPTIMIZATION_FINDINGS.md` for complete variant testing results.
 
+**V7.2 JSON Format Fix (October 2025):**
+Fixed options format mismatch causing text input fields instead of multiple choice buttons in history exams generated before Oct 20, 2025.
+
+Changed from:
+```json
+"options": ["Option 1", "Option 2", ...]
+```
+To:
+```json
+"options": [
+  { "id": "A", "text": "Option 1" },
+  { "id": "B", "text": "Option 2" }
+]
+```
+
+**Note:** History exams created Oct 19-20, 2025 require regeneration to display correctly.
+
 ### 8. Audio Summary Generation
 - **TTS Service:** Google Cloud TTS with 0.8 speaking rate for educational clarity
 - **Languages:** 12+ languages (Finnish, German, English, Swedish, Spanish, French, etc.)
@@ -502,6 +519,22 @@ Two layout systems allow easy switching between UI variants:
 - **Attempt Tracking:** `attempt_number` field tracks retake counts
 - **Structure:** `grading_id`, `exam_id` (FK), `grade_scale`, `grading_json`, `final_grade`, `graded_at`, `attempt_number`
 - **Database:** Migrated to production Oct 2025 • All legacy tables removed • Foreign keys validated
+
+### 13. Internationalization (i18n)
+- **Languages:** English (en), Finnish (fi)
+- **Control:** `NEXT_PUBLIC_LOCALE` environment variable
+- **Architecture:** Custom implementation without external libraries
+- **Client-side:** `useTranslation()` hook • Server-side: `getServerTranslation()` function
+- **Type Safety:** Full TypeScript autocomplete for translation keys
+- **Coverage:** 200+ strings across API errors, UI components, and exam pages
+
+**Phase 3: Main App Pages ✅ (October 2025)**
+Localized core exam flow:
+- **Exam Taking Page**: 12 strings (submit dialogs, navigation, error states)
+- **Audio Player Page**: 2 strings (error handling)
+- **Results/Grading Page**: 7 strings (result states, action buttons)
+
+Total Phase 3: 21 strings localized across 3 pages.
 
 ## Common Tasks
 

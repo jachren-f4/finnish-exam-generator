@@ -39,6 +39,12 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ❌ NEVER modify core prompt structure without user approval
 - ✅ ALWAYS use service layer pattern (no direct DB calls in API routes)
 
+### History Prompt JSON Format
+- ✅ Options MUST use format: `[{ "id": "A", "text": "..." }, ...]`
+- ❌ NEVER use simple string arrays: `["Option 1", "Option 2", ...]`
+- 📁 **File:** `/src/lib/config.ts:620` (getHistoryPrompt JSON OUTPUT)
+- ⚠️ Fixed Oct 2025 (V7.2) - old exams show text inputs instead of MC buttons
+
 ### Production Database Migration (October 2025)
 - ✅ Production schema now matches staging (Oct 20, 2025)
 - ✅ New `examgenie_grading` table created with proper FKs
@@ -306,6 +312,7 @@ npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
 | Legacy table query fails | Tables `exams`, `grading`, `answers` dropped in Oct 2025 migration • Use `examgenie_exams`, `examgenie_grading`, `examgenie_questions` instead |
 | Grading returns wrong scale | New system uses '4-10' not '1-10' • Old `grading` table removed • Use `examgenie_grading` |
 | Query references `exam_status` type | Type dropped in Oct 2025 migration • No longer used |
+| History exam shows text inputs | Options stored as string array instead of `{ id, text }` objects • Fixed in V7.2 (Oct 20, 2025) • Old exams need regeneration | Check `processed_text.questions[0].options` format in DB |
 
 ## Architecture Decisions - Don't Break These
 
@@ -393,4 +400,5 @@ For detailed explanations, architecture history, and comprehensive guides, see:
 ✅ All core features implemented and tested
 ✅ Mobile app (Flutter) integrated and working
 ✅ Math audio summaries with spoken notation
+✅ Phase 3 i18n complete (21 strings: Taking, Audio, Grading pages)
 ⚠️ Legacy OCR endpoints exist but are unused (can be removed)
