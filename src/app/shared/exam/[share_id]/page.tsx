@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import { useTranslation } from '@/i18n'
 
 interface Question {
   id: string
@@ -30,6 +31,7 @@ interface SharedExam {
 export default function SharedExamPage() {
   const params = useParams()
   const share_id = params?.share_id as string
+  const { t } = useTranslation()
 
   const [exam, setExam] = useState<SharedExam | null>(null)
   const [loading, setLoading] = useState(true)
@@ -68,7 +70,7 @@ export default function SharedExamPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Ladataan koetta...</p>
+          <p className="text-gray-600">{t('sharedExam.loading')}</p>
         </div>
       </div>
     )
@@ -79,10 +81,10 @@ export default function SharedExamPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Koetta ei löytynyt</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('sharedExam.notFound')}</h1>
           <p className="text-gray-600 mb-4">{error}</p>
           <p className="text-sm text-gray-500">
-            Tarkista että linkki on oikea tai ota yhteyttä kokeen jakajaan.
+            {t('sharedExam.notFoundDetails')}
           </p>
         </div>
       </div>
@@ -93,7 +95,7 @@ export default function SharedExamPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Koetta ei löytynyt</p>
+          <p className="text-gray-600">{t('sharedExam.notFound')}</p>
         </div>
       </div>
     )
@@ -104,8 +106,8 @@ export default function SharedExamPage() {
       {/* Print header */}
       <div className="print:block hidden">
         <div className="text-center border-b pb-4 mb-6">
-          <h1 className="text-2xl font-bold">ExamGenie</h1>
-          <p className="text-gray-600">Automaattisesti luotu koe</p>
+          <h1 className="text-2xl font-bold">{t('sharedExam.printHeader')}</h1>
+          <p className="text-gray-600">{t('sharedExam.printSubheader')}</p>
         </div>
       </div>
 
@@ -113,14 +115,14 @@ export default function SharedExamPage() {
         {/* Screen-only controls */}
         <div className="print:hidden mb-6 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Jaettu koe</h1>
-            <p className="text-gray-600 mt-1">Julkinen näkymä</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('sharedExam.title')}</h1>
+            <p className="text-gray-600 mt-1">{t('sharedExam.publicView')}</p>
           </div>
           <button
             onClick={handlePrint}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            🖨️ Tulosta
+            🖨️ {t('sharedExam.print')}
           </button>
         </div>
 
@@ -133,23 +135,23 @@ export default function SharedExamPage() {
               </h2>
               {exam.student_name && (
                 <p className="text-gray-700">
-                  <span className="font-medium">Oppilaan nimi:</span> {exam.student_name}
+                  <span className="font-medium">{t('sharedExam.studentName')}</span> {exam.student_name}
                 </p>
               )}
               <p className="text-gray-700">
-                <span className="font-medium">Luotu:</span>{' '}
+                <span className="font-medium">{t('sharedExam.created')}</span>{' '}
                 {new Date(exam.created_at).toLocaleDateString('fi-FI')}
               </p>
             </div>
             <div className="text-right print:text-left">
               <p className="text-gray-700">
-                <span className="font-medium">Kysymyksiä:</span> {exam.question_count}
+                <span className="font-medium">{t('sharedExam.questions')}</span> {exam.question_count}
               </p>
               <p className="text-gray-700">
-                <span className="font-medium">Pisteitä yhteensä:</span> {exam.total_points}
+                <span className="font-medium">{t('sharedExam.totalPoints')}</span> {exam.total_points}
               </p>
               <p className="text-sm text-gray-500 mt-2">
-                Koe-ID: {exam.share_id}
+                {t('sharedExam.examId')} {exam.share_id}
               </p>
             </div>
           </div>
@@ -157,12 +159,12 @@ export default function SharedExamPage() {
 
         {/* Instructions */}
         <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-8 print:bg-white print:border-gray-300">
-          <h3 className="font-semibold text-blue-900 mb-2">📋 Ohjeet</h3>
+          <h3 className="font-semibold text-blue-900 mb-2">📋 {t('sharedExam.instructions')}</h3>
           <ul className="text-blue-800 text-sm space-y-1">
-            <li>• Lue jokainen kysymys huolellisesti</li>
-            <li>• Vastaa kaikkiin kysymyksiin</li>
-            <li>• Monivalintakysymyksissä valitse yksi oikea vastaus</li>
-            <li>• Kirjoita vastaukset selkeästi</li>
+            <li>• {t('sharedExam.instruction1')}</li>
+            <li>• {t('sharedExam.instruction2')}</li>
+            <li>• {t('sharedExam.instruction3')}</li>
+            <li>• {t('sharedExam.instruction4')}</li>
           </ul>
         </div>
 
@@ -175,7 +177,7 @@ export default function SharedExamPage() {
                   {question.question_number}. {question.question_text}
                 </h3>
                 <span className="text-sm text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded print:bg-white print:border">
-                  {question.max_points} p
+                  {t('sharedExam.points', { points: question.max_points })}
                 </span>
               </div>
 
@@ -193,7 +195,7 @@ export default function SharedExamPage() {
               {question.question_type !== 'multiple_choice' && (
                 <div className="mt-4">
                   <div className="border border-gray-300 rounded p-4 min-h-20 print:border-black print:rounded-none">
-                    <p className="text-gray-400 text-sm">Kirjoita vastauksesi tähän...</p>
+                    <p className="text-gray-400 text-sm">{t('sharedExam.answerPlaceholder')}</p>
                   </div>
                 </div>
               )}
@@ -204,7 +206,7 @@ export default function SharedExamPage() {
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-gray-200 text-center text-gray-500 print:border-black">
           <p className="text-sm">
-            Luotu <span className="font-medium text-blue-600">ExamGenie</span>-sovelluksella
+            {t('sharedExam.createdWith')} <span className="font-medium text-blue-600">{t('sharedExam.appName')}</span> {t('sharedExam.application')}
           </p>
           <p className="text-xs mt-1 print:hidden">
             {exam.sharing_url}
