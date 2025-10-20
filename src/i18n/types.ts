@@ -41,6 +41,24 @@ export interface Translations {
     gradeInfo: string // "Grade {grade} • {count} questions"
     questionsCount: string // "{count} Q"
     rewardAmount: string // "+{amount}"
+    audioDescription: string
+    startExam: string
+    resultsDescription: string
+    resultsLocked: string
+    viewResults: string
+    retakeFullExam: string
+    retakeDescription: string
+    retakeLocked: string
+    startRetake: string
+    practiceMistakes: string
+    reviewWrongQuestions: string // "Review {count} question{s} you got wrong"
+    perfectScore: string
+    mistakesLocked: string
+    practiceNow: string
+    rankingComingSoon: string
+    helpFaq: string
+    helpDescription: string
+    viewHelp: string
   }
 
   examTaking: {

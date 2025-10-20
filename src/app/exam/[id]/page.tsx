@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import type { ExamData } from '@/lib/supabase'
+import { useTranslation } from '@/i18n'
 import { EXAM_UI } from '@/constants/exam-ui'
 import { ICONS } from '@/constants/exam-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, TRANSITIONS } from '@/constants/design-tokens'
@@ -24,6 +25,7 @@ export default function ExamMenuPage() {
   const params = useParams()
   const router = useRouter()
   const examId = params?.id as string
+  const { t } = useTranslation()
 
   // Layout mode toggle - change this to 'grid' or 'classic'
   const LAYOUT_MODE = 'classic' as 'grid' | 'classic'
@@ -127,7 +129,7 @@ export default function ExamMenuPage() {
             marginTop: SPACING.lg,
             fontSize: TYPOGRAPHY.fontSize.sm,
             color: COLORS.primary.medium,
-          }}>{EXAM_UI.LOADING}</p>
+          }}>{t('common.loading')}</p>
         </div>
         <style jsx>{`
           @keyframes spin {
@@ -163,12 +165,12 @@ export default function ExamMenuPage() {
               fontWeight: TYPOGRAPHY.fontWeight.bold,
               color: COLORS.primary.text,
               marginBottom: SPACING.md,
-            }}>{EXAM_UI.ERROR}</h1>
+            }}>{t('common.error')}</h1>
             <p style={{
               fontSize: TYPOGRAPHY.fontSize.base,
               color: COLORS.primary.medium,
               marginBottom: SPACING.lg,
-            }}>{error || EXAM_UI.NOT_FOUND}</p>
+            }}>{error || t('common.notFound')}</p>
             <button
               onClick={() => window.location.reload()}
               style={{
@@ -185,7 +187,7 @@ export default function ExamMenuPage() {
                 transition: TRANSITIONS.normal,
               }}
             >
-              {EXAM_UI.RETRY}
+              {t('common.retry')}
             </button>
           </div>
         </div>
@@ -237,7 +239,7 @@ export default function ExamMenuPage() {
               color: COLORS.primary.text,
               margin: 0,
             }}>
-              ExamGenie
+              {t('examMenu.title')}
             </h1>
           </div>
 
@@ -257,7 +259,7 @@ export default function ExamMenuPage() {
               color: COLORS.primary.medium,
               fontWeight: TYPOGRAPHY.fontWeight.medium,
             }}>
-              Genie Dollars
+              {t('examMenu.genieDollars')}
             </span>
             <span style={{
               fontSize: TYPOGRAPHY.fontSize.base,
@@ -300,7 +302,7 @@ export default function ExamMenuPage() {
             margin: 0,
             lineHeight: TYPOGRAPHY.lineHeight.tight,
           }}>
-            Grade {exam.grade} • {exam.total_questions} questions
+            {t('examMenu.gradeInfo', { grade: exam.grade, count: exam.total_questions })}
           </p>
         </div>
 
@@ -338,7 +340,7 @@ export default function ExamMenuPage() {
               marginBottom: '2px',
               color: '#1a1a1a',
             }}>
-              Audio
+              {t('examMenu.audio')}
             </div>
             {hasAudio ? (
               rewardStatus.audioEligible ? (
@@ -352,7 +354,7 @@ export default function ExamMenuPage() {
                   fontWeight: TYPOGRAPHY.fontWeight.semibold,
                   marginTop: '4px',
                 }}>
-                  +{GENIE_DOLLAR_REWARDS.AUDIO}
+                  {t('examMenu.rewardAmount', { amount: GENIE_DOLLAR_REWARDS.AUDIO })}
                 </div>
               ) : (
                 <div style={{
@@ -379,7 +381,7 @@ export default function ExamMenuPage() {
                 fontWeight: TYPOGRAPHY.fontWeight.semibold,
                 marginTop: '4px',
               }}>
-                N/A
+                {t('examMenu.na')}
               </div>
             )}
           </div>
@@ -409,7 +411,7 @@ export default function ExamMenuPage() {
               marginBottom: '2px',
               color: '#1a1a1a',
             }}>
-              Exam
+              {t('examMenu.exam')}
             </div>
             {rewardStatus.examEligible ? (
               <div style={{
@@ -466,7 +468,7 @@ export default function ExamMenuPage() {
               marginBottom: '2px',
               color: '#1a1a1a',
             }}>
-              Results
+              {t('examMenu.results')}
             </div>
             {isCompleted ? (
               <div style={{
@@ -479,7 +481,7 @@ export default function ExamMenuPage() {
                 fontWeight: TYPOGRAPHY.fontWeight.semibold,
                 marginTop: '4px',
               }}>
-                View
+                {t('examMenu.view')}
               </div>
             ) : (
               <div style={{
@@ -492,7 +494,7 @@ export default function ExamMenuPage() {
                 fontWeight: TYPOGRAPHY.fontWeight.semibold,
                 marginTop: '4px',
               }}>
-                Pending
+                {t('examMenu.pending')}
               </div>
             )}
           </div>
@@ -523,7 +525,7 @@ export default function ExamMenuPage() {
               marginBottom: '2px',
               color: '#1a1a1a',
             }}>
-              Retake
+              {t('examMenu.retake')}
             </div>
             {isCompleted ? (
               rewardStatus.retakeEligible ? (
@@ -537,7 +539,7 @@ export default function ExamMenuPage() {
                   fontWeight: TYPOGRAPHY.fontWeight.semibold,
                   marginTop: '4px',
                 }}>
-                  +{GENIE_DOLLAR_REWARDS.EXAM_RETAKE}
+                  {t('examMenu.rewardAmount', { amount: GENIE_DOLLAR_REWARDS.EXAM_RETAKE })}
                 </div>
               ) : (
                 <div style={{
@@ -564,7 +566,7 @@ export default function ExamMenuPage() {
                 fontWeight: TYPOGRAPHY.fontWeight.semibold,
                 marginTop: '4px',
               }}>
-                Pending
+                {t('examMenu.pending')}
               </div>
             )}
           </div>
@@ -595,7 +597,7 @@ export default function ExamMenuPage() {
               marginBottom: '2px',
               color: '#1a1a1a',
             }}>
-              Mistakes
+              {t('examMenu.mistakes')}
             </div>
             {isCompleted && wrongQuestionCount > 0 ? (
               <div style={{
@@ -621,7 +623,7 @@ export default function ExamMenuPage() {
                 fontWeight: TYPOGRAPHY.fontWeight.semibold,
                 marginTop: '4px',
               }}>
-                {isCompleted && wrongQuestionCount === 0 ? 'Perfect!' : 'Pending'}
+                {isCompleted && wrongQuestionCount === 0 ? t('examMenu.perfect') : t('examMenu.pending')}
               </div>
             )}
           </div>
@@ -651,7 +653,7 @@ export default function ExamMenuPage() {
               marginBottom: '2px',
               color: '#1a1a1a',
             }}>
-              Ranking
+              {t('examMenu.ranking')}
             </div>
             <div style={{
               display: 'inline-block',
@@ -663,7 +665,7 @@ export default function ExamMenuPage() {
               fontWeight: TYPOGRAPHY.fontWeight.semibold,
               marginTop: '4px',
             }}>
-              Soon
+              {t('examMenu.soon')}
             </div>
           </div>
 
@@ -692,7 +694,7 @@ export default function ExamMenuPage() {
               marginBottom: '2px',
               color: '#1a1a1a',
             }}>
-              Help
+              {t('examMenu.help')}
             </div>
             <div style={{
               display: 'inline-block',
@@ -704,7 +706,7 @@ export default function ExamMenuPage() {
               fontWeight: TYPOGRAPHY.fontWeight.semibold,
               marginTop: '4px',
             }}>
-              Learn
+              {t('examMenu.learn')}
             </div>
           </div>
           </div>
@@ -744,7 +746,7 @@ export default function ExamMenuPage() {
                       margin: 0,
                       marginBottom: SPACING.xs,
                     }}>
-                      Audio Summary
+                      {t('examMenu.audio')} {t('common.done')}
                     </h3>
                     <p style={{
                       fontSize: TYPOGRAPHY.fontSize.sm,
@@ -752,7 +754,7 @@ export default function ExamMenuPage() {
                       margin: 0,
                       lineHeight: TYPOGRAPHY.lineHeight.relaxed,
                     }}>
-                      Listen to an overview of the material before taking the exam
+                      {t('examMenu.audioDescription')}
                     </p>
                   </div>
                 </div>
@@ -786,7 +788,7 @@ export default function ExamMenuPage() {
                       fontSize: TYPOGRAPHY.fontSize.xs,
                       fontWeight: TYPOGRAPHY.fontWeight.bold,
                     }}>
-                      +{GENIE_DOLLAR_REWARDS.AUDIO}
+                      {t('examMenu.rewardAmount', { amount: GENIE_DOLLAR_REWARDS.AUDIO })}
                     </span>
                   )}
                 </button>
@@ -821,7 +823,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     marginBottom: SPACING.xs,
                   }}>
-                    Exam
+                    {t('examMenu.exam')}
                   </h3>
                   <p style={{
                     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -829,7 +831,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     lineHeight: TYPOGRAPHY.lineHeight.relaxed,
                   }}>
-                    {exam.total_questions} questions
+                    {t('examMenu.questionsCount', { count: exam.total_questions })}
                   </p>
                 </div>
               </div>
@@ -853,7 +855,7 @@ export default function ExamMenuPage() {
                   gap: SPACING.sm,
                 }}
               >
-                Start Exam
+                {t('examMenu.startExam')}
                 {rewardStatus.examEligible && (
                   <span style={{
                     background: 'rgba(254, 243, 199, 0.3)',
@@ -863,7 +865,7 @@ export default function ExamMenuPage() {
                     fontSize: TYPOGRAPHY.fontSize.xs,
                     fontWeight: TYPOGRAPHY.fontWeight.bold,
                   }}>
-                    +{GENIE_DOLLAR_REWARDS.EXAM}
+                    {t('examMenu.rewardAmount', { amount: GENIE_DOLLAR_REWARDS.EXAM })}
                   </span>
                 )}
               </button>
@@ -898,7 +900,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     marginBottom: SPACING.xs,
                   }}>
-                    Results
+                    {t('examMenu.results')}
                   </h3>
                   <p style={{
                     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -906,7 +908,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     lineHeight: TYPOGRAPHY.lineHeight.relaxed,
                   }}>
-                    {isCompleted ? 'View your exam results and feedback' : 'Complete the exam to see results'}
+                    {isCompleted ? t('examMenu.resultsDescription') : t('examMenu.resultsLocked')}
                   </p>
                 </div>
               </div>
@@ -927,7 +929,7 @@ export default function ExamMenuPage() {
                     transition: TRANSITIONS.normal,
                   }}
                 >
-                  View Results
+                  {t('examMenu.view')} Results
                 </button>
               )}
             </div>
@@ -961,7 +963,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     marginBottom: SPACING.xs,
                   }}>
-                    Retake Full Exam
+                    {t('examMenu.retake')} Full Exam
                   </h3>
                   <p style={{
                     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -969,7 +971,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     lineHeight: TYPOGRAPHY.lineHeight.relaxed,
                   }}>
-                    {isCompleted ? 'Practice again with all questions' : 'Complete the exam first to unlock retakes'}
+                    {isCompleted ? t('examMenu.retakeDescription') : t('examMenu.retakeLocked')}
                   </p>
                 </div>
               </div>
@@ -994,7 +996,7 @@ export default function ExamMenuPage() {
                     gap: SPACING.sm,
                   }}
                 >
-                  Start Retake
+                  {t('examMenu.startRetake')}
                   {rewardStatus.retakeEligible && (
                     <span style={{
                       background: '#fb923c',
@@ -1004,7 +1006,7 @@ export default function ExamMenuPage() {
                       fontSize: TYPOGRAPHY.fontSize.xs,
                       fontWeight: TYPOGRAPHY.fontWeight.bold,
                     }}>
-                      +{GENIE_DOLLAR_REWARDS.EXAM_RETAKE}
+                      {t('examMenu.rewardAmount', { amount: GENIE_DOLLAR_REWARDS.EXAM_RETAKE })}
                     </span>
                   )}
                 </button>
@@ -1040,7 +1042,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     marginBottom: SPACING.xs,
                   }}>
-                    Practice Mistakes
+                    {t('examMenu.practiceMistakes')}
                   </h3>
                   <p style={{
                     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -1049,10 +1051,10 @@ export default function ExamMenuPage() {
                     lineHeight: TYPOGRAPHY.lineHeight.relaxed,
                   }}>
                     {isCompleted && wrongQuestionCount > 0
-                      ? `Review ${wrongQuestionCount} question${wrongQuestionCount > 1 ? 's' : ''} you got wrong`
+                      ? t('examMenu.reviewWrongQuestions', { count: wrongQuestionCount })
                       : isCompleted && wrongQuestionCount === 0
-                      ? 'Perfect score! No mistakes to practice'
-                      : 'Complete the exam to see your mistakes'}
+                      ? t('examMenu.perfectScore')
+                      : t('examMenu.mistakesLocked')}
                   </p>
                 </div>
               </div>
@@ -1073,7 +1075,7 @@ export default function ExamMenuPage() {
                     transition: TRANSITIONS.normal,
                   }}
                 >
-                  Practice Now
+                  {t('examMenu.practiceNow')}
                 </button>
               )}
             </div>
@@ -1113,7 +1115,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     lineHeight: TYPOGRAPHY.lineHeight.relaxed,
                   }}>
-                    Coming soon - compete with other students
+                    {t('examMenu.rankingComingSoon')}
                   </p>
                 </div>
               </div>
@@ -1147,7 +1149,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     marginBottom: SPACING.xs,
                   }}>
-                    Help & FAQ
+                    {t('examMenu.help')} & FAQ
                   </h3>
                   <p style={{
                     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -1155,7 +1157,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     lineHeight: TYPOGRAPHY.lineHeight.relaxed,
                   }}>
-                    Learn about ExamGenie, Genie Dollars, and get answers to common questions
+                    {t('examMenu.learn')} about ExamGenie, Genie Dollars, and get answers to common questions
                   </p>
                 </div>
               </div>
@@ -1175,7 +1177,7 @@ export default function ExamMenuPage() {
                   transition: TRANSITIONS.normal,
                 }}
               >
-                View Help
+                {t('examMenu.view')} Help
               </button>
             </div>
           </div>
