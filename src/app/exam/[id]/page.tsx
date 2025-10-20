@@ -87,7 +87,7 @@ export default function ExamMenuPage() {
       }
     } catch (err) {
       console.error('Error fetching exam:', err)
-      setError(err instanceof Error ? err.message : EXAM_UI.LOAD_FAILED)
+      setError(err instanceof Error ? err.message : t('common.loadFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -293,6 +293,7 @@ export default function ExamMenuPage() {
             color: '#1a1a1a',
             marginBottom: '2px',
             lineHeight: TYPOGRAPHY.lineHeight.tight,
+            textTransform: 'capitalize',
           }}>
             {exam.subject}
           </h2>

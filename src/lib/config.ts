@@ -617,8 +617,13 @@ Before finalizing, if output approaches length limit, shorten explanations but k
       "id": 1,
       "type": "multiple_choice",
       "question": "[Natural question in source language]",
-      "options": ["A", "B", "C", "D"],
-      "correct_answer": "[Exact match from options]",
+      "options": [
+        { "id": "A", "text": "[Answer option text]" },
+        { "id": "B", "text": "[Answer option text]" },
+        { "id": "C", "text": "[Answer option text]" },
+        { "id": "D", "text": "[Answer option text]" }
+      ],
+      "correct_answer": "[Exact match: A, B, C, or D]",
       "explanation": "[1–2 sentences, factual and concise]"
     }
   ],

@@ -586,6 +586,52 @@ After 9 iterations plus language-aware enhancement, **V7.1 Hybrid Summarized Gro
 
 **Status:** V7.1 deployed to staging (commits 7b3b963, 6c9bb09), ready for production.
 
+---
+
+### V7.2: JSON Format Fix for Options (October 20, 2025)
+**Problem Discovered:**
+History prompt (V7/V7.1) was outputting options in simplified format:
+```json
+"options": ["Option 1", "Option 2", "Option 3", "Option 4"]
+```
+
+Frontend expected structured format:
+```json
+"options": [
+  { "id": "A", "text": "Option 1" },
+  { "id": "B", "text": "Option 2" },
+  { "id": "C", "text": "Option 3" },
+  { "id": "D", "text": "Option 4" }
+]
+```
+
+**Impact:**
+- History exams displayed text input fields instead of multiple choice buttons
+- User experience broken for all history subject exams
+- Discovered during Phase 3 i18n testing on staging exam `55220c3a-da62-44b1-840e-3a2bc38cc14d`
+
+**Solution:**
+Updated JSON OUTPUT section in `getHistoryPrompt()` to match standard exam format:
+```json
+"options": [
+  { "id": "A", "text": "[Answer option text]" },
+  { "id": "B", "text": "[Answer option text]" },
+  { "id": "C", "text": "[Answer option text]" },
+  { "id": "D", "text": "[Answer option text]" }
+]
+```
+
+**Changes:**
+- File: `/src/lib/config.ts` line 620-625
+- Updated prompt template to use structured options format
+- Maintains all V7.1 benefits (grounding, distribution, token efficiency)
+
+**Testing Required:**
+- Generate new history exam to verify options format
+- Confirm multiple choice buttons render correctly
+- Verify correct_answer matching works with "A", "B", "C", "D" format
+
+**Status:** Fix applied October 20, 2025, awaiting production testing
 
 ---
 
