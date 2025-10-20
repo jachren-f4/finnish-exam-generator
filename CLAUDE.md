@@ -155,6 +155,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 - **Design Tokens**: `/src/constants/design-tokens.ts`
 - **Question Shuffler**: `/src/lib/utils/question-shuffler.ts`
 - **Genie Dollars**: `/src/lib/utils/genie-dollars.ts`
+- **Onboarding**: `/src/components/exam/OnboardingOverlay.tsx`, `/src/lib/utils/onboarding.ts`, `/src/app/dev/reset/page.tsx`
 - **Gemini Client**: `/src/lib/gemini.ts`
 - **Supabase Client**: `/src/lib/supabase.ts`
 - **Database Scripts**: `/db-query.ts` (CLI tool), `/scripts/db-query.sh`, `/scripts/db-latest-exams.sh`
@@ -313,6 +314,7 @@ npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
 | Grading returns wrong scale | New system uses '4-10' not '1-10' • Old `grading` table removed • Use `examgenie_grading` |
 | Query references `exam_status` type | Type dropped in Oct 2025 migration • No longer used |
 | History exam shows text inputs | Options stored as string array instead of `{ id, text }` objects • Fixed in V7.2 (Oct 20, 2025) • Old exams need regeneration | Check `processed_text.questions[0].options` format in DB |
+| Onboarding not showing | Integrated into menu page (`/exam/[id]`), not take page • Check localStorage key `examgenie_onboarding_seen` • Use `/dev/reset` to clear |
 
 ## Architecture Decisions - Don't Break These
 

@@ -462,7 +462,20 @@ To:
 - Yellow badge shows eligible rewards, green badge shows time until next eligibility
 - localStorage tracking: `audioLastEarnedAt` and `examLastEarnedAt`
 
-### 10. Retake UI Design
+### 10. Onboarding Flow
+First-time users see a 4-slide bottom sheet overlay when visiting any exam menu page:
+1. **Welcome** - explains menu cards (Audio, Exam, Results)
+2. **Navigate** - how to move between questions
+3. **Genie Dollars** - reward system (+5 audio, +10 exam)
+4. **Submit** - viewing results
+
+**Features:**
+- Swipe (mobile) or keyboard navigation (arrows, space, ESC)
+- Per-exam tracking via localStorage (`examgenie_onboarding_seen`)
+- Appears once per exam, per device
+- Dev tools at `/dev/reset` to clear localStorage for testing
+
+### 11. Retake UI Design
 
 **Bottom Sheet Pattern (Variant 6)** - When retaking exams, previous answer details are shown via a bottom sheet to keep the question area clean:
 
@@ -471,7 +484,7 @@ To:
 - **Overlay:** Semi-transparent backdrop dismisses sheet when tapped
 - **Clean Question Card:** No clutter—students focus on current attempt
 
-### 11. Layout Toggle System
+### 12. Layout Toggle System
 
 Two layout systems allow easy switching between UI variants:
 
