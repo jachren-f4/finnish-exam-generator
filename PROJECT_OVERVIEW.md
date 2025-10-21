@@ -10,7 +10,7 @@ This is a full-stack web application that generates Finnish language educational
 4. **Exam Management**: Create, store, share, and grade exams with AI-powered evaluation
 
 ## Current URLs and Deployment
-- **Production**: https://exam-generator.vercel.app
+- **Production**: https://examgenie.app
 - **Local Development**: http://localhost:3001 (configurable)
 - **GitHub Repository**: https://github.com/jachren-f4/finnish-exam-generator.git
 
@@ -97,7 +97,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_key
 
 # Application URL (Important!)
-NEXT_PUBLIC_APP_URL=https://exam-generator.vercel.app  # Or http://localhost:3001 for local
+NEXT_PUBLIC_APP_URL=https://examgenie.app  # Or http://localhost:3001 for local
 
 # Optional
 ENABLE_PROMPT_LOGGING=true  # For development debugging
@@ -223,7 +223,7 @@ curl -X POST http://localhost:3001/api/mobile/exam-questions \
 
 ### "Wrong domain in exam URLs"
 - Check `NEXT_PUBLIC_APP_URL` in `.env.local`
-- Should be `https://exam-generator.vercel.app` for production
+- Should be `https://examgenie.app` for production
 
 ### "Gemini API errors"
 - Verify `GEMINI_API_KEY` is set

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ExamGenie – Key Concepts Prototype</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #222;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header { text-align: center; color: white; margin-bottom: 2rem; }
+    h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .test-info { background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 12px; margin-bottom: 2rem; }
+    .test-info p { color: white; margin: 0.25rem 0; font-size: 0.9rem; }
+    h2 { text-align: center; color: white; margin-bottom: 1.5rem; font-size: 1.8rem; }
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .concept-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .concept-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    .concept-card[data-clicked="true"] {
+      border: 2px solid #4CAF50;
+    }
+    .concept-card.mastered {
+      border: 2px solid #4CAF50;
+      background: #e8f5e9;
+      transition: background 0.3s ease, border 0.3s ease;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 1rem;
+      gap: 0.5rem;
+    }
+    h3 {
+      font-size: 1.2rem;
+      color: #333;
+      line-height: 1.3;
+      flex: 1;
+    }
+    .difficulty-badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .difficulty-badge.foundational { background: #E3F2FD; color: #1976D2; }
+    .difficulty-badge.intermediate { background: #FFF3E0; color: #F57C00; }
+    .difficulty-badge.advanced { background: #FCE4EC; color: #C2185B; }
+    .badge {
+      font-weight: 600;
+      color: #667eea;
+      margin: 0.5rem 0;
+      font-size: 0.95rem;
+    }
+    .category, .related-questions {
+      color: #666;
+      font-size: 0.85rem;
+      margin: 0.25rem 0;
+    }
+    .expand-btn {
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    .expand-btn:hover { background: #5568d3; }
+    .definition {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    .definition p { margin: 0.5rem 0; line-height: 1.6; }
+    .definition-text { color: #333; }
+    .hint { color: #555; font-style: italic; }
+    .hidden { display: none; }
+    .progress {
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: white;
+    }
+    #completion-banner {
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+      padding: 2rem;
+      border-radius: 16px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+      animation: fadeIn 1s ease forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .stats-bar {
+      background: rgba(255,255,255,0.95);
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .stat { text-align: center; }
+    .stat-value { font-size: 1.5rem; font-weight: 700; color: #667eea; }
+    .stat-label { font-size: 0.85rem; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎓 ExamGenie Key Concepts</h1>
+      <p>Interactive Prototype – Click cards to learn!</p>
+    </header>
+
+    <div class="test-info">
+      <p><strong>Test Version:</strong> v1.2</p>
+      <p><strong>Model:</strong> gemini-2.5-flash-lite (temperature: 0)</p>
+      <p><strong>Questions Generated:</strong> 15</p>
+      <p><strong>Concepts Extracted:</strong> 12</p>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-value" id="clicked-count">0</div>
+        <div class="stat-label">Opittuja käsitteitä</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Käsitteitä yhteensä</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="progress-percent">0%</div>
+        <div class="stat-label">Edistyminen</div>
+      </div>
+    </div>
+
+    <section id="key-concepts">
+      <h2>Avainkäsitteet</h2>
+      <p id="progress" class="progress" data-ui-show="Näytä selitys" data-ui-hide="Piilota selitys">0/12</p>
+      <div class="concept-grid">
+    <div class="concept-card" data-clicked="false" data-index="0">
+      <div class="card-header">
+        <h3>Tasainen liike</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Vakaa kulkija</p>
+      <p class="category">📂 Liike</p>
+      <p class="related-questions">🔗 Questions: 1, 4</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Liike, jossa nopeus ja suunta pysyvät vakioina.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Mikä liiketila ei muutu ajan kuluessa?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="1">
+      <div class="card-header">
+        <h3>Nopeuden muunnos</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Yksikkömuunnin</p>
+      <p class="category">📂 Yksiköt</p>
+      <p class="related-questions">🔗 Questions: 2</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Kyky muuntaa nopeusyksiköitä, kuten km/h, m/s:ksi.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Kuinka monta metriä sekunnissa on 30 kilometriä tunnissa?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="2">
+      <div class="card-header">
+        <h3>Nopeuden SI-yksikkö</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Metri sekunnissa</p>
+      <p class="category">📂 Yksiköt</p>
+      <p class="related-questions">🔗 Questions: 3</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Metriä sekunnissa (m/s) on nopeuden perusyksikkö SI-järjestelmässä.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Mikä on virallinen nopeuden mittayksikkö?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="3">
+      <div class="card-header">
+        <h3>Matka nopeus aika</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Matkalaskuri</p>
+      <p class="category">📂 Laskenta</p>
+      <p class="related-questions">🔗 Questions: 5</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Matka lasketaan kertomalla nopeus ajalla tasaisessa liikkeessä.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Jos kuljet 10 m/s, kuinka pitkälle pääset 5 sekunnissa?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="4">
+      <div class="card-header">
+        <h3>Tasaisesti kiihtyvä liike</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Kiihtyvä vauhti</p>
+      <p class="category">📂 Liike</p>
+      <p class="related-questions">🔗 Questions: 6</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Liike, jossa nopeus kasvaa tai pienenee tasaisella vauhdilla.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Mikä liiketila muuttaa nopeuttaan tasaisesti?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="5">
+      <div class="card-header">
+        <h3>Keskimääräinen kiihtyvyys</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Kiihtyvyysmittari</p>
+      <p class="category">📂 Laskenta</p>
+      <p class="related-questions">🔗 Questions: 7</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Nopeuden muutoksen jakaminen aikavälillä, jonka aikana muutos tapahtui.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Jos nopeus muuttuu 10 m/s kahdessa sekunnissa, mikä on kiihtyvyys?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="6">
+      <div class="card-header">
+        <h3>Kiihtyvyyden SI-yksikkö</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Metri sekunti toiseen</p>
+      <p class="category">📂 Yksiköt</p>
+      <p class="related-questions">🔗 Questions: 8</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Metriä sekuntia kohden toiseen (m/s²) on kiihtyvyyden perusyksikkö SI-järjestelmässä.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Mikä on kiihtyvyyden mittayksikkö?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="7">
+      <div class="card-header">
+        <h3>Kiihtyvyyden määritelmä</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Nopeuden muutos</p>
+      <p class="category">📂 Liike</p>
+      <p class="related-questions">🔗 Questions: 9</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Kiihtyvyys kuvaa nopeuden muutosnopeutta.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Mikä mittaa kuinka nopeasti nopeus muuttuu?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="8">
+      <div class="card-header">
+        <h3>Hidastuminen</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Vauhdin vähentäjä</p>
+      <p class="category">📂 Liike</p>
+      <p class="related-questions">🔗 Questions: 10</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Nopeuden väheneminen, joka ilmenee negatiivisena kiihtyvyytenä.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Mitä kiihtyvyyden merkki kertoo, kun nopeus pienenee?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="9">
+      <div class="card-header">
+        <h3>Newtonin ensimmäinen laki</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Hitauden laki</p>
+      <p class="category">📂 Newtonin lait</p>
+      <p class="related-questions">🔗 Questions: 11, 15</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Esine pysyy levossa tai tasaisessa liikkeessä, ellei siihen vaikuta ulkoinen voima.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Mikä laki kuvaa esineen taipumusta vastustaa muutoksia liikkeessään?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="10">
+      <div class="card-header">
+        <h3>Newtonin toinen laki</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Voiman kaava</p>
+      <p class="category">📂 Newtonin lait</p>
+      <p class="related-questions">🔗 Questions: 12</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Voima on yhtä suuri kuin massa kertaa kiihtyvyys (F=ma).</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Mikä on kaava, joka yhdistää voiman, massan ja kiihtyvyyden?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="11">
+      <div class="card-header">
+        <h3>Newtonin kolmas laki</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Vaikutus ja vastavaikutus</p>
+      <p class="category">📂 Newtonin lait</p>
+      <p class="related-questions">🔗 Questions: 13, 14</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Jokaiselle vaikutukselle on olemassa yhtä suuri ja vastakkainen vastavaikutus.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Kun työnnät seinää, mitä seinä tekee?</p>
+      </div>
+    </div>
+  </div>
+      <div id="completion-banner" class="hidden">
+        🎉 Onneksi olkoon! Olet oppinut kaikki avainkäsitteet!
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function toggleDefinition(btn) {
+      const card = btn.parentElement;
+      const def = btn.nextElementSibling;
+      const wasHidden = def.classList.contains('hidden');
+
+      def.classList.toggle('hidden');
+
+      // Mark card as mastered on first click
+      if (wasHidden && !card.classList.contains('mastered')) {
+        card.classList.add('mastered');
+        card.dataset.clicked = "true";
+        updateProgress();
+      }
+
+      // Get UI strings from data attributes on progress element
+      const progressEl = document.getElementById('progress');
+      btn.textContent = wasHidden ? progressEl.dataset.uiHide : progressEl.dataset.uiShow;
+    }
+
+    function updateProgress() {
+      const all = document.querySelectorAll('.concept-card');
+      const mastered = document.querySelectorAll('.concept-card[data-clicked="true"]');
+      const progress = Math.round((mastered.length / all.length) * 100);
+
+      // Update stats bar
+      document.getElementById('clicked-count').textContent = mastered.length;
+      document.getElementById('progress-percent').textContent = progress + '%';
+
+      // Update progress text (simple numeric format - language-agnostic)
+      document.getElementById('progress').textContent = mastered.length + '/' + all.length;
+
+      // Show completion banner if all mastered
+      if (mastered.length === all.length) {
+        document.getElementById('completion-banner').classList.remove('hidden');
+        confettiEffect();
+      }
+    }
+
+    // Optional: simple confetti animation
+    function confettiEffect() {
+      const banner = document.getElementById('completion-banner');
+      banner.innerHTML += ' 🏆';
+      banner.style.background = 'linear-gradient(135deg, #4CAF50, #66BB6A)';
+    }
+  </script>
+</body>
+</html>

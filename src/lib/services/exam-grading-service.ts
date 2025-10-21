@@ -9,7 +9,21 @@ export interface QuestionGradingResult {
   points_awarded: number
   percentage: number
   feedback: string
-  usage_metadata?: any
+  usage_metadata?: any  // Kept for backward compatibility, but not used for DB storage
+}
+
+export interface BatchGradingResult {
+  gradingResults: Map<string, QuestionGradingResult>
+  gradingUsageMetadata: {
+    promptTokenCount: number
+    candidatesTokenCount: number
+    totalTokenCount: number
+    estimatedCost: number
+    inputCost: number
+    outputCost: number
+    model: string
+    questionsGraded: number
+  } | null
 }
 
 export interface ExamGradingOptions {
@@ -29,7 +43,7 @@ export class ExamGradingService {
     questions: any[],
     studentAnswers: StudentAnswer[],
     examId?: string
-  ): Promise<Map<string, QuestionGradingResult> | null> {
+  ): Promise<BatchGradingResult | null> {
     try {
       const startTime = Date.now()
       const model = genAI.getGenerativeModel({ model: GEMINI_CONFIG.MODEL_NAME })
@@ -122,6 +136,19 @@ JSON:
 
       console.log(`✅ Batch graded ${gradingResults.size}/${questions.length} questions successfully`)
 
+      // Create usage metadata for database storage
+      const gradingUsageMetadata = usageMetadata ? {
+        promptTokenCount: usageMetadata.promptTokenCount || 0,
+        candidatesTokenCount: usageMetadata.candidatesTokenCount || 0,
+        totalTokenCount: (usageMetadata.promptTokenCount || 0) + (usageMetadata.candidatesTokenCount || 0),
+        estimatedCost: ((usageMetadata.promptTokenCount || 0) / 1_000_000) * GEMINI_CONFIG.PRICING.INPUT_COST_PER_1M +
+                       ((usageMetadata.candidatesTokenCount || 0) / 1_000_000) * GEMINI_CONFIG.PRICING.OUTPUT_COST_PER_1M,
+        inputCost: ((usageMetadata.promptTokenCount || 0) / 1_000_000) * GEMINI_CONFIG.PRICING.INPUT_COST_PER_1M,
+        outputCost: ((usageMetadata.candidatesTokenCount || 0) / 1_000_000) * GEMINI_CONFIG.PRICING.OUTPUT_COST_PER_1M,
+        model: GEMINI_CONFIG.MODEL_NAME,
+        questionsGraded: questions.length
+      } : null
+
       // Log batch grading prompt and response
       if (examId) {
         try {
@@ -135,7 +162,7 @@ JSON:
               promptTokens: usageMetadata?.promptTokenCount || 0,
               responseTokens: usageMetadata?.candidatesTokenCount || 0,
               totalTokens: (usageMetadata?.promptTokenCount || 0) + (usageMetadata?.candidatesTokenCount || 0),
-              estimatedCost: ((usageMetadata?.promptTokenCount || 0) / 1000000) * 0.10 + ((usageMetadata?.candidatesTokenCount || 0) / 1000000) * 0.40
+              estimatedCost: gradingUsageMetadata?.estimatedCost || 0
             },
             'BATCH'
           )
@@ -145,7 +172,10 @@ JSON:
         }
       }
 
-      return gradingResults
+      return {
+        gradingResults,
+        gradingUsageMetadata
+      }
 
     } catch (error) {
       console.error('Batch AI grading failed:', error)
@@ -320,12 +350,18 @@ Evaluate the answer and give points between 0-${maxPoints}.`
 
       // Try BATCH AI grading first if enabled
       let batchGradingResults: Map<string, QuestionGradingResult> | null = null
+      let batchGradingUsage: any = null  // Store usage metadata for DB
       if (useAiGrading) {
         try {
           console.log(`🚀 Starting BATCH grading for ${questions.length} questions...`)
-          batchGradingResults = await this.gradeQuestionsWithBatchAI(questions, studentAnswers, examData.exam_id)
-          if (batchGradingResults) {
+          const batchResult = await this.gradeQuestionsWithBatchAI(questions, studentAnswers, examData.exam_id)
+          if (batchResult) {
+            batchGradingResults = batchResult.gradingResults
+            batchGradingUsage = batchResult.gradingUsageMetadata  // Capture for DB storage
             console.log(`✅ BATCH grading completed for ${batchGradingResults.size} questions`)
+            if (batchGradingUsage) {
+              console.log(`💰 Grading cost: $${batchGradingUsage.estimatedCost.toFixed(6)}`)
+            }
           }
         } catch (error) {
           console.warn('Batch AI grading failed, falling back to individual processing:', error)
@@ -440,7 +476,9 @@ Evaluate the answer and give points between 0-${maxPoints}.`
           gemini_available: !!process.env.GEMINI_API_KEY,
           total_gemini_usage: totalGeminiUsage,
           grading_prompt: getGradingPrompt()
-        }
+        },
+        // NEW: Include batch grading usage for database storage
+        grading_gemini_usage: batchGradingUsage
       }
 
 

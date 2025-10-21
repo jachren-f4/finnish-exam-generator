@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results Page Variants - ExamGenie</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #F5F5F5;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #737373;
+    }
+
+    .variants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .variant-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 24px;
+      transition: all 0.3s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .variant-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      transform: translateY(-4px);
+    }
+
+    .variant-number {
+      display: inline-block;
+      background: #1a1a1a;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .variant-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+
+    .variant-description {
+      font-size: 14px;
+      color: #737373;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .variant-features {
+      list-style: none;
+      margin-bottom: 16px;
+    }
+
+    .variant-features li {
+      font-size: 13px;
+      color: #737373;
+      padding-left: 20px;
+      position: relative;
+      margin-bottom: 4px;
+    }
+
+    .variant-features li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #22C55E;
+      font-weight: 700;
+    }
+
+    .variant-tag {
+      display: inline-block;
+      background: #F5F5F5;
+      color: #737373;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-right: 4px;
+      margin-top: 8px;
+    }
+
+    .view-btn {
+      display: inline-block;
+      background: #1a1a1a;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 12px;
+      transition: all 0.3s;
+    }
+
+    .variant-card:hover .view-btn {
+      background: #404040;
+    }
+
+    .info-section {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .info-section h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+
+    .info-section p {
+      font-size: 14px;
+      color: #737373;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .back-link {
+      display: inline-block;
+      color: #1a1a1a;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 24px;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📊 Exam Results Page Variants</h1>
+      <p class="subtitle">Six mobile-optimized designs using the same style as the exam-taking page</p>
+    </div>
+
+    <div class="info-section">
+      <h2>About These Variants</h2>
+      <p>Each variant uses consistent design tokens: colors (#22C55E green, #F59E0B orange, #EF4444 red), 640px max-width, white cards with shadows, 12px border radius, and 48px touch targets.</p>
+      <p>All variants are fully interactive with sample data. Open any variant to see how it looks and works!</p>
+    </div>
+
+    <div class="variants-grid">
+      <!-- Variant 1 -->
+      <a href="https://exam-generator-staging.vercel.app/results-variants/variant-1-swipeable-cards.html" class="variant-card">
+        <span class="variant-number">VARIANT 1</span>
+        <h3 class="variant-title">Swipeable Cards</h3>
+        <p class="variant-description">Instagram-style swipeable question cards with navigation dots</p>
+        <ul class="variant-features">
+          <li>One question per screen</li>
+          <li>Color-coded navigation dots</li>
+          <li>Touch-friendly swipe navigation</li>
+          <li>Question counter shows progress</li>
+        </ul>
+        <div>
+          <span class="variant-tag">Mobile-First</span>
+          <span class="variant-tag">Touch-Optimized</span>
+        </div>
+        <span class="view-btn">View Variant →</span>
+      </a>
+
+      <!-- Variant 2 -->
+      <a href="https://exam-generator-staging.vercel.app/results-variants/variant-2-timeline-expansion.html" class="variant-card">
+        <span class="variant-number">VARIANT 2</span>
+        <h3 class="variant-title">Timeline with Expansion</h3>
+        <p class="variant-description">Vertical timeline with expandable question details</p>
+        <ul class="variant-features">
+          <li>Timeline dots numbered by question</li>
+          <li>Expand/collapse cards</li>
+          <li>Compact overview mode</li>
+          <li>"Expand All" quick action</li>
+        </ul>
+        <div>
+          <span class="variant-tag">Scannable</span>
+          <span class="variant-tag">Progressive Disclosure</span>
+        </div>
+        <span class="view-btn">View Variant →</span>
+      </a>
+
+      <!-- Variant 3 -->
+      <a href="https://exam-generator-staging.vercel.app/results-variants/variant-3-compact-slide-in.html" class="variant-card">
+        <span class="variant-number">VARIANT 3</span>
+        <h3 class="variant-title">Compact List with Slide-in</h3>
+        <p class="variant-description">Dense list view with full-screen slide-in panel for details</p>
+        <ul class="variant-features">
+          <li>Maximum information density</li>
+          <li>Filter by result type</li>
+          <li>Slide-in detail panel</li>
+          <li>Previous/Next navigation</li>
+        </ul>
+        <div>
+          <span class="variant-tag">Information Dense</span>
+          <span class="variant-tag">Filterable</span>
+        </div>
+        <span class="view-btn">View Variant →</span>
+      </a>
+
+      <!-- Variant 4 -->
+      <a href="https://exam-generator-staging.vercel.app/results-variants/variant-4-dashboard.html" class="variant-card">
+        <span class="variant-number">VARIANT 4</span>
+        <h3 class="variant-title">Dashboard Style</h3>
+        <p class="variant-description">Analytics dashboard with visual metrics and grid layout</p>
+        <ul class="variant-features">
+          <li>Gradient hero card</li>
+          <li>Visual performance bar</li>
+          <li>3-column question grid</li>
+          <li>Modal popup for details</li>
+        </ul>
+        <div>
+          <span class="variant-tag">Visual</span>
+          <span class="variant-tag">Gamified</span>
+        </div>
+        <span class="view-btn">View Variant →</span>
+      </a>
+
+      <!-- Variant 5 -->
+      <a href="https://exam-generator-staging.vercel.app/results-variants/variant-5-tabs.html" class="variant-card">
+        <span class="variant-number">VARIANT 5</span>
+        <h3 class="variant-title">Tab-Based</h3>
+        <p class="variant-description">Tabbed interface separating question types</p>
+        <ul class="variant-features">
+          <li>5 tabs with badge counts</li>
+          <li>Sticky tab bar</li>
+          <li>Filtered views per tab</li>
+          <li>Side-by-side comparison</li>
+        </ul>
+        <div>
+          <span class="variant-tag">Organized</span>
+          <span class="variant-tag">Categorized</span>
+        </div>
+        <span class="view-btn">View Variant →</span>
+      </a>
+
+      <!-- Variant 6 -->
+      <a href="https://exam-generator-staging.vercel.app/results-variants/variant-6-story-style.html" class="variant-card">
+        <span class="variant-number">VARIANT 6</span>
+        <h3 class="variant-title">Story Style (Full Screen)</h3>
+        <p class="variant-description">Instagram/Snapchat-style immersive full-screen cards</p>
+        <ul class="variant-features">
+          <li>Full-screen gradient cards</li>
+          <li>Progress bars at top</li>
+          <li>Swipe & tap navigation</li>
+          <li>Keyboard shortcuts supported</li>
+        </ul>
+        <div>
+          <span class="variant-tag">Immersive</span>
+          <span class="variant-tag">Modern</span>
+        </div>
+        <span class="view-btn">View Variant →</span>
+      </a>
+    </div>
+
+    <div class="info-section">
+      <h2>Navigation Tips</h2>
+      <p><strong>Variant 1, 6:</strong> Use arrows, swipe, or tap left/right to navigate</p>
+      <p><strong>Variant 2:</strong> Click cards to expand/collapse, or use "Expand All" button</p>
+      <p><strong>Variant 3:</strong> Click any question row to see details in slide-in panel</p>
+      <p><strong>Variant 4:</strong> Click question tiles to open detail modal</p>
+      <p><strong>Variant 5:</strong> Switch between tabs to see filtered views</p>
+      <p><strong>Variant 6:</strong> ESC key to exit, Space/Arrow keys to navigate</p>
+    </div>
+
+    <a href="https://exam-generator-staging.vercel.app" class="back-link">← Back to ExamGenie Staging</a>
+  </div>
+</body>
+</html>

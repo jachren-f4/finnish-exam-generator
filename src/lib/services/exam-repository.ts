@@ -238,7 +238,10 @@ export class ExamRepository {
         total_questions: questions.length,
         max_total_points: totalPoints,
         audio_url: examgenieExam.audio_url || null,
-        summary_text: examgenieExam.summary_text || null
+        summary_text: examgenieExam.summary_text || null,
+        detected_language: examgenieExam.detected_language || null,  // AUTO-DETECT: For UI localization
+        key_concepts: examgenieExam.key_concepts || null,  // NEW: Include key concepts
+        gamification: examgenieExam.gamification || null  // NEW: Include gamification
       }
 
     } catch (error) {

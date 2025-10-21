@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math Exam Preview V1.5 - ExamGenie</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #ffffff;
+      color: #000000;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .header {
+      text-align: center;
+      padding: 20px 0;
+      border-bottom: 1px solid #e0e0e0;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: #000000;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+    }
+
+    .question-card {
+      max-width: 600px;
+      margin: 0 auto 40px;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .question-number {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .progress-dots {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #e0e0e0;
+    }
+
+    .dot.active {
+      background: #000000;
+    }
+
+    .question-text {
+      font-size: 20px;
+      font-weight: 500;
+      margin-bottom: 24px;
+      color: #000000;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .option:hover {
+      border-color: #000000;
+    }
+
+    .option.correct {
+      background: #d4edda;
+      border-color: #28a745;
+    }
+
+    .radio-circle {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #666;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .option.correct .radio-circle {
+      border-color: #28a745;
+      background: #28a745;
+      position: relative;
+    }
+
+    .option.correct .radio-circle::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .option-text {
+      flex: 1;
+      font-size: 16px;
+      color: #000000;
+    }
+
+    .explanation {
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #333;
+      border-left: 3px solid #000000;
+    }
+
+    .explanation strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #000000;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 640px) {
+      body {
+        padding: 10px;
+      }
+
+      .question-card {
+        padding: 20px;
+      }
+
+      .question-text {
+        font-size: 18px;
+      }
+
+      .option {
+        padding: 12px 16px;
+      }
+
+      .option-text {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>
+      <span class="logo">🎓</span>
+      ExamGenie - Matematiikan Koe (V1.5 Hybrid)
+    </h1>
+  </div>
+
+  
+      <div class="question-card">
+        <div class="question-number">1 / 15</div>
+        <div class="progress-dots">
+          <div class="dot active"></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Laske lausekkeen $\frac{1}{5} = \frac{x}{10}$ ratkaisu.</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 2</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 3</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 8</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 10</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Ratkaistaan yhtälö kertomalla ristiin: $1 \cdot 10 = 5 \cdot x$, josta saadaan $10 = 5x$. Jaetaan molemmat puolet 5:llä: $x = \frac{10}{5} = 2$. Yleinen virhe on laskea $10/5$ väärin.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">2 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot active"></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Ratkaise yhtälö $\frac{12}{x} = \frac{4}{5}$.</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 15</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 12</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 5</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 3</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Kerrotaan yhtälö ristiin: $12 \cdot 5 = x \cdot 4$, josta saadaan $60 = 4x$. Jaetaan molemmat puolet 4:llä: $x = \frac{60}{4} = 15$. Tyypillinen virhe on unohtaa kertoa molemmat puolet muuttujalla.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">3 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot active"></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Laske yhtälön $\frac{2x}{7} = \frac{20}{14}$ ratkaisu.</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 10</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 5</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 7</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 14</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Yhtälö voidaan ratkaista kertomalla ristiin: $2x \cdot 14 = 7 \cdot 20$, josta saadaan $28x = 140$. Jaetaan molemmat puolet 28:lla: $x = \frac{140}{28} = 5$. Vaihtoehtoisesti huomataan, että $\frac{20}{14} = \frac{10}{7}$, jolloin $\frac{2x}{7} = \frac{10}{7}$, josta $2x=10$ ja $x=5$. Tarkistus: $\frac{2 \cdot 5}{7} = \frac{10}{7} = \frac{20}{14}$.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">4 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot active"></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Ratkaise yhtälö $\frac{x+2}{4} = \frac{9}{12}$.</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 4,5</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 7</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 2,5</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 5,5</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Kerrotaan yhtälö ristiin: $(x+2) \cdot 12 = 4 \cdot 9$, josta saadaan $12x + 24 = 36$. Vähennetään 24 molemmilta puolilta: $12x = 12$. Jaetaan 12:lla: $x = 1$. Tarkistus: $\frac{1+2}{4} = \frac{3}{4} = \frac{9}{12}$.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">5 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot active"></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Laske yhtälön $\frac{8}{x+1} = \frac{7}{14}$ ratkaisu.</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 13</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 15</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 10</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 11</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Yhtälö voidaan sieventää muotoon $\frac{8}{x+1} = \frac{1}{2}$. Kerrotaan ristiin: $8 \cdot 2 = (x+1) \cdot 1$, josta saadaan $16 = x+1$. Vähennetään 1 molemmilta puolilta: $x = 15$. Tarkistus: $\frac{8}{15+1} = \frac{8}{16} = \frac{1}{2} = \frac{7}{14}$.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">6 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot active"></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Ratkaise yhtälö $\frac{x-1}{6} = \frac{3}{18}$.</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 2</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 1</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 3</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">x = 0</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Sievennetään ensin oikea puoli: $\frac{3}{18} = \frac{1}{6}$. Yhtälö on siis $\frac{x-1}{6} = \frac{1}{6}$. Kun nimittäjät ovat samat, myös osoittajien on oltava samat: $x-1 = 1$. Lisätään 1 molemmille puolille: $x = 2$. Tarkistus: $\frac{2-1}{6} = \frac{1}{6} = \frac{3}{18}$.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">7 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot active"></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Yksinkertaista lauseke $\frac{b^{12}}{b^4}$.</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">$b^8$</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">$b^{16}$</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">$b^3$</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">$b^{-8}$</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Kun jaetaan potensseja, joiden kantaluku on sama, eksponentit vähennetään: $\frac{a^m}{a^n} = a^{m-n}$. Tässä tapauksessa $\frac{b^{12}}{b^4} = b^{12-4} = b^8$. Yleinen virhe on laskea $12/4$ tai $12+4$.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">8 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot active"></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Sievennä lauseke $5a^3 \cdot 2a^2$.</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">$10a^5$</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">$7a^5$</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">$10a^6$</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">$7a^6$</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Kerrotaan ensin kertoimet keskenään: $5 \cdot 2 = 10$. Kun kerrotaan potensseja, joiden kantaluku on sama, eksponentit lasketaan yhteen: $a^m \cdot a^n = a^{m+n}$. Tässä tapauksessa $a^3 \cdot a^2 = a^{3+2} = a^5$. Yhdistämällä saadaan $10a^5$. Tyypillinen virhe on laskea eksponentit väärin.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">9 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot active"></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Sievennä lauseke $(x^3)^4$.</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">$x^{12}$</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">$x^7$</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">$x^{81}$</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">$x^1$</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Kun potenssi korotetaan potenssiin, eksponentit kerrotaan keskenään: $(a^m)^n = a^{m \cdot n}$. Tässä tapauksessa $(x^3)^4 = x^{3 \cdot 4} = x^{12}$. Yleinen virhe on laskea $3+4$ eksponenttien sijaan.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">10 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot active"></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Yksinkertaista lauseke $\frac{15x^5y^3}{3x^2y}$.</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">$5x^3y^2$</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">$5x^3y^3$</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">$5x^2y^2$</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">$12x^3y^2$</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Jaetaan ensin kertoimet: $\frac{15}{3} = 5$. Jaetaan sitten muuttujat potenssien vähennyssäännön mukaisesti: $\frac{x^5}{x^2} = x^{5-2} = x^3$ ja $\frac{y^3}{y} = y^{3-1} = y^2$. Yhdistämällä saadaan $5x^3y^2$. Virheellinen vastaus voi syntyä, jos eksponentteja ei vähennetä oikein.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">11 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot active"></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Astian kaadetaan 0,5 litraa mehutiivistettä. Mehun laimennussuhde on 1 : 4. Kuinka paljon valmista mehua saadaan?</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">2,5 litraa</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">2 litraa</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">3 litraa</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">1,5 litraa</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Laimennussuhde 1:4 tarkoittaa, että yhtä osaa tiivistettä kohden käytetään neljä osaa vettä. Valmista mehua on siis $1+4=5$ osaa. Jos tiivistettä on 0,5 litraa (1 osa), valmista mehua on $5 \times 0,5$ litraa = 2,5 litraa. Yleinen virhe on laskea vain veden määrä.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">12 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot active"></div><div class="dot "></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Tallinnan-laiva kulkee 80 kilometrin matkan kahdessa tunnissa. Kuinka kauan laivalta kuluu sama nopeudella 10 kilometrin matkaan?</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">15 minuuttia</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">30 minuuttia</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">20 minuuttia</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">10 minuuttia</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Laivan nopeus on $\frac{80 \text{ km}}{2 \text{ h}} = 40 \text{ km/h}$. Aika matkaan lasketaan kaavalla aika = matka / nopeus. Aika = $\frac{10 \text{ km}}{40 \text{ km/h}} = 0,25 \text{ h}$. Koska 1 tunti on 60 minuuttia, 0,25 tuntia on $0,25 \times 60 = 15$ minuuttia. Virheellinen vastaus voi syntyä, jos lasketaan tunnit väärin minuuteiksi.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">13 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot active"></div><div class="dot "></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Kartalla mittakaava on 1 : 25 000. Kuinka pitkä matka kartalla, kun se on luonnossa 4,7 km?</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">18,8 cm</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">188 cm</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">18,8 m</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">1,88 cm</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Mittakaava 1:25 000 tarkoittaa, että 1 cm kartalla vastaa 25 000 cm luonnossa. Muutetaan 4,7 km senttimetreiksi: $4,7 \text{ km} = 4,7 \times 1000 	ext{ m} = 4700 	ext{ m} = 4700 	imes 100 	ext{ cm} = 470 000 	ext{ cm}$. Karttamatka on $\frac{470 000 \text{ cm}}{25 000} = 18,8 \text{ cm}$. Yleinen virhe on muuntaa yksiköt väärin.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">14 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot active"></div><div class="dot "></div>
+        </div>
+        <h2 class="question-text">Mitä tarkoittaa, kun sanotaan, että kahden luvun suhde on 2 : 3?</h2>
+        <div class="options">
+          
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">Ensimmäinen luku on kaksi kertaa niin suuri kuin toinen.</div>
+        </div>
+      
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">Ensimmäinen luku on kaksi kolmasosaa toisesta luvusta.</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">Toinen luku on kaksi kertaa niin suuri kuin ensimmäinen.</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">Lukujen erotus on 2.</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Suhde 2:3 tarkoittaa, että jaettaessa ensimmäinen luku toisella saadaan tulokseksi $\frac{2}{3}$. Toisin sanoen, jos ensimmäinen luku on $a$ ja toinen $b$, niin $\frac{a}{b} = \frac{2}{3}$. Yleinen virhe on sekoittaa suhde ja erotus tai kertoa väärin.
+        </div>
+      </div>
+    
+      <div class="question-card">
+        <div class="question-number">15 / 15</div>
+        <div class="progress-dots">
+          <div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot "></div><div class="dot active"></div>
+        </div>
+        <h2 class="question-text">Miksi luvun $a^0$ arvo on aina 1 (kun $a \neq 0$)?</h2>
+        <div class="options">
+          
+        <div class="option correct">
+          <div class="radio-circle"></div>
+          <div class="option-text">Potenssin nolla eksponentti tarkoittaa, että luku on jaettu itsellään.</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">Potenssin nolla eksponentti tarkoittaa, että luku on kerrottu nollalla.</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">Potenssin nolla eksponentti tarkoittaa, että luku on korotettu nollanteen potenssiin.</div>
+        </div>
+      
+        <div class="option ">
+          <div class="radio-circle"></div>
+          <div class="option-text">Potenssin nolla eksponentti tarkoittaa, että luku on yhtä suuri kuin nolla.</div>
+        </div>
+      
+        </div>
+        <div class="explanation">
+          <strong>Selitys:</strong> Potenssin nolla eksponentti perustuu jakolaskusääntöön: $a^m / a^n = a^{m-n}$. Jos $m=n$, niin $a^m / a^m = a^{m-m} = a^0$. Koska mikä tahansa luku jaettuna itsellään on 1, pätee $a^0 = 1$. Virheellinen käsitys on, että se tarkoittaisi kertomista nollalla.
+        </div>
+      </div>
+    
+
+  <div class="footer">
+    Generated by ExamGenie Math Exam Test Script V1.5 (V1 Enforcement + V2 Structure)<br>
+    Topic: Algebra ja yhtälöt, suhteet ja mittakaavat | Grade: 8
+  </div>
+
+  <script>
+    // Render LaTeX with KaTeX
+    document.addEventListener("DOMContentLoaded", function() {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: "$$", right: "$$", display: true},
+          {left: "$", right: "$", display: false}
+        ],
+        throwOnError: false
+      });
+    });
+  </script>
+</body>
+</html>

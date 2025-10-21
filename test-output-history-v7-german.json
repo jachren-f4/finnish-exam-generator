@@ -1,0 +1,220 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-10-19T13:38:28.526Z",
+    "version": "v7-hybrid-summarized-grounding",
+    "prompt_source": "V7 - Internal Extraction + Token Guard",
+    "model": "gemini-2.0-flash-exp",
+    "temperature": 0,
+    "maxOutputTokens": 4000,
+    "duration_ms": 19222,
+    "language": "German"
+  },
+  "prompt_used": "SYSTEM INSTRUCTION (prepend this before any user content):\nYou must treat the uploaded textbook images as your *only factual source*.\nDo not rely on your general history knowledge. Use only information visible in the textbook pages.\nIf something is not visible, skip it.\n\nKeep total output under 4000 tokens. Use concise sentences and limit explanations to 1–2 lines.\n\n---\n\n## 🎓 Task\nCreate a **history exam for grade 8 students** based *only* on the uploaded textbook pages.\n\n---\n\n## 🔍 INTERNAL FACT EXTRACTION (do NOT print)\nFirst, silently read all textbook images and extract:\n- main events with dates\n- people or groups mentioned\n- historical terms defined\n- visible causes and consequences\n\nDo NOT list or print these facts. Keep them in memory only.\n\n---\n\n## ✍️ QUESTION GENERATION\nNow, using only the information you extracted internally, generate:\n\n- 2 terminology questions (\"What does X mean?\")\n- 6 event questions (\"What happened / when / where?\")\n- 4 cause–consequence questions (\"Why / what resulted?\")\n- 3 people questions (\"Who / what did they do?\")\n→ Total = 15 questions\n\nEvery question must be answerable directly from the textbook pages.\nIf a fact, date, or person is not visible, skip it.\n\n---\n\n## 🎯 ADDITIONAL RULES\n\n### Language\n- Auto-detect textbook language and use it everywhere.\n- No translation, no mixing.\n\n### Style\n- Write like a teacher talking to students.\n- Never mention \"the text\", \"material\", or \"chapter\".\n- Use natural, clear sentences.\n\n### Terminology Rule\n- Only ask meanings of *specialized historical terms* (e.g. hyperinflaatio, sisällissota).\n- Never ask about common words (itsenäisyys, demokratia, sota, rauha).\n\n### Validation\n- Exactly 2 terminology questions.\n- No generic vocabulary or invented names.\n- All 15 questions grounded, clear, and answerable from the textbook pages.\n\n### Language-Aware Grounding Rule (CRITICAL)\nBEFORE creating each question, detect the textbook language:\n- **If German**: ONLY use facts from visible INFO boxes, captions, timeline dates, or explicit definitions. Never use general historical knowledge.\n- **If Finnish/Swedish/English**: Use all visible text content from pages.\n- **Common rule**: If a date, name, or event is NOT explicitly written in the textbook, skip it entirely.\n\nExamples of what NOT to do:\n- ❌ \"Wann wurde das Deutsche Reich gegründet? 1871\" (if 1871 not visible in text)\n- ❌ Questions about countries/people never mentioned in the pages\n- ✅ Only use dates from timelines, INFO boxes, or body text\n\n### Self-Check Compression\nBefore finalizing, if output approaches length limit, shorten explanations but keep correctness.\n\n---\n\n## 🧩 JSON OUTPUT\n\n{\n  \"questions\": [\n    {\n      \"id\": 1,\n      \"type\": \"multiple_choice\",\n      \"question\": \"[Natural question in source language]\",\n      \"options\": [\"A\", \"B\", \"C\", \"D\"],\n      \"correct_answer\": \"[Exact match from options]\",\n      \"explanation\": \"[1–2 sentences, factual and concise]\"\n    }\n  ],\n  \"summary\": {\n    \"introduction\": \"[100–200 words – introduce the historical topic from the text]\",\n    \"key_concepts\": \"[250–400 words – main events, causes, results]\",\n    \"examples_and_applications\": \"[150–250 words – help students understand significance]\",\n    \"summary_conclusion\": \"[80–150 words – wrap up clearly]\",\n    \"total_word_count\": [number],\n    \"language\": \"[ISO 639-1 code]\"\n  }\n}\n\n---\n\n## ⚠️ FINAL CHECKLIST\n✅ 15 total questions\n✅ 2 terminology exactly\n✅ No \"material/text\" references\n✅ No invented facts or external info\n✅ All questions from visible textbook content\n✅ Natural, student-friendly phrasing\n✅ Output under 4000 tokens",
+  "gemini_response": {
+    "questions": [
+      {
+        "id": 1,
+        "type": "multiple_choice",
+        "question": "Was bedeutet der Begriff 'Imperialismus'?",
+        "options": [
+          "Die Zeit nach dem Ersten Weltkrieg.",
+          "Das Streben von Staaten, ihre Macht über andere Länder auszudehnen.",
+          "Eine Epoche des Friedens und der Zusammenarbeit.",
+          "Die Politik des Deutschen Reiches unter Bismarck."
+        ],
+        "correct_answer": "Das Streben von Staaten, ihre Macht über andere Länder auszudehnen.",
+        "explanation": "Imperialismus kommt aus dem Lateinischen und bezeichnet das Streben von Staaten, ihre Macht durch die Aneignung von Kolonien über andere Länder auszudehnen."
+      },
+      {
+        "id": 2,
+        "type": "multiple_choice",
+        "question": "Was bedeutet der Begriff 'Nationalismus'?",
+        "options": [
+          "Eine Weltanschauung, die die eigene Nation in den Mittelpunkt rückt.",
+          "Eine Bewegung für den Frieden in Europa.",
+          "Eine Form der Regierung im Deutschen Reich.",
+          "Ein Bündnis zwischen europäischen Staaten."
+        ],
+        "correct_answer": "Eine Weltanschauung, die die eigene Nation in den Mittelpunkt rückt.",
+        "explanation": "Nationalismus ist eine Weltanschauung, die die eigene Nation in den Mittelpunkt rückt. Man fühlt sich in der eigenen Lebensart der anderen Nationen überlegen."
+      },
+      {
+        "id": 3,
+        "type": "multiple_choice",
+        "question": "Wann begann der Erste Weltkrieg?",
+        "options": [
+          "1914",
+          "1871",
+          "1900",
+          "1918"
+        ],
+        "correct_answer": "1914",
+        "explanation": "Der Erste Weltkrieg begann im Jahr 1914."
+      },
+      {
+        "id": 4,
+        "type": "multiple_choice",
+        "question": "Welches Ereignis fand im Jahr 1884 in Bezug auf Afrika statt?",
+        "options": [
+          "Die Berliner Konferenz",
+          "Die Unabhängigkeit Namibias",
+          "Die Gründung des Deutschen Reiches",
+          "Der Beginn der Kolonialisierung Afrikas durch David Livingstone"
+        ],
+        "correct_answer": "Die Berliner Konferenz",
+        "explanation": "1884 fand die Berliner Konferenz statt, auf der die Aufteilung Afrikas unter den europäischen Mächten geregelt wurde."
+      },
+      {
+        "id": 5,
+        "type": "multiple_choice",
+        "question": "Welches Ereignis fand im Jahr 1871 statt?",
+        "options": [
+          "Gründung des Deutschen Reiches",
+          "Beginn des Ersten Weltkriegs",
+          "Berliner Konferenz",
+          "Kolonialisierung Afrikas"
+        ],
+        "correct_answer": "Gründung des Deutschen Reiches",
+        "explanation": "Nach seiner Gründung war das Deutsche Reich die größte Landmacht in Mitteleuropa."
+      },
+      {
+        "id": 6,
+        "type": "multiple_choice",
+        "question": "Wann annektierte Leopold II. den Kongo?",
+        "options": [
+          "1885",
+          "1914",
+          "1871",
+          "1900"
+        ],
+        "correct_answer": "1885",
+        "explanation": "König Leopold von Belgien ließ 1885 den Kongo annektieren."
+      },
+      {
+        "id": 7,
+        "type": "multiple_choice",
+        "question": "Wann begann die deutsche Kolonie in Deutsch-Südwestafrika?",
+        "options": [
+          "Ende des 19. Jahrhunderts",
+          "Anfang des 18. Jahrhunderts",
+          "Mitte des 20. Jahrhunderts",
+          "Anfang des 19. Jahrhunderts"
+        ],
+        "correct_answer": "Ende des 19. Jahrhunderts",
+        "explanation": "Die deutsche Kolonie in Deutsch-Südwestafrika begann am Ende des 19. Jahrhunderts."
+      },
+      {
+        "id": 8,
+        "type": "multiple_choice",
+        "question": "Wann wurde die ehemalige Kolonie Deutsch-Südwestafrika selbstständig?",
+        "options": [
+          "1990",
+          "1914",
+          "1884",
+          "2000"
+        ],
+        "correct_answer": "1990",
+        "explanation": "Die ehemalige Kolonie Deutsch-Südwestafrika wurde 1990 selbstständig."
+      },
+      {
+        "id": 9,
+        "type": "multiple_choice",
+        "question": "Warum trafen sich europäische Staaten zur Berliner Konferenz?",
+        "options": [
+          "Um Afrika unter sich aufzuteilen.",
+          "Um einen Friedenvertrag zu schließen.",
+          "Um den Handel zu fördern.",
+          "Um gemeinsam gegen das Deutsche Reich vorzugehen."
+        ],
+        "correct_answer": "Um Afrika unter sich aufzuteilen.",
+        "explanation": "Auf der Berliner Konferenz trafen sich europäische Staaten, um die Aufteilung Afrikas unter sich zu regeln."
+      },
+      {
+        "id": 10,
+        "type": "multiple_choice",
+        "question": "Welche Folge hatte die Politik des Deutschen Reiches unter Wilhelm II.?",
+        "options": [
+          "Das Deutsche Reich spielte eine führende Rolle.",
+          "Das Deutsche Reich verlor an Einfluss.",
+          "Es gab keine Veränderungen.",
+          "Das Deutsche Reich wurde zur Kolonie."
+        ],
+        "correct_answer": "Das Deutsche Reich spielte eine führende Rolle.",
+        "explanation": "Durch Kaiser Wilhelm II. spielte das Deutsche Reich eine führende Rolle."
+      },
+      {
+        "id": 11,
+        "type": "multiple_choice",
+        "question": "Was war ein Resultat des Kolonialismus in Afrika?",
+        "options": [
+          "Europäische Staaten konnten ihren Reichtum vergrößern.",
+          "Afrika wurde zum reichsten Kontinent.",
+          "Es gab keinen Einfluss auf Afrika.",
+          "Alle afrikanischen Staaten wurden unabhängig."
+        ],
+        "correct_answer": "Europäische Staaten konnten ihren Reichtum vergrößern.",
+        "explanation": "Durch den Kolonialismus konnten europäische Staaten ihren Reichtum vergrößern."
+      },
+      {
+        "id": 12,
+        "type": "multiple_choice",
+        "question": "Was war ein Grund für den Aufstand der Herero?",
+        "options": [
+          "Die Gewalt, den Übergriffen, Diebstahl und Vergewaltigungen durch die deutschen Soldaten.",
+          "Die Unterstützung durch andere afrikanische Stämme.",
+          "Die friedliche Zusammenarbeit mit den deutschen Kolonialherren.",
+          "Der Wunsch nach mehr Kolonien."
+        ],
+        "correct_answer": "Die Gewalt, den Übergriffen, Diebstahl und Vergewaltigungen durch die deutschen Soldaten.",
+        "explanation": "Der Herero Aufstand war wegen der Gewalt, den Übergriffen, Diebstahl und Vergewaltigungen durch die deutschen Soldaten."
+      },
+      {
+        "id": 13,
+        "type": "multiple_choice",
+        "question": "Wer war David Livingstone?",
+        "options": [
+          "Ein schottischer Forscher, der als Missionar in Südafrika predigte.",
+          "Ein deutscher General im Ersten Weltkrieg.",
+          "Ein König von Belgien.",
+          "Ein afrikanischer Stammesführer."
+        ],
+        "correct_answer": "Ein schottischer Forscher, der als Missionar in Südafrika predigte.",
+        "explanation": "David Livingstone war ein schottischer Forscher, der als Missionar in Südafrika predigte."
+      },
+      {
+        "id": 14,
+        "type": "multiple_choice",
+        "question": "Wer war Wilhelm II.?",
+        "options": [
+          "Deutscher Kaiser.",
+          "Britischer Premierminister.",
+          "Französischer General.",
+          "Russischer Zar."
+        ],
+        "correct_answer": "Deutscher Kaiser.",
+        "explanation": "Wilhelm II. war Deutscher Kaiser."
+      },
+      {
+        "id": 15,
+        "type": "multiple_choice",
+        "question": "Wer war Max Weber?",
+        "options": [
+          "Ein deutscher Nationalökonom.",
+          "Ein französischer General.",
+          "Ein britischer Entdecker.",
+          "Ein russischer Zar."
+        ],
+        "correct_answer": "Ein deutscher Nationalökonom.",
+        "explanation": "Max Weber war ein deutscher Nationalökonom."
+      }
+    ],
+    "summary": {
+      "introduction": "In diesem Kapitel geht es um den Imperialismus und den Ersten Weltkrieg. Der Imperialismus beschreibt das Streben von Staaten, ihre Macht und ihren Einfluss auf andere Länder auszudehnen, oft durch die Gründung von Kolonien. Das Deutsche Reich spielte unter Kaiser Wilhelm II. eine wichtige Rolle in dieser Zeit. Der Erste Weltkrieg, der 1914 begann, war eine Folge der Spannungen und Konflikte zwischen den europäischen Großmächten. Das Kapitel beleuchtet auch die Kolonialisierung Afrikas und die damit verbundenen Ereignisse wie die Berliner Konferenz und den Aufstand der Herero.",
+      "key_concepts": "Ein zentrales Thema ist der Imperialismus, das Streben von Staaten nach Machtausdehnung durch Kolonien. Die Berliner Konferenz 1884 regelte die Aufteilung Afrikas unter den europäischen Mächten. Der Erste Weltkrieg, der 1914 begann, war eine Folge der imperialistischen Spannungen. Die Kolonialisierung hatte tiefgreifende Auswirkungen auf Afrika, darunter die Ausbeutung von Ressourcen und die Unterdrückung der einheimischen Bevölkerung. Der Aufstand der Herero in Deutsch-Südwestafrika war eine Reaktion auf die deutsche Kolonialherrschaft. Wichtige Personen in dieser Zeit waren Kaiser Wilhelm II., der eine führende Rolle im Deutschen Reich spielte, und David Livingstone, ein schottischer Forscher und Missionar in Afrika.",
+      "examples_and_applications": "Ein Beispiel für den Imperialismus ist die Kolonialisierung Afrikas, bei der europäische Staaten große Teile des Kontinents unter ihre Kontrolle brachten. Die Berliner Konferenz ist ein Beispiel dafür, wie die europäischen Mächte ihre Interessen in Afrika durchsetzten. Der Aufstand der Herero zeigt die negativen Folgen der Kolonialherrschaft und den Widerstand der afrikanischen Bevölkerung gegen die Unterdrückung. Die Politik von Kaiser Wilhelm II. verdeutlicht, wie das Deutsche Reich versuchte, seinen Einfluss in der Welt auszubauen.",
+      "summary_conclusion": "Zusammenfassend lässt sich sagen, dass der Imperialismus und der Erste Weltkrieg entscheidende Epochen der Geschichte waren. Der Imperialismus führte zur Aufteilung Afrikas und zu Konflikten zwischen den europäischen Großmächten. Der Erste Weltkrieg war eine Folge dieser Spannungen und hatte verheerende Auswirkungen auf Europa und die Welt. Die Kolonialisierung Afrikas hatte langfristige Folgen für den Kontinent, die bis heute spürbar sind.",
+      "total_word_count": 384,
+      "language": "de"
+    }
+  }
+}

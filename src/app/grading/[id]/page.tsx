@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from '@/i18n'
 import { useParams } from 'next/navigation'
 import type { GradingResult } from '@/lib/supabase'
 import { EXAM_UI } from '@/constants/exam-ui'
@@ -11,16 +12,41 @@ export default function GradingPage() {
   const params = useParams()
   const examId = params?.id as string
 
+  // Results mode toggle - change this to 'story' or 'legacy'
+  const RESULTS_MODE = 'story' as 'story' | 'legacy'
+
   const [grading, setGrading] = useState<GradingResult | null>(null)
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null)
+
+  // AUTO-DETECT: Use exam's detected language for UI (overrides NEXT_PUBLIC_LOCALE)
+  const { t } = useTranslation(detectedLanguage)
+  const [previousGrading, setPreviousGrading] = useState<GradingResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [showAllQuestions, setShowAllQuestions] = useState(true)
+  const [attemptNumber, setAttemptNumber] = useState<number>(1)
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(0)
 
   useEffect(() => {
     if (examId) {
+      fetchExamLanguage()
       fetchGrading()
     }
   }, [examId])
+
+  const fetchExamLanguage = async () => {
+    try {
+      const response = await fetch(`/api/exam/${examId}`)
+      if (response.ok) {
+        const data = await response.json()
+        const examData = data.data || data
+        setDetectedLanguage(examData.detected_language || null)
+      }
+    } catch (err) {
+      console.error('Failed to fetch exam language:', err)
+      // Non-critical, continue without language detection
+    }
+  }
 
   const fetchGrading = async () => {
     try {
@@ -29,16 +55,41 @@ export default function GradingPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to load results')
+        throw new Error(errorData.error || t('examTaking.noResults'))
       }
 
       const responseData = await response.json()
       const gradingData = responseData.data || responseData
       setGrading(gradingData)
+
+      // Extract attempt number if available
+      const currentAttempt = (gradingData as any).attempt_number || 1
+      setAttemptNumber(currentAttempt)
+
+      // Fetch previous attempt if this is a retry
+      if (currentAttempt > 1) {
+        try {
+          const attemptsResponse = await fetch(`/api/exam/${examId}/attempts`)
+          if (attemptsResponse.ok) {
+            const attemptsData = await attemptsResponse.json()
+            if (attemptsData.success && attemptsData.attempts) {
+              const prevAttempt = attemptsData.attempts.find(
+                (a: any) => a.attempt_number === currentAttempt - 1
+              )
+              if (prevAttempt && prevAttempt.grading_json) {
+                setPreviousGrading(prevAttempt.grading_json)
+              }
+            }
+          }
+        } catch (err) {
+          console.log('Could not fetch previous attempts:', err)
+        }
+      }
+
       setError('')
     } catch (err) {
       console.error('Error fetching grading:', err)
-      setError(err instanceof Error ? err.message : EXAM_UI.LOAD_FAILED)
+      setError(err instanceof Error ? err.message : t('common.loadFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -51,6 +102,80 @@ export default function GradingPage() {
     if (gradeNum >= 5) return COLORS.semantic.warning
     return COLORS.semantic.error
   }
+
+  // Story mode helpers
+  const getTotalStories = () => {
+    if (!grading || !grading.questions) return 2
+    return grading.questions.length + 2 // +2 for summary and completion
+  }
+
+  const getQuestionStatus = (percentage: number) => {
+    if (percentage === 100) return 'correct'
+    if (percentage > 0) return 'partial'
+    return 'incorrect'
+  }
+
+  const nextStory = () => {
+    if (currentStoryIndex < getTotalStories() - 1) {
+      setCurrentStoryIndex(currentStoryIndex + 1)
+    }
+  }
+
+  const prevStory = () => {
+    if (currentStoryIndex > 0) {
+      setCurrentStoryIndex(currentStoryIndex - 1)
+    }
+  }
+
+  // Keyboard navigation for story mode
+  useEffect(() => {
+    if (RESULTS_MODE !== 'story') return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault()
+        nextStory()
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        prevStory()
+      } else if (e.key === 'Escape') {
+        window.location.href = `/exam/${examId}`
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [currentStoryIndex, RESULTS_MODE, examId])
+
+  // Touch swipe for story mode
+  useEffect(() => {
+    if (RESULTS_MODE !== 'story') return
+
+    let touchStartX = 0
+    let touchEndX = 0
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.changedTouches[0].screenX
+    }
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      touchEndX = e.changedTouches[0].screenX
+      const swipeThreshold = 50
+      if (touchEndX < touchStartX - swipeThreshold) {
+        nextStory()
+      }
+      if (touchEndX > touchStartX + swipeThreshold) {
+        prevStory()
+      }
+    }
+
+    window.addEventListener('touchstart', handleTouchStart)
+    window.addEventListener('touchend', handleTouchEnd)
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [currentStoryIndex, RESULTS_MODE])
 
   if (isLoading) {
     return (
@@ -76,7 +201,7 @@ export default function GradingPage() {
             marginTop: SPACING.lg,
             fontSize: TYPOGRAPHY.fontSize.sm,
             color: COLORS.primary.medium,
-          }}>{EXAM_UI.LOADING}</p>
+          }}>{t('common.loading')}</p>
         </div>
         <style jsx>{`
           @keyframes spin {
@@ -112,12 +237,12 @@ export default function GradingPage() {
               fontWeight: TYPOGRAPHY.fontWeight.bold,
               color: COLORS.primary.text,
               marginBottom: SPACING.md,
-            }}>{EXAM_UI.ERROR}</h1>
+            }}>{t('common.error')}</h1>
             <p style={{
               fontSize: TYPOGRAPHY.fontSize.base,
               color: COLORS.primary.medium,
               marginBottom: SPACING.lg,
-            }}>{error || EXAM_UI.NO_RESULTS}</p>
+            }}>{error || t('examTaking.noResults')}</p>
             <button
               onClick={() => window.location.reload()}
               style={{
@@ -133,7 +258,7 @@ export default function GradingPage() {
                 cursor: 'pointer',
               }}
             >
-              {EXAM_UI.RETRY}
+              {t('common.retry')}
             </button>
           </div>
         </div>
@@ -141,6 +266,359 @@ export default function GradingPage() {
     )
   }
 
+  // Render story mode or legacy mode
+  if (RESULTS_MODE === 'story') {
+    return (
+      <div style={{
+        background: '#000',
+        minHeight: '100vh',
+        overflow: 'hidden',
+        position: 'relative',
+      }}>
+        {/* Progress Bar */}
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          display: 'flex',
+          gap: '4px',
+          padding: SPACING.sm,
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)',
+        }}>
+          {Array.from({ length: getTotalStories() }).map((_, i) => (
+            <div key={i} style={{
+              flex: 1,
+              height: '3px',
+              background: 'rgba(255,255,255,0.3)',
+              borderRadius: RADIUS.sm,
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%',
+                background: 'white',
+                width: i === currentStoryIndex ? '100%' : i < currentStoryIndex ? '100%' : '0%',
+                transition: 'width 0.3s',
+              }} />
+            </div>
+          ))}
+        </div>
+
+        {/* Close Button */}
+        <button
+          onClick={() => window.location.href = `/exam/${examId}`}
+          style={{
+            position: 'fixed',
+            top: SPACING.md,
+            right: SPACING.md,
+            zIndex: 100,
+            background: 'rgba(0,0,0,0.5)',
+            border: 'none',
+            color: 'white',
+            fontSize: TYPOGRAPHY.fontSize['2xl'],
+            width: '40px',
+            height: '40px',
+            borderRadius: RADIUS.full,
+            cursor: 'pointer',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          ×
+        </button>
+
+        {/* Story Cards */}
+        <div style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: '640px',
+          margin: '0 auto',
+          minHeight: '100vh',
+        }}>
+          {/* Summary Card */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            opacity: currentStoryIndex === 0 ? 1 : 0,
+            pointerEvents: currentStoryIndex === 0 ? 'auto' : 'none',
+            transition: 'opacity 0.3s',
+            background: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
+            overflowY: 'auto',
+          }}>
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: `80px ${SPACING.lg}`,
+              textAlign: 'center',
+              color: 'white',
+              minHeight: '100vh',
+            }}>
+              <div style={{ maxWidth: '500px', width: '100%' }}>
+                <div style={{ fontSize: '80px', marginBottom: SPACING.lg, animation: 'bounce 1s' }}>
+                  {parseInt(grading.final_grade) >= 9 ? '🎉' :
+                   parseInt(grading.final_grade) >= 7 ? '👍' :
+                   parseInt(grading.final_grade) >= 5 ? '📚' : '💪'}
+                </div>
+                <div style={{ fontSize: '96px', fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.md }}>
+                  {grading.final_grade}
+                </div>
+                <div style={{ fontSize: TYPOGRAPHY.fontSize.xl, opacity: 0.95, marginBottom: SPACING.lg }}>
+                  {t('examGrading.excellentWork')}
+                </div>
+                <div style={{ fontSize: TYPOGRAPHY.fontSize.xl, opacity: 0.95, marginBottom: SPACING.xl }}>
+                  {grading.total_points} / {grading.max_total_points} {EXAM_UI.POINTS} ({grading.percentage}%)
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: SPACING.xl }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize['2xl'], fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.xs }}>
+                      {grading.questions_correct}
+                    </div>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>{t('examGrading.correct')}</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize['2xl'], fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.xs }}>
+                      {grading.questions_partial}
+                    </div>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>{t('examGrading.partial')}</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize['2xl'], fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.xs }}>
+                      {grading.questions_incorrect}
+                    </div>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>{t('examGrading.wrong')}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Question Cards */}
+          {grading.questions?.map((question, index) => {
+            const status = getQuestionStatus(question.percentage)
+            const storyIndex = index + 1
+            const gradientColors = status === 'correct'
+              ? 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)'
+              : status === 'partial'
+              ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+              : 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
+
+            return (
+              <div key={question.id} style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                opacity: currentStoryIndex === storyIndex ? 1 : 0,
+                pointerEvents: currentStoryIndex === storyIndex ? 'auto' : 'none',
+                transition: 'opacity 0.3s',
+                background: gradientColors,
+                overflowY: 'auto',
+              }}>
+                <div style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: `80px ${SPACING.lg}`,
+                  textAlign: 'center',
+                  color: 'white',
+                  minHeight: '100vh',
+                }}>
+                  <div style={{ maxWidth: '500px', width: '100%' }}>
+                    <div style={{
+                      display: 'inline-block',
+                      background: 'rgba(255,255,255,0.2)',
+                      padding: `${SPACING.xs} ${SPACING.md}`,
+                      borderRadius: RADIUS.lg,
+                      fontSize: TYPOGRAPHY.fontSize.sm,
+                      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                      marginBottom: SPACING.lg,
+                    }}>
+                      {t('examGrading.questionOf', { current: index + 1, total: grading.questions.length })}
+                    </div>
+                    <div style={{
+                      fontSize: TYPOGRAPHY.fontSize.xl,
+                      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                      lineHeight: TYPOGRAPHY.lineHeight.normal,
+                      marginBottom: SPACING.xl,
+                    }}>
+                      {question.question_text}
+                    </div>
+                    <div style={{
+                      width: '120px',
+                      height: '120px',
+                      borderRadius: RADIUS.full,
+                      background: 'rgba(255,255,255,0.2)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: `0 auto ${SPACING.lg}`,
+                      backdropFilter: 'blur(10px)',
+                    }}>
+                      <div style={{ fontSize: '48px', fontWeight: TYPOGRAPHY.fontWeight.bold }}>
+                        {question.points_awarded}
+                      </div>
+                      <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>
+                        / {question.max_points}
+                      </div>
+                    </div>
+                    <div style={{
+                      background: 'rgba(0,0,0,0.3)',
+                      borderRadius: RADIUS.lg,
+                      padding: SPACING.lg,
+                      marginBottom: SPACING.md,
+                      textAlign: 'left',
+                      backdropFilter: 'blur(10px)',
+                    }}>
+                      <div style={{ marginBottom: SPACING.md }}>
+                        <div style={{
+                          fontSize: TYPOGRAPHY.fontSize.xs,
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          opacity: 0.7,
+                          marginBottom: SPACING.xs,
+                        }}>
+                          {t('examGrading.yourAnswer')}
+                        </div>
+                        <div style={{ fontSize: TYPOGRAPHY.fontSize.base, lineHeight: TYPOGRAPHY.lineHeight.relaxed }}>
+                          {question.student_answer || t('examTaking.yourAnswer')}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{
+                          fontSize: TYPOGRAPHY.fontSize.xs,
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          opacity: 0.7,
+                          marginBottom: SPACING.xs,
+                        }}>
+                          {t('examGrading.correctAnswer')}
+                        </div>
+                        <div style={{ fontSize: TYPOGRAPHY.fontSize.base, lineHeight: TYPOGRAPHY.lineHeight.relaxed }}>
+                          {question.expected_answer}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{
+                      fontSize: TYPOGRAPHY.fontSize.sm,
+                      lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+                      opacity: 0.95,
+                      background: 'rgba(0,0,0,0.3)',
+                      padding: SPACING.md,
+                      borderRadius: RADIUS.md,
+                      backdropFilter: 'blur(10px)',
+                    }}>
+                      {question.feedback}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Completion Card */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            opacity: currentStoryIndex === getTotalStories() - 1 ? 1 : 0,
+            pointerEvents: currentStoryIndex === getTotalStories() - 1 ? 'auto' : 'none',
+            transition: 'opacity 0.3s',
+            background: 'linear-gradient(135deg, #1a1a1a 0%, #404040 100%)',
+            overflowY: 'auto',
+          }}>
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: `80px ${SPACING.lg}`,
+              textAlign: 'center',
+              color: 'white',
+              minHeight: '100vh',
+            }}>
+              <div>
+                <div style={{ fontSize: '80px', marginBottom: SPACING.lg }}>✨</div>
+                <div style={{ fontSize: TYPOGRAPHY.fontSize['2xl'], fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.md }}>
+                  {t('examGrading.resultsReviewed')}
+                </div>
+                <div style={{ fontSize: TYPOGRAPHY.fontSize.base, opacity: 0.9, marginBottom: SPACING.xl }}>
+                  {t('examGrading.reviewedAll', { count: grading.questions?.length || 0 })}
+                </div>
+                <button
+                  onClick={() => window.location.href = `/exam/${examId}`}
+                  style={{
+                    background: 'white',
+                    color: '#1a1a1a',
+                    border: 'none',
+                    padding: `${SPACING.md} ${SPACING.xl}`,
+                    borderRadius: RADIUS.lg,
+                    fontSize: TYPOGRAPHY.fontSize.base,
+                    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                    cursor: 'pointer',
+                    minWidth: '200px',
+                    minHeight: TOUCH_TARGETS.comfortable,
+                  }}
+                >
+                  {t('common.backToMenu')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Areas */}
+        <div
+          onClick={prevStory}
+          style={{
+            position: 'fixed',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: '30%',
+            cursor: 'pointer',
+            zIndex: 5,
+          }}
+        />
+        <div
+          onClick={nextStory}
+          style={{
+            position: 'fixed',
+            top: 0,
+            bottom: 0,
+            right: 0,
+            width: '30%',
+            cursor: 'pointer',
+            zIndex: 5,
+          }}
+        />
+
+        <style jsx>{`
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+          }
+        `}</style>
+      </div>
+    )
+  }
+
+  // Legacy mode
   return (
     <div style={{
       minHeight: '100vh',
@@ -214,8 +692,51 @@ export default function GradingPage() {
             }}>
               ({grading.percentage}%)
             </p>
+            {attemptNumber > 1 && (
+              <p style={{
+                fontSize: TYPOGRAPHY.fontSize.sm,
+                color: COLORS.primary.medium,
+                marginTop: SPACING.sm,
+                fontStyle: 'italic',
+              }}>
+                {t('examGrading.attemptNumber', { number: attemptNumber })}
+              </p>
+            )}
           </div>
         </div>
+
+        {/* Improvement Banner */}
+        {previousGrading && (() => {
+          const gradeDiff = parseFloat(grading.final_grade) - parseFloat(previousGrading.final_grade)
+          const pointsDiff = grading.total_points - previousGrading.total_points
+          const isImproved = gradeDiff > 0
+          const isWorsened = gradeDiff < 0
+
+          return (
+            <div style={{
+              background: isImproved ? '#E8F5E9' : isWorsened ? '#FFF3E0' : COLORS.background.secondary,
+              border: `2px solid ${isImproved ? COLORS.semantic.success : isWorsened ? COLORS.semantic.warning : COLORS.border.light}`,
+              borderRadius: RADIUS.md,
+              padding: SPACING.md,
+              marginBottom: SPACING.lg,
+            }}>
+              <div style={{
+                fontSize: TYPOGRAPHY.fontSize.sm,
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                color: COLORS.primary.text,
+                marginBottom: SPACING.xs,
+              }}>
+                {isImproved ? `📈 ${t('examGrading.improvement')}` : isWorsened ? `📉 ${t('examGrading.keepPracticing')}` : `➡️ ${t('examGrading.sameScore')}`}
+              </div>
+              <div style={{
+                fontSize: TYPOGRAPHY.fontSize.xs,
+                color: COLORS.primary.medium,
+              }}>
+                {t('examGrading.gradeDiff', { diff: `${gradeDiff > 0 ? '+' : ''}${gradeDiff.toFixed(1)}` })} • {t('examGrading.pointsDiff', { diff: `${pointsDiff > 0 ? '+' : ''}${pointsDiff}` })}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Statistics */}
         <div style={{
@@ -294,7 +815,7 @@ export default function GradingPage() {
               fontSize: TYPOGRAPHY.fontSize.xs,
               color: COLORS.primary.medium,
               marginTop: SPACING.xs,
-            }}>{EXAM_UI.TOTAL}</div>
+            }}>{t('examGrading.total')}</div>
           </div>
         </div>
 
@@ -338,42 +859,74 @@ export default function GradingPage() {
 
           {showAllQuestions && (
             <div style={{ marginTop: SPACING.lg, display: 'flex', flexDirection: 'column', gap: SPACING.lg }}>
-              {(grading.questions || []).map((question, index) => (
-                <div key={question.id} style={{
-                  border: `2px solid ${COLORS.border.light}`,
-                  borderRadius: RADIUS.md,
-                  padding: SPACING.md,
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    marginBottom: SPACING.md,
-                    gap: SPACING.md,
+              {(grading.questions || []).map((question, index) => {
+                const prevQuestion = previousGrading?.questions?.find((q: any) => q.id === question.id)
+                const pointsDiff = prevQuestion ? question.points_awarded - prevQuestion.points_awarded : 0
+                const hasChange = prevQuestion && pointsDiff !== 0
+
+                return (
+                  <div key={question.id} style={{
+                    border: `2px solid ${COLORS.border.light}`,
+                    borderRadius: RADIUS.md,
+                    padding: SPACING.md,
+                    position: 'relative',
                   }}>
-                    <h3 style={{
-                      fontSize: TYPOGRAPHY.fontSize.base,
-                      fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                      color: COLORS.primary.text,
-                      flex: 1,
-                    }}>
-                      {index + 1}. {question.question_text}
-                    </h3>
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{
-                        fontSize: TYPOGRAPHY.fontSize.lg,
-                        fontWeight: TYPOGRAPHY.fontWeight.bold,
-                        color: question.percentage === 100 ? COLORS.semantic.success :
-                          question.percentage > 0 ? COLORS.semantic.warning : COLORS.semantic.error
-                      }}>
-                        {question.points_awarded}/{question.max_points}
-                      </span>
-                      <p style={{
+                    {hasChange && (
+                      <div style={{
+                        position: 'absolute',
+                        top: SPACING.sm,
+                        right: SPACING.sm,
+                        background: pointsDiff > 0 ? COLORS.semantic.success : COLORS.semantic.error,
+                        color: 'white',
                         fontSize: TYPOGRAPHY.fontSize.xs,
-                        color: COLORS.primary.medium,
-                      }}>{question.percentage}%</p>
+                        fontWeight: TYPOGRAPHY.fontWeight.bold,
+                        padding: `2px ${SPACING.xs}`,
+                        borderRadius: RADIUS.sm,
+                        lineHeight: '1',
+                      }}>
+                        {pointsDiff > 0 ? '↑' : '↓'}{Math.abs(pointsDiff)}
+                      </div>
+                    )}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      marginBottom: SPACING.md,
+                      gap: SPACING.md,
+                      paddingRight: hasChange ? SPACING.xl : 0,
+                    }}>
+                      <h3 style={{
+                        fontSize: TYPOGRAPHY.fontSize.base,
+                        fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                        color: COLORS.primary.text,
+                        flex: 1,
+                      }}>
+                        {index + 1}. {question.question_text}
+                      </h3>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{
+                          fontSize: TYPOGRAPHY.fontSize.lg,
+                          fontWeight: TYPOGRAPHY.fontWeight.bold,
+                          color: question.percentage === 100 ? COLORS.semantic.success :
+                            question.percentage > 0 ? COLORS.semantic.warning : COLORS.semantic.error
+                        }}>
+                          {question.points_awarded}/{question.max_points}
+                        </span>
+                        <p style={{
+                          fontSize: TYPOGRAPHY.fontSize.xs,
+                          color: COLORS.primary.medium,
+                        }}>{question.percentage}%</p>
+                        {prevQuestion && (
+                          <p style={{
+                            fontSize: TYPOGRAPHY.fontSize.xs,
+                            color: COLORS.primary.medium,
+                            fontStyle: 'italic',
+                          }}>
+                            was: {prevQuestion.points_awarded}/{prevQuestion.max_points}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
                   {question.options && (
                     <div style={{ marginBottom: SPACING.md }}>
@@ -414,7 +967,7 @@ export default function GradingPage() {
                         padding: SPACING.md,
                         borderRadius: RADIUS.sm,
                       }}>
-                        {question.student_answer || EXAM_UI.YOUR_ANSWER}
+                        {question.student_answer || t('examTaking.yourAnswer')}
                       </p>
                     </div>
                     <div>
@@ -462,7 +1015,8 @@ export default function GradingPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+              )
+              })}
             </div>
           )}
         </div>
@@ -470,7 +1024,7 @@ export default function GradingPage() {
         {/* Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.md }}>
           <button
-            onClick={() => window.print()}
+            onClick={() => window.location.href = `/exam/${examId}`}
             style={{
               width: '100%',
               background: BUTTONS.primary.background,
@@ -484,7 +1038,24 @@ export default function GradingPage() {
               cursor: 'pointer',
             }}
           >
-            🖨️ {EXAM_UI.PRINT_RESULTS}
+            {ICONS.ARROW_LEFT} {t('common.backToMenu')}
+          </button>
+          <button
+            onClick={() => window.print()}
+            style={{
+              width: '100%',
+              background: BUTTONS.secondary.background,
+              color: BUTTONS.secondary.text,
+              padding: BUTTONS.secondary.padding,
+              borderRadius: BUTTONS.secondary.radius,
+              border: `2px solid ${COLORS.border.medium}`,
+              fontSize: TYPOGRAPHY.fontSize.base,
+              fontWeight: TYPOGRAPHY.fontWeight.medium,
+              minHeight: TOUCH_TARGETS.comfortable,
+              cursor: 'pointer',
+            }}
+          >
+            🖨️ {t('examGrading.printResults')}
           </button>
           <button
             onClick={() => window.location.href = '/'}
@@ -501,7 +1072,7 @@ export default function GradingPage() {
               cursor: 'pointer',
             }}
           >
-            📝 {EXAM_UI.NEW_EXAM}
+            📝 {t('examGrading.newExam')}
           </button>
         </div>
       </div>

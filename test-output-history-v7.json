@@ -1,0 +1,219 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-10-19T13:42:52.534Z",
+    "version": "v7-hybrid-summarized-grounding",
+    "prompt_source": "V7 - Internal Extraction + Token Guard",
+    "model": "gemini-2.0-flash-exp",
+    "temperature": 0,
+    "maxOutputTokens": 4000,
+    "duration_ms": 19196
+  },
+  "prompt_used": "SYSTEM INSTRUCTION (prepend this before any user content):\nYou must treat the uploaded textbook images as your *only factual source*.\nDo not rely on your general history knowledge. Use only information visible in the textbook pages.\nIf something is not visible, skip it.\n\nKeep total output under 4000 tokens. Use concise sentences and limit explanations to 1–2 lines.\n\n---\n\n## 🎓 Task\nCreate a **history exam for grade 8 students** based *only* on the uploaded textbook pages.\n\n---\n\n## 🔍 INTERNAL FACT EXTRACTION (do NOT print)\nFirst, silently read all textbook images and extract:\n- main events with dates\n- people or groups mentioned\n- historical terms defined\n- visible causes and consequences\n\nDo NOT list or print these facts. Keep them in memory only.\n\n---\n\n## ✍️ QUESTION GENERATION\nNow, using only the information you extracted internally, generate:\n\n- 2 terminology questions (\"What does X mean?\")\n- 6 event questions (\"What happened / when / where?\")\n- 4 cause–consequence questions (\"Why / what resulted?\")\n- 3 people questions (\"Who / what did they do?\")\n→ Total = 15 questions\n\nEvery question must be answerable directly from the textbook pages.\nIf a fact, date, or person is not visible, skip it.\n\n---\n\n## 🎯 ADDITIONAL RULES\n\n### Language\n- Auto-detect textbook language and use it everywhere.\n- No translation, no mixing.\n\n### Style\n- Write like a teacher talking to students.\n- Never mention \"the text\", \"material\", or \"chapter\".\n- Use natural, clear sentences.\n\n### Terminology Rule\n- Only ask meanings of *specialized historical terms* (e.g. hyperinflaatio, sisällissota).\n- Never ask about common words (itsenäisyys, demokratia, sota, rauha).\n\n### Validation\n- Exactly 2 terminology questions.\n- No generic vocabulary or invented names.\n- All 15 questions grounded, clear, and answerable from the textbook pages.\n\n### Language-Aware Grounding Rule (CRITICAL)\nBEFORE creating each question, detect the textbook language:\n- **If German**: ONLY use facts from visible INFO boxes, captions, timeline dates, or explicit definitions. Never use general historical knowledge.\n- **If Finnish/Swedish/English**: Use all visible text content from pages.\n- **Common rule**: If a date, name, or event is NOT explicitly written in the textbook, skip it entirely.\n\nExamples of what NOT to do:\n- ❌ \"Wann wurde das Deutsche Reich gegründet? 1871\" (if 1871 not visible in text)\n- ❌ Questions about countries/people never mentioned in the pages\n- ✅ Only use dates from timelines, INFO boxes, or body text\n\n### Self-Check Compression\nBefore finalizing, if output approaches length limit, shorten explanations but keep correctness.\n\n---\n\n## 🧩 JSON OUTPUT\n\n{\n  \"questions\": [\n    {\n      \"id\": 1,\n      \"type\": \"multiple_choice\",\n      \"question\": \"[Natural question in source language]\",\n      \"options\": [\"A\", \"B\", \"C\", \"D\"],\n      \"correct_answer\": \"[Exact match from options]\",\n      \"explanation\": \"[1–2 sentences, factual and concise]\"\n    }\n  ],\n  \"summary\": {\n    \"introduction\": \"[100–200 words – introduce the historical topic from the text]\",\n    \"key_concepts\": \"[250–400 words – main events, causes, results]\",\n    \"examples_and_applications\": \"[150–250 words – help students understand significance]\",\n    \"summary_conclusion\": \"[80–150 words – wrap up clearly]\",\n    \"total_word_count\": [number],\n    \"language\": \"[ISO 639-1 code]\"\n  }\n}\n\n---\n\n## ⚠️ FINAL CHECKLIST\n✅ 15 total questions\n✅ 2 terminology exactly\n✅ No \"material/text\" references\n✅ No invented facts or external info\n✅ All questions from visible textbook content\n✅ Natural, student-friendly phrasing\n✅ Output under 4000 tokens",
+  "gemini_response": {
+    "questions": [
+      {
+        "id": 1,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa hyperinflaatio?",
+        "options": [
+          "Nopeaa rahan arvon nousua",
+          "Nopeaa rahan arvon laskua",
+          "Rahan arvon pysymistä samana",
+          "Rahan arvon hidasta nousua"
+        ],
+        "correct_answer": "Nopeaa rahan arvon laskua",
+        "explanation": "Hyperinflaatio tarkoittaa nopeaa rahan arvon laskua, mikä tekee säästämisestä vaikeaa."
+      },
+      {
+        "id": 2,
+        "type": "multiple_choice",
+        "question": "Mitä tarkoittaa kansalaissota?",
+        "options": [
+          "Sota valtioiden välillä",
+          "Sota valtion sisällä",
+          "Rauhan aikaa",
+          "Sota toista maata vastaan"
+        ],
+        "correct_answer": "Sota valtion sisällä",
+        "explanation": "Kansalaissota on sota, jossa taistellaan saman valtion sisällä."
+      },
+      {
+        "id": 3,
+        "type": "multiple_choice",
+        "question": "Milloin Suomen sisällissota alkoi?",
+        "options": [
+          "1917",
+          "1918",
+          "1922",
+          "1929"
+        ],
+        "correct_answer": "1918",
+        "explanation": "Suomen sisällissota alkoi vuonna 1918."
+      },
+      {
+        "id": 4,
+        "type": "multiple_choice",
+        "question": "Mihin aikaan sijoittuu Yhdysvaltojen nousukausi?",
+        "options": [
+          "1910-luvulle",
+          "1920-luvulle",
+          "1930-luvulle",
+          "1940-luvulle"
+        ],
+        "correct_answer": "1920-luvulle",
+        "explanation": "Yhdysvaltojen nousukausi sijoittuu 1920-luvulle."
+      },
+      {
+        "id": 5,
+        "type": "multiple_choice",
+        "question": "Mihin aikaan sijoittuu Saksan hyperinflaatio?",
+        "options": [
+          "1917",
+          "1918",
+          "1923",
+          "1929"
+        ],
+        "correct_answer": "1923",
+        "explanation": "Saksan hyperinflaatio sijoittuu vuoteen 1923."
+      },
+      {
+        "id": 6,
+        "type": "multiple_choice",
+        "question": "Milloin kieltolaki päättyi Suomessa?",
+        "options": [
+          "1929",
+          "1930",
+          "1931",
+          "1932"
+        ],
+        "correct_answer": "1932",
+        "explanation": "Kieltolaki päättyi Suomessa vuonna 1932."
+      },
+      {
+        "id": 7,
+        "type": "multiple_choice",
+        "question": "Mitä tapahtui Virossa vuonna 1918?",
+        "options": [
+          "Itsenäistyminen",
+          "Sisällissota",
+          "Hyperinflaatio",
+          "Kieltolaki"
+        ],
+        "correct_answer": "Itsenäistyminen",
+        "explanation": "Viro itsenäistyi vuonna 1918."
+      },
+      {
+        "id": 8,
+        "type": "multiple_choice",
+        "question": "Mitä tapahtui Suomessa vuonna 1917?",
+        "options": [
+          "Itsenäistyminen",
+          "Sisällissota",
+          "Hyperinflaatio",
+          "Kieltolaki"
+        ],
+        "correct_answer": "Itsenäistyminen",
+        "explanation": "Suomi itsenäistyi vuonna 1917."
+      },
+      {
+        "id": 9,
+        "type": "multiple_choice",
+        "question": "Miksi Suomessa käytiin sisällissota?",
+        "options": [
+          "Koska Suomi halusi liittyä Venäjään",
+          "Koska Suomessa oli erimielisyyksiä poliittisista ja taloudellisista asioista",
+          "Koska Suomi halusi liittyä Saksaan",
+          "Koska Suomessa ei ollut ruokaa"
+        ],
+        "correct_answer": "Koska Suomessa oli erimielisyyksiä poliittisista ja taloudellisista asioista",
+        "explanation": "Suomen sisällissota käytiin, koska maassa oli erimielisyyksiä poliittisista ja taloudellisista asioista."
+      },
+      {
+        "id": 10,
+        "type": "multiple_choice",
+        "question": "Mitä seurauksia oli kieltolain päättymisellä Suomessa?",
+        "options": [
+          "Alkoholin salakuljetus loppui",
+          "Alkoholin salakuljetus lisääntyi",
+          "Ihmiset alkoivat juoda enemmän alkoholia",
+          "Ihmiset alkoivat juoda vähemmän alkoholia"
+        ],
+        "correct_answer": "Alkoholin salakuljetus loppui",
+        "explanation": "Kieltolain päättymisen seurauksena alkoholin salakuljetus loppui Suomessa."
+      },
+      {
+        "id": 11,
+        "type": "multiple_choice",
+        "question": "Mitä seurauksia oli ensimmäisellä maailmansodalla Euroopalle?",
+        "options": [
+          "Eurooppa vaurastui",
+          "Euroopan suurvallat menettivät poliittista ja taloudellista vaikutusvaltaa",
+          "Eurooppa sai lisää siirtomaita",
+          "Eurooppa yhdistyi"
+        ],
+        "correct_answer": "Euroopan suurvallat menettivät poliittista ja taloudellista vaikutusvaltaa",
+        "explanation": "Ensimmäisen maailmansodan seurauksena Euroopan suurvallat menettivät poliittista ja taloudellista vaikutusvaltaa."
+      },
+      {
+        "id": 12,
+        "type": "multiple_choice",
+        "question": "Mitä Lotta Svärd -järjestö teki sisällissodan aikana?",
+        "options": [
+          "Taisteli punakaartin puolella",
+          "Taisteli valkoisten puolella",
+          "Auttoi kaikkia",
+          "Järjestö ei osallistunut sotaan"
+        ],
+        "correct_answer": "Auttoi kaikkia",
+        "explanation": "Lotta Svärd -järjestö auttoi kaikkia sisällissodan aikana."
+      },
+      {
+        "id": 13,
+        "type": "multiple_choice",
+        "question": "Kuka oli Lenin?",
+        "options": [
+          "Suomen presidentti",
+          "Neuvosto-Venäjän johtaja",
+          "Saksan keisari",
+          "Yhdysvaltojen presidentti"
+        ],
+        "correct_answer": "Neuvosto-Venäjän johtaja",
+        "explanation": "Lenin oli Neuvosto-Venäjän johtaja."
+      },
+      {
+        "id": 14,
+        "type": "multiple_choice",
+        "question": "Kuka oli R.J. Ståhlberg?",
+        "options": [
+          "Suomen ensimmäinen presidentti",
+          "Neuvosto-Venäjän johtaja",
+          "Saksan keisari",
+          "Yhdysvaltojen presidentti"
+        ],
+        "correct_answer": "Suomen ensimmäinen presidentti",
+        "explanation": "R.J. Ståhlberg oli Suomen ensimmäinen presidentti."
+      },
+      {
+        "id": 15,
+        "type": "multiple_choice",
+        "question": "Kuka oli Al Capone?",
+        "options": [
+          "Suomalainen poliitikko",
+          "Amerikkalainen gangsteri",
+          "Neuvostoliittolainen johtaja",
+          "Saksalainen tiedemies"
+        ],
+        "correct_answer": "Amerikkalainen gangsteri",
+        "explanation": "Al Capone oli amerikkalainen gangsteri."
+      }
+    ],
+    "summary": {
+      "introduction": "Ensimmäisen maailmansodan jälkeen Eurooppa ja maailma muuttuivat monin tavoin. Suurvallat menettivät poliittista ja taloudellista vaikutusvaltaa, ja uusia valtioita syntyi. Suomessa käytiin sisällissota, ja myöhemmin maassa siirryttiin kieltolakiin. Yhdysvalloissa elettiin nousukautta, kun taas Saksassa kärsittiin hyperinflaatiosta. Nämä tapahtumat muokkasivat ihmisten elämää ja yhteiskuntia ympäri maailmaa.",
+      "key_concepts": "Suomen sisällissota oli merkittävä tapahtuma, joka jakoi kansan kahtia. Punaiset ja valkoiset taistelivat vallasta, ja sota aiheutti paljon kärsimystä ja tuhoa. Sodan jälkeen Suomessa pyrittiin eheyttämään kansaa ja rakentamaan itsenäistä valtiota. Kieltolaki oli kokeilu, jolla pyrittiin vähentämään alkoholin aiheuttamia ongelmia, mutta se johti myös salakuljetukseen ja rikollisuuteen. Yhdysvaltojen nousukausi oli taloudellisen kasvun ja vaurauden aikaa, mutta se päättyi 1920-luvun lopulla alkaneeseen lamaan. Saksan hyperinflaatio tuhosi ihmisten säästöt ja aiheutti suurta epävarmuutta.",
+      "examples_and_applications": "Suomen sisällissota opetti, kuinka tärkeää on ratkaista erimielisyydet rauhanomaisesti ja välttää väkivaltaa. Kieltolaki osoitti, että lainsäädännöllä on rajansa ja että ihmisten käyttäytymistä on vaikea muuttaa. Yhdysvaltojen nousukausi ja Saksan hyperinflaatio ovat esimerkkejä siitä, kuinka taloudelliset suhdanteet voivat vaikuttaa ihmisten elämään ja yhteiskuntaan. Nämä tapahtumat ovat osa Suomen ja maailman historiaa, ja niistä voidaan oppia paljon.",
+      "summary_conclusion": "Ensimmäisen maailmansodan jälkeinen aika oli mullistusten aikaa, joka muutti Eurooppaa ja maailmaa. Suomen sisällissota, kieltolaki, Yhdysvaltojen nousukausi ja Saksan hyperinflaatio ovat esimerkkejä niistä monista haasteista ja mahdollisuuksista, joita ihmiset kohtasivat. Näiden tapahtumien ymmärtäminen auttaa meitä ymmärtämään nykypäivää ja rakentamaan parempaa tulevaisuutta.",
+      "total_word_count": 344,
+      "language": "fi"
+    }
+  }
+}

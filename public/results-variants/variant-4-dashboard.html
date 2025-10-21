@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results Variant 4: Dashboard Style</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #F5F5F5;
+      min-height: 100vh;
+    }
+
+    .header {
+      padding: 16px;
+      background: white;
+      border-bottom: 1px solid #E5E5E5;
+    }
+
+    .header-content {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+      min-height: 48px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 16px;
+      padding-bottom: 80px;
+    }
+
+    /* Grade Hero */
+    .grade-hero {
+      background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 24px;
+      margin-bottom: 16px;
+      color: white;
+      text-align: center;
+    }
+
+    .grade-hero-emoji {
+      font-size: 56px;
+      margin-bottom: 12px;
+    }
+
+    .grade-hero-number {
+      font-size: 64px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .grade-hero-label {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+
+    /* Stats Dashboard */
+    .stats-dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-tile {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-tile-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .stat-tile-number {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stat-tile-label {
+      font-size: 14px;
+      color: #737373;
+    }
+
+    .stat-tile.correct .stat-tile-number { color: #22C55E; }
+    .stat-tile.partial .stat-tile-number { color: #F59E0B; }
+    .stat-tile.incorrect .stat-tile-number { color: #EF4444; }
+    .stat-tile.total .stat-tile-number { color: #1a1a1a; }
+
+    /* Performance Bar */
+    .performance-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .performance-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+
+    .performance-bar {
+      height: 40px;
+      background: #F5F5F5;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .bar-segment {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+      transition: all 0.3s;
+    }
+
+    .bar-segment.correct { background: #22C55E; }
+    .bar-segment.partial { background: #F59E0B; }
+    .bar-segment.incorrect { background: #EF4444; }
+
+    /* Breakdown Section */
+    .breakdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .breakdown-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .sort-btn {
+      background: transparent;
+      border: 2px solid #D4D4D4;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Question Grid */
+    .question-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .question-tile {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .question-tile:active {
+      transform: scale(0.95);
+    }
+
+    .tile-number {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .tile-status {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin: 0 auto 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: white;
+    }
+
+    .tile-status.correct { background: #22C55E; }
+    .tile-status.partial { background: #F59E0B; }
+    .tile-status.incorrect { background: #EF4444; }
+
+    .tile-score {
+      font-size: 12px;
+      color: #737373;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 40;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 16px;
+      border-bottom: 1px solid #E5E5E5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .modal-content {
+      padding: 16px;
+    }
+
+    .modal-question {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    .modal-answer {
+      margin-bottom: 12px;
+    }
+
+    .modal-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #737373;
+      margin-bottom: 4px;
+    }
+
+    .modal-box {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .modal-box.your { background: #EBF5FF; }
+    .modal-box.correct { background: #E8F5E9; }
+
+    .modal-feedback {
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 4px solid;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    .modal-feedback.success {
+      background: #E8F5E9;
+      border-color: #22C55E;
+    }
+
+    .modal-feedback.error {
+      background: #FFEBEE;
+      border-color: #EF4444;
+    }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .action-btn {
+      width: 100%;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      min-height: 48px;
+      cursor: pointer;
+    }
+
+    .action-btn.primary {
+      background: #1a1a1a;
+      color: white;
+      border: none;
+    }
+
+    .action-btn.secondary {
+      background: white;
+      color: #1a1a1a;
+      border: 2px solid #D4D4D4;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <button class="back-btn" onclick="window.location.href='https://exam-generator-staging.vercel.app/exam/40aca3a0-eb9a-4ce3-a4d9-eccc0eb609df'">←</button>
+      <h1>Exam Results</h1>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Grade Hero -->
+    <div class="grade-hero">
+      <div class="grade-hero-emoji">🎉</div>
+      <div class="grade-hero-number">9</div>
+      <div class="grade-hero-label">Excellent Work!</div>
+    </div>
+
+    <!-- Stats Dashboard -->
+    <div class="stats-dashboard">
+      <div class="stat-tile correct">
+        <div class="stat-tile-icon">✓</div>
+        <div class="stat-tile-number">12</div>
+        <div class="stat-tile-label">Correct</div>
+      </div>
+      <div class="stat-tile partial">
+        <div class="stat-tile-icon">~</div>
+        <div class="stat-tile-number">2</div>
+        <div class="stat-tile-label">Partial</div>
+      </div>
+      <div class="stat-tile incorrect">
+        <div class="stat-tile-icon">✗</div>
+        <div class="stat-tile-number">1</div>
+        <div class="stat-tile-label">Incorrect</div>
+      </div>
+      <div class="stat-tile total">
+        <div class="stat-tile-icon">📊</div>
+        <div class="stat-tile-number">13.5/15</div>
+        <div class="stat-tile-label">Total Points</div>
+      </div>
+    </div>
+
+    <!-- Performance Bar -->
+    <div class="performance-card">
+      <div class="performance-title">Performance Breakdown</div>
+      <div class="performance-bar">
+        <div class="bar-segment correct" style="width: 80%">80%</div>
+        <div class="bar-segment partial" style="width: 13.3%">13%</div>
+        <div class="bar-segment incorrect" style="width: 6.7%">7%</div>
+      </div>
+    </div>
+
+    <!-- Breakdown Header -->
+    <div class="breakdown-header">
+      <div class="breakdown-title">All Questions (15)</div>
+      <button class="sort-btn" onclick="alert('Sort by: Score / Question #')">Sort</button>
+    </div>
+
+    <!-- Question Grid -->
+    <div class="question-grid" id="questionGrid"></div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="action-btn primary" onclick="window.location.href='https://exam-generator-staging.vercel.app/exam/40aca3a0-eb9a-4ce3-a4d9-eccc0eb609df'">← Back to Menu</button>
+      <button class="action-btn secondary" onclick="window.print()">🖨️ Print Results</button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">Question <span id="modalNumber">1</span></div>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-content" id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      { id: 1, text: "What is the capital of France?", yourAnswer: "Paris", correctAnswer: "Paris", score: 1, maxScore: 1, feedback: "Correct!", percentage: 100 },
+      { id: 2, text: "Calculate: 15 + 27", yourAnswer: "42", correctAnswer: "42", score: 1, maxScore: 1, feedback: "Perfect!", percentage: 100 },
+      { id: 3, text: "What year did World War II end?", yourAnswer: "1945", correctAnswer: "1945", score: 1, maxScore: 1, feedback: "Correct!", percentage: 100 },
+      { id: 4, text: "What is photosynthesis?", yourAnswer: "Process where plants make food", correctAnswer: "The process by which green plants use sunlight to synthesize nutrients", score: 0.5, maxScore: 1, feedback: "Partially correct.", percentage: 50 },
+      { id: 5, text: "Name three primary colors", yourAnswer: "Red, Blue, Yellow", correctAnswer: "Red, Blue, Yellow", score: 1, maxScore: 1, feedback: "Excellent!", percentage: 100 },
+    ];
+
+    function getStatus(q) {
+      return q.percentage === 100 ? 'correct' : q.percentage > 0 ? 'partial' : 'incorrect';
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('questionGrid');
+      grid.innerHTML = questions.map((q, i) => {
+        const status = getStatus(q);
+        const icon = status === 'correct' ? '✓' : status === 'partial' ? '~' : '✗';
+        return `
+          <div class="question-tile" onclick="openModal(${i})">
+            <div class="tile-number">${i + 1}</div>
+            <div class="tile-status ${status}">${icon}</div>
+            <div class="tile-score">${q.score}/${q.maxScore}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openModal(index) {
+      const q = questions[index];
+      const status = getStatus(q);
+
+      document.getElementById('modalNumber').textContent = index + 1;
+      document.getElementById('modalContent').innerHTML = `
+        <div class="modal-question">${q.text}</div>
+        <div class="modal-answer">
+          <div class="modal-label">Your Answer</div>
+          <div class="modal-box your">${q.yourAnswer}</div>
+        </div>
+        <div class="modal-answer">
+          <div class="modal-label">Correct Answer</div>
+          <div class="modal-box correct">${q.correctAnswer}</div>
+        </div>
+        <div class="modal-feedback ${status === 'correct' ? 'success' : 'error'}">
+          <strong>${q.score}/${q.maxScore} points (${q.percentage}%)</strong><br>
+          ${q.feedback}
+        </div>
+      `;
+
+      document.getElementById('modalOverlay').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+    }
+
+    renderGrid();
+  </script>
+</body>
+</html>

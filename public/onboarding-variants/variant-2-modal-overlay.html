@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Onboarding Variant 2: Modal Overlay</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f7;
+      overflow: hidden;
+    }
+
+    /* Simulated exam background */
+    .exam-background {
+      position: fixed;
+      inset: 0;
+      background: #f5f5f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: blur(8px);
+    }
+
+    .fake-exam {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 600px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    /* Overlay */
+    .overlay-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9998;
+      backdrop-filter: blur(4px);
+    }
+
+    .onboarding-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 520px;
+      width: calc(100% - 32px);
+      max-height: 90vh;
+      overflow: hidden;
+      animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -40%);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+      }
+    }
+
+    .modal-header {
+      padding: 24px 24px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e5e5e7;
+    }
+
+    .close-button {
+      background: #f5f5f7;
+      border: none;
+      color: #666;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .close-button:hover {
+      background: #e5e5e7;
+      transform: scale(1.1);
+    }
+
+    .progress-indicator {
+      display: flex;
+      gap: 6px;
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #e5e5e7;
+      transition: all 0.3s;
+    }
+
+    .step-dot.active {
+      background: #667eea;
+      width: 24px;
+      border-radius: 4px;
+    }
+
+    .modal-body {
+      padding: 32px 24px;
+      overflow-y: auto;
+      max-height: calc(90vh - 160px);
+    }
+
+    .content-wrapper {
+      display: flex;
+      overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .slide {
+      flex: 0 0 100%;
+      text-align: center;
+      padding: 0 16px;
+    }
+
+    .icon {
+      font-size: 72px;
+      margin-bottom: 24px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1d1d1f;
+      margin-bottom: 12px;
+    }
+
+    .description {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #666;
+    }
+
+    .modal-footer {
+      padding: 16px 24px 24px;
+      display: flex;
+      gap: 12px;
+      border-top: 1px solid #e5e5e7;
+    }
+
+    .footer-button {
+      flex: 1;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      min-height: 48px;
+    }
+
+    .footer-button.secondary {
+      background: #f5f5f7;
+      color: #1d1d1f;
+    }
+
+    .footer-button.secondary:hover:not(:disabled) {
+      background: #e5e5e7;
+    }
+
+    .footer-button.primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .footer-button.primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+    }
+
+    .footer-button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .keyboard-hint {
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      padding: 0 24px 16px;
+    }
+
+    @media (max-width: 640px) {
+      .modal-body {
+        padding: 24px 16px;
+      }
+      .title {
+        font-size: 20px;
+      }
+      .description {
+        font-size: 14px;
+      }
+      .icon {
+        font-size: 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Simulated exam background (blurred) -->
+  <div class="exam-background">
+    <div class="fake-exam">
+      <h2>Question 1 of 15</h2>
+      <p style="margin-top: 16px; color: #666;">What is the capital of Finland?</p>
+    </div>
+  </div>
+
+  <!-- Overlay backdrop -->
+  <div class="overlay-backdrop" onclick="dismissOnboarding()"></div>
+
+  <!-- Modal -->
+  <div class="onboarding-modal">
+    <div class="modal-header">
+      <div class="progress-indicator">
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+      </div>
+      <button class="close-button" onclick="dismissOnboarding()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="content-wrapper" id="contentWrapper">
+        <!-- Slide 1: Welcome -->
+        <div class="slide">
+          <div class="icon">👋</div>
+          <h2 class="title">Welcome to Your Exam!</h2>
+          <p class="description">
+            Let's take a quick tour to show you how to navigate and complete your exam successfully.
+          </p>
+        </div>
+
+        <!-- Slide 2: Navigate -->
+        <div class="slide">
+          <div class="icon">⬅️ ➡️</div>
+          <h2 class="title">Navigate Questions</h2>
+          <p class="description">
+            Use the arrow buttons at the bottom to move between questions. You can go back and change answers anytime.
+          </p>
+        </div>
+
+        <!-- Slide 3: Select Answers -->
+        <div class="slide">
+          <div class="icon">✅</div>
+          <h2 class="title">Select Your Answers</h2>
+          <p class="description">
+            Tap any option to select your answer. The selected option will be highlighted. Change your mind? Just tap a different option.
+          </p>
+        </div>
+
+        <!-- Slide 4: Submit -->
+        <div class="slide">
+          <div class="icon">🎉</div>
+          <h2 class="title">Submit When Ready</h2>
+          <p class="description">
+            Once you've answered all questions, tap the Submit button to get your results and earn Genie Dollars!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="keyboard-hint">
+      Use arrow keys or swipe to navigate • Press ESC to skip
+    </div>
+
+    <div class="modal-footer">
+      <button class="footer-button secondary" id="prevBtn" onclick="previousSlide()" disabled>
+        ← Back
+      </button>
+      <button class="footer-button primary" id="nextBtn" onclick="nextSlide()">
+        Next →
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 0
+    const totalSlides = 4
+    const wrapper = document.getElementById('contentWrapper')
+    const dots = document.querySelectorAll('.step-dot')
+    const prevBtn = document.getElementById('prevBtn')
+    const nextBtn = document.getElementById('nextBtn')
+
+    // Touch handling
+    let touchStartX = 0
+    let touchEndX = 0
+
+    wrapper.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX
+    })
+
+    wrapper.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX
+      handleSwipe()
+    })
+
+    function handleSwipe() {
+      const swipeThreshold = 50
+      if (touchStartX - touchEndX > swipeThreshold) {
+        nextSlide()
+      }
+      if (touchEndX - touchStartX > swipeThreshold) {
+        previousSlide()
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault()
+        if (currentSlide < totalSlides - 1) {
+          nextSlide()
+        } else {
+          dismissOnboarding()
+        }
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        previousSlide()
+      }
+      if (e.key === 'Escape') {
+        dismissOnboarding()
+      }
+    })
+
+    function updateSlide() {
+      // Update wrapper position
+      wrapper.style.transform = `translateX(-${currentSlide * 100}%)`
+
+      // Update progress dots
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentSlide)
+      })
+
+      // Update buttons
+      prevBtn.disabled = currentSlide === 0
+
+      if (currentSlide === totalSlides - 1) {
+        nextBtn.textContent = "Got it! 🚀"
+      } else {
+        nextBtn.textContent = "Next →"
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++
+        updateSlide()
+      } else {
+        dismissOnboarding()
+      }
+    }
+
+    function previousSlide() {
+      if (currentSlide > 0) {
+        currentSlide--
+        updateSlide()
+      }
+    }
+
+    function dismissOnboarding() {
+      const modal = document.querySelector('.onboarding-modal')
+      const backdrop = document.querySelector('.overlay-backdrop')
+
+      modal.style.opacity = '0'
+      modal.style.transform = 'translate(-50%, -40%)'
+      backdrop.style.opacity = '0'
+      modal.style.transition = 'all 0.3s'
+      backdrop.style.transition = 'opacity 0.3s'
+
+      setTimeout(() => {
+        alert('Onboarding dismissed! In the real app, this would:\n\n1. Mark localStorage as seen\n2. Hide the overlay\n3. Let you start the exam')
+        location.reload()
+      }, 300)
+    }
+
+    // Initialize
+    updateSlide()
+  </script>
+
+</body>
+</html>

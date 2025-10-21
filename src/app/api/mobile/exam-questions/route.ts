@@ -6,10 +6,10 @@ import { MobileApiService } from '@/lib/services/mobile-api-service'
 import { ApiResponseBuilder } from '@/lib/utils/api-response'
 import { ErrorManager, ErrorCategory } from '@/lib/utils/error-manager'
 import { withOptionalAuth } from '@/middleware/auth'
-import { FINNISH_SUBJECTS, FinnishSubject } from '@/lib/supabase'
 import { getRateLimiter } from '@/lib/services/rate-limiter'
 import { getRequestLogger } from '@/lib/services/request-logger'
 import { getJWTValidator } from '@/lib/services/jwt-validator'
+import { getServerTranslation } from '@/i18n/server'
 
 /**
  * ExamGenie MVP Mobile API Route - Handles subject-aware exam generation
@@ -19,6 +19,9 @@ export async function POST(request: NextRequest) {
   return withOptionalAuth(request, async (req, authContext) => {
     const processingId = uuidv4()
     const timer = new OperationTimer('ExamGenie Mobile API Processing')
+
+    // Get translation function for API error messages
+    const t = getServerTranslation()
 
     // Build error context for better debugging
     const clientInfo = RequestProcessor.getClientInfo(req)
@@ -45,7 +48,7 @@ export async function POST(request: NextRequest) {
 
       // Extract ExamGenie-specific parameters
       const category = formData.get('category')?.toString() // 'mathematics', 'core_academics', 'language_studies'
-      const subject = formData.get('subject')?.toString() as FinnishSubject // For backwards compatibility
+      const subject = formData.get('subject')?.toString() // For backwards compatibility
       const gradeStr = formData.get('grade')?.toString()
       const grade = gradeStr ? parseInt(gradeStr, 10) : undefined
       // Backward compatibility: Accept both user_id and student_id (mobile app currently sends student_id)
@@ -80,7 +83,7 @@ export async function POST(request: NextRequest) {
       // Check rate limit BEFORE processing images to save resources
       if (!finalUserId) {
         return ApiResponseBuilder.validationError(
-          'user_id tai student_id vaaditaan', // Finnish: user_id or student_id required
+          t('api.errors.userIdRequired'),
           'Rate limiting requires user identification',
           { requestId: processingId }
         )
@@ -115,13 +118,15 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json(
           {
-            error: 'Päivittäinen koeraja saavutettu', // Finnish: Daily exam limit reached
+            error: t('api.errors.rateLimitExceeded'),
             error_code: 'RATE_LIMIT_EXCEEDED',
             limit: rateLimitResult.limit,
             remaining: 0,
             resetAt: rateLimitResult.resetAt.toISOString(),
             retryAfter: rateLimitResult.retryAfter,
-            details: `Voit luoda uuden kokeen ${Math.ceil((rateLimitResult.retryAfter || 0) / 60)} minuutin kuluttua.`, // You can create a new exam in X minutes
+            details: t('api.errors.rateLimitRetryAfter', {
+              minutes: Math.ceil((rateLimitResult.retryAfter || 0) / 60)
+            }),
             requestId: processingId
           },
           {
@@ -152,23 +157,18 @@ export async function POST(request: NextRequest) {
       const validCategories = ['mathematics', 'core_academics', 'language_studies']
       if (category && !validCategories.includes(category)) {
         return ApiResponseBuilder.validationError(
-          'Invalid category. Must be one of: mathematics, core_academics, language_studies',
+          t('api.errors.invalidCategory'),
           'Category determines the type of exam questions to generate.'
         )
       }
 
-      // Validate subject if provided (for backwards compatibility)
-      if (subject && !category && !FINNISH_SUBJECTS.includes(subject as FinnishSubject)) {
-        return ApiResponseBuilder.validationError(
-          'Invalid subject. Must be one of the supported Finnish subjects.',
-          `Valid subjects: ${FINNISH_SUBJECTS.join(', ')}`
-        )
-      }
+      // Note: subject is only stored in DB, not used for routing
+      // Category determines routing (mathematics vs standard prompt)
 
       // Validate grade if provided
       if (grade && (typeof grade !== 'number' || grade < 1 || grade > 9)) {
         return ApiResponseBuilder.validationError(
-          'Invalid grade. Must be between 1 and 9.',
+          t('api.errors.invalidGrade'),
           'Grade must be a number from 1 to 9 representing the student\'s school year.'
         )
       }
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
         processingId,
         // ExamGenie MVP parameters
         category: category || undefined,
-        subject: subject && !category ? subject : undefined, // Only use subject if category not provided
+        subject: subject || undefined, // Store subject from endpoint, category determines prompt routing
         grade,
         language,
         user_id: finalUserId || authContext.user?.id // Use finalUserId (JWT or body) or authenticated user

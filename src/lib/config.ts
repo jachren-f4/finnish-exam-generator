@@ -93,7 +93,7 @@ export const GRADING_CONFIG = {
 
 // Application URLs
 export const APP_CONFIG = {
-  BASE_URL: 'https://exam-generator.vercel.app',
+  BASE_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://examgenie.app',
   ENDPOINTS: {
     EXAM: (id: string) => `/exam/${id}`,
     GRADING: (id: string) => `/grading/${id}`,
@@ -124,109 +124,27 @@ export const RATE_LIMIT_CONFIG = {
   ENABLED: process.env.RATE_LIMITING_ENABLED !== 'false', // Default: enabled
 } as const
 
-// Default Prompts
+/**
+ * Prompt Routing Logic:
+ * - subject: contains 'historia|history|geschichte' → getHistoryPrompt() (content-focused, factual verification)
+ * - category: 'mathematics' → getMathPrompt() (LaTeX support, specialized validation)
+ * - category: 'language_studies' → getLanguageStudiesPrompt() (auto-detect languages)
+ * - category: 'core_academics' OR default → getCategoryAwarePrompt() (with summary for TTS)
+ */
+
+// Exam Generation Prompts
 export const PROMPTS = {
-  DEFAULT_EXAM_GENERATION: `
-Extract text from the images and generate exam questions.
-
-Use the same language as the source material for all questions and explanations.
-
-Return your response as a JSON object with this exact structure:
-{
-  "questions": [
-    {
-      "id": 1,
-      "type": "multiple_choice",
-      "question": "Question text",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct_answer": "Option A",
-      "explanation": "Brief explanation"
-    }
-  ],
-  "topic": "Brief topic description",
-  "difficulty": "elementary"
-}
-
-Important: Return only the JSON object. Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions based on the image content.`,
-
-  OCR_EXTRACTION: `STEP 1: Extract text from each image separately
-- Process each image individually (numbered 0, 1, 2, etc.)
-- Preserve ALL text exactly as it appears: titles, headers, paragraphs, captions
-- Maintain page boundaries - do NOT merge or mix content between different images
-- Keep each page's content distinct and separate
-
-STEP 2: MANDATORY TOPIC ANALYSIS
-Before finalizing the output, you MUST:
-1. Examine each image/page separately and identify its main academic subject
-2. Determine if all pages belong to the same subject area (e.g., all physics, all biology, all history)
-3. If pages contain DIFFERENT academic subjects, note this clearly
-4. State your analysis: "Topic detected: [SUBJECT NAME]" or "Mixed topics detected: [LIST SUBJECTS]"
-
-STEP 3: Format output with clear page separation
-- Use "=== PAGE X ===" markers to separate different images/pages
-- Include your topic analysis in the output
-- Preserve original text structure and formatting
-
-Return your response as a JSON object with this exact structure:
-{
-  "rawText": "=== PAGE 0 ===\\n[text from first image]\\n\\n=== PAGE 1 ===\\n[text from second image]\\n\\n[Topic Analysis: ...]"
-}
-
-VALIDATION CHECK before finalizing:
-- Verify clear page boundaries are maintained
-- Confirm topic analysis is included
-- Ensure no content mixing between different pages
-
-Important: Only return the JSON object with the extracted text. Do not include any additional explanations or notes.`,
-
-
-  // ITERATION 2: Simplified Natural Language Prompt (75% size reduction)
-  getSimplifiedCategoryPrompt: (category: string, grade?: number, language: string = 'en') => {
-    const distribution = EXAM_CONFIG.QUESTION_TYPE_DISTRIBUTION(EXAM_CONFIG.DEFAULT_QUESTION_COUNT)
-    return `Read the educational content and create ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} exam questions.
-
-Use the same language as the source material for all questions and explanations.
-
-Target: Grade ${grade || '5'} students
-Subject: ${category}
-
-Generate varied question types:
-- ${distribution.multiple_choice} multiple choice
-- ${distribution.short_answer} short answer
-- ${distribution.true_false} true/false
-- ${distribution.fill_in_blank} fill-in-blank
-
-Requirements:
-- Questions must sound natural
-- Based only on text content (no image references)
-- Age-appropriate difficulty
-- Clear, simple phrasing
-
-JSON format:
-{
-  "questions": [
-    {
-      "id": 1,
-      "type": "multiple_choice",
-      "question": "question text",
-      "options": ["option A", "option B", "option C", "option D"],
-      "correct_answer": "option A",
-      "explanation": "brief explanation"
-    }
-  ]
-}
-
-Return only JSON.`
-  },
-
-  getCategoryAwarePrompt: (category: string, grade?: number, language: string = 'en') => {
+  getCategoryAwarePrompt: (category: string, grade?: number, language: string = 'en', imageCount: number = 1) => {
     const categoryDescriptions = {
       mathematics: 'Mathematics and logic problems',
       core_academics: 'Science, history, geography, biology, physics, chemistry, environmental studies, or social studies',
       language_studies: 'Foreign language learning including vocabulary, grammar, translation, and comprehension'
     }
 
-    return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students.
+    // Calculate expected key concepts: images × 3
+    const expectedKeyConcepts = imageCount * 3;
+
+    return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students, generate an educational summary, AND extract gamified key concepts.
 
 CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
 
@@ -239,46 +157,9 @@ Avoid:
 
 TARGET: Use the same language as the source material. Subject area: core academics.
 
-TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts in the material.
+TASK 1: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts in the material.
 
-REQUIRED FORMAT:
-{
-  "questions": [
-    {
-      "id": 1,
-      "type": "multiple_choice",
-      "question": "[Question text in same language as source material]",
-      "options": ["[Option A]", "[Option B]", "[Option C]", "[Option D]"],
-      "correct_answer": "[Exact match from options array]",
-      "explanation": "[Brief explanation in same language]"
-    }
-  ]
-}
-
-IMPORTANT: The correct_answer field must contain the exact text from the options array.`
-  },
-
-  getCategoryAwarePromptWithSummary: (category: string, grade?: number, language: string = 'en') => {
-    const categoryDescriptions = {
-      mathematics: 'Mathematics and logic problems',
-      core_academics: 'Science, history, geography, biology, physics, chemistry, environmental studies, or social studies',
-      language_studies: 'Foreign language learning including vocabulary, grammar, translation, and comprehension'
-    }
-
-    return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students AND generate an educational summary.
-
-CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
-
-Avoid:
-- Visual references from the material, like images or page or chapter numbers
-- References to graph, table, diagram, or coordinate systems
-- Something that is factually untrue
-- Something that is impossible to answer without the images
-- Questions that aren't explicitly based on the source material
-
-TARGET: Use the same language as the source material. Subject area: core academics.
-
-TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts in the material.
+TASK 2: Extract exactly ${expectedKeyConcepts} key concepts for gamified learning.
 
 REQUIRED FORMAT:
 {
@@ -299,6 +180,28 @@ REQUIRED FORMAT:
     "summary_conclusion": "[100-250 word conclusion summarizing key takeaways in the same language]",
     "total_word_count": [approximate total word count],
     "language": "[ISO 639-1 language code, e.g., 'fi' for Finnish, 'en' for English]"
+  },
+  "key_concepts": [
+    {
+      "concept_name": "Short title (2-5 words in source language)",
+      "definition": "Clear, single-sentence explanation (50-100 words)",
+      "difficulty": "foundational" | "intermediate" | "advanced",
+      "category": "Short category label (1-2 words)",
+      "related_question_ids": [1, 3, 7],
+      "badge_title": "Gamified label (2-4 words in source language)",
+      "mini_game_hint": "Short riddle or clue (1 sentence in source language)"
+    }
+    // Exactly ${expectedKeyConcepts} concepts
+  ],
+  "gamification": {
+    "completion_message": "Brief congratulations message in source language",
+    "boss_question_open": "Open-ended synthesis question in source language",
+    "boss_question_multiple_choice": {
+      "question": "MC question linking multiple concepts in source language",
+      "options": ["A", "B", "C", "D"],
+      "correct_answer": "One of A/B/C/D"
+    },
+    "reward_text": "Achievement message in source language"
   }
 }
 
@@ -309,12 +212,21 @@ SUMMARY REQUIREMENTS:
 - Structure: 4 sections as specified in the JSON format
 - Educational tone: clear, pedagogical, age-appropriate
 - Focus on reinforcing concepts from the exam questions
-- Use proper formatting: **bold** for key terms, numbered lists where appropriate
+
+KEY CONCEPTS REQUIREMENTS:
+- Extract exactly ${expectedKeyConcepts} concepts (images × 3 formula)
+- Ensure EVERY question is referenced by at least one concept
+- Concept names: 2-5 words in source language
+- Definitions: 50-100 words, clear and educational
+- Difficulty balance: mix foundational, intermediate, advanced
+- Category diversity: create varied category labels
+- Badge titles: fun, motivating names in source language
+- Mini-game hints: playful clues for concept matching games
 
 IMPORTANT:
 - The correct_answer field must contain the exact text from the options array
-- The summary must be in the SAME language as the questions and source material
-- Do not reference visual elements in the summary either`
+- The summary and key concepts must be in the SAME language as the questions
+- Do not reference visual elements in questions, summary, or concepts`
   },
 
   getLanguageStudiesPrompt: (grade?: number, studentLanguage: string = 'en') => {
@@ -383,6 +295,451 @@ FORBIDDEN:
 - Fill-in-the-blank or completion questions (use multiple choice instead)
 
 Return ONLY the JSON object, no additional text`
+  },
+
+  getMathPrompt: (grade: number, language: string = 'fi'): string => {
+    const EXAM_QUESTION_COUNT = MATH_EXAM_CONFIG.DEFAULT_QUESTION_COUNT
+
+    return `⚠️ CRITICAL - LANGUAGE DETECTION FIRST ⚠️
+
+BEFORE ANYTHING ELSE:
+1. Look at the textbook images and identify the SOURCE LANGUAGE
+2. If you see "Addiere", "Subtrahiere", "Multipliziere" → German
+3. If you see "Lisää", "Vähennä", "Kerro" → Finnish
+4. If you see "Add", "Subtract", "Multiply" → English
+5. ALL your output MUST be in that SAME detected language
+
+LANGUAGE RULE: Questions, explanations, AND audio_summary sections MUST ALL match the source material language.
+DO NOT use Finnish if the source is German. DO NOT use English if the source is Finnish.
+
+ROLE: You are an expert mathematics teacher creating exam questions for grade ${grade} students.
+
+CONTEXT: You are analyzing textbook images containing mathematical content. The images may show:
+- Algebraic expressions and equations
+- Rational expressions (fractions with variables)
+- Exponential expressions and powers
+- Geometric problems and measurements
+- Word problems with real-world context
+
+CRITICAL - CONTENT ANALYSIS:
+Before generating questions, analyze the material shown:
+1. **Detect the topic**: Identify the specific mathematical concepts (e.g., "rational expressions", "exponents", "linear equations", "geometry")
+2. **Assess difficulty**: Note the actual complexity level shown in the images
+3. **Identify problem types**: computational, simplification, word problems, conceptual understanding
+
+CRITICAL - DO NOT COPY EXERCISES DIRECTLY:
+The textbook shows sub-exercises labeled (a, b, c, d). DO NOT convert these directly into multiple choice questions.
+Instead, CREATE NEW ORIGINAL questions that test the SAME SKILLS at the SAME DIFFICULTY LEVEL.
+
+FORBIDDEN (poor pedagogy):
+❌ Question: "Calculate $10^1$" with answer "$10^1$" (this is nonsense - answer must be the VALUE)
+❌ Directly copying sub-parts (a, b, c, d) from textbook as separate questions
+❌ Questions where multiple options are correct
+❌ Pure mechanical calculation without understanding
+
+TASK: Generate ${EXAM_QUESTION_COUNT} exam questions following this distribution:
+
+QUESTION TYPE DISTRIBUTION:
+1. Computational questions (6): Ask for NUMERICAL VALUE answers
+   - Example: "Calculate $10^3$" → Answer: "1000" (NOT "$10^3$")
+   - For geometry: "Calculate the sector area..." → Answer: "19.8 cm²"
+
+2. Formula application / Simplification questions (4): **ADAPT TO CONTENT**
+   - For algebra/exponents: "Simplify $a^3 \\\\cdot a^5$" → Answer: "$a^8$" (wrap in $ delimiters)
+   - For division: "Simplify $\\\\frac{b^{12}}{b^4}$" → Options: "$b^8$", "$b^{16}$", "$b^3$", "$\\\\frac{1}{b^8}$"
+   - For geometry: "Apply the sector area formula to find..." → Answer: numerical result
+   - For equations: "Solve for x in..." → Answer: "$x = 5$"
+
+3. Word problems (3): Real-world applications
+   - Population growth, money/interest, technology, scientific notation
+   - For geometry: angle of view, circular arc measurements, practical applications
+   - Must require calculation, not just pattern recognition
+
+4. Conceptual questions (2): Test understanding (adapt to topic)
+   - For exponents: "Why is any number to the power of 0 equal to 1?"
+   - For fractions: "Why must fractions have a common denominator before adding?"
+   - For geometry: "Which formula correctly calculates sector area?" or "Explain the relationship between arc length and central angle"
+
+ANSWER FORMAT RULES:
+- For "Calculate" questions: Options MUST be NUMBERS
+- For "Simplify" questions: Options MUST be SIMPLIFIED expressions
+- Wrong options should represent COMMON STUDENT ERRORS
+
+GOOD DISTRACTORS (represent common student errors):
+Exponents: $(-2)^3 = -8$ → wrong: "8" (forgot sign), "-6" (multiplied not exponentiated)
+Fractions: "$\\\\frac{x}{6} - \\\\frac{5}{3}$" → wrong: "$\\\\frac{x-5}{3}$" (subtracted denominators)
+Geometry: Sector area 19,6 cm² → wrong: 39,2 cm² (forgot sector fraction), 31,4 cm² (confused with arc)
+NOTE: Wrap all \\\\frac, \\\\cdot in $...$
+
+MATHEMATICAL NOTATION:
+- Math mode ($...$) for EXPRESSIONS ONLY, not plain decimals: "8,9 m" not "$8,9 m$"
+- LaTeX commands MUST wrap in $...$: "$\\\\frac{1}{b^8}$" renders, "\\\\frac{1}{b^8}" shows raw code
+- Operators: $\\\\cdot$ (multiply), $\\\\frac{a}{b}$ (fractions), $\\\\alpha$/$\\\\beta$/$\\\\pi$ (Greek), ° (degrees)
+
+JSON ESCAPING: Double all backslashes in JSON strings. Example: LaTeX \\\\frac becomes JSON \\\\\\\\frac which renders as "$\\\\frac{1}{2}$"
+
+OUTPUT FORMAT:
+You MUST respond with valid JSON following this schema:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Clear question with LaTeX notation",
+      "options": [
+        "First option",
+        "Second option",
+        "Third option",
+        "Fourth option"
+      ],
+      "correct_answer": "First option",
+      "explanation": "CONCISE explanation in the SAME language as source material (1-3 sentences max) covering why this is correct and common errors"
+    }
+  ],
+  "audio_summary": {
+    "overview": "[100-200 word overview in the same language as source material: What mathematical concepts does this chapter cover and why are they important?]",
+    "key_ideas": "[200-350 words explaining the main formulas and concepts using SPOKEN MATH notation - see requirements below]",
+    "applications": "[150-250 words on real-world applications and when students would use these concepts]",
+    "common_mistakes": "[150-200 words covering typical errors students make and how to avoid them]",
+    "guided_reflections": [
+      {
+        "question": "[Thought-provoking question posed conversationally]",
+        "pause_seconds": 5,
+        "short_answer": "[Concise 1-2 sentence answer or hint using SPOKEN math notation]"
+      }
+    ],
+    "total_word_count": [approximate total word count across all sections],
+    "estimated_duration_seconds": [approximate audio duration],
+    "language": "[ISO 639-1 language code]"
+  },
+  "topic": "Detected mathematics topic",
+  "grade": ${grade}
+}
+
+AUDIO SUMMARY REQUIREMENTS (for TTS conversion):
+This summary will be converted to AUDIO using Text-to-Speech, so special formatting is required.
+
+CRITICAL - SPOKEN MATH NOTATION:
+LaTeX symbols CANNOT be spoken by TTS. Convert ALL mathematical notation to spoken language in the SOURCE LANGUAGE:
+
+**Finnish examples:**
+- "$x^2$" → "x toiseen"
+- "$x^3$" → "x kolmanteen"
+- "$\\\\pi r^2$" → "pii kertaa r toiseen"
+- "$\\\\frac{a}{b}$" → "a per b" or "a jaettuna b:llä"
+- "$\\\\sqrt{x}$" → "neliöjuuri x:stä"
+- Operators: "plus", "miinus", "kertaa", "jaettuna"
+- Decimals: "nolla pilkku viisi" (0.5)
+
+**German examples:**
+- "$x^2$" → "x Quadrat" or "x hoch zwei"
+- "$x^3$" → "x hoch drei"
+- "$\\\\pi r^2$" → "pi mal r Quadrat"
+- "$\\\\frac{a}{b}$" → "a durch b" or "a geteilt durch b"
+- "$\\\\sqrt{x}$" → "Wurzel aus x" or "Quadratwurzel von x"
+- Operators: "plus", "minus", "mal", "geteilt durch"
+- Decimals: "null Komma fünf" (0,5)
+
+**English examples:**
+- "$x^2$" → "x squared"
+- "$x^3$" → "x cubed" or "x to the power of 3"
+- "$\\\\pi r^2$" → "pi times r squared"
+- "$\\\\frac{a}{b}$" → "a over b" or "a divided by b"
+- "$\\\\sqrt{x}$" → "square root of x"
+- Operators: "plus", "minus", "times", "divided by"
+- Decimals: "zero point five" (0.5)
+
+RULE: NO dollar signs ($), NO backslashes (\\\\), NO curly braces in audio_summary sections
+
+SECTION GUIDELINES (use detected source language):
+1. **overview** (100-200 words):
+   - Introduce the topic conversationally
+   - Finnish: "Tässä luvussa opimme..."
+   - German: "In diesem Kapitel lernen wir..."
+   - English: "In this chapter, we learn..."
+   - Explain why this matters in mathematics
+   - Set expectations for what students will understand
+
+2. **key_ideas** (200-350 words):
+   - Explain main formulas using SPOKEN notation only (see examples above)
+   - Finnish: "Potenssien kertolaskussa lasketaan eksponentit yhteen"
+   - German: "Beim Multiplizieren von Potenzen addiert man die Exponenten"
+   - English: "When multiplying powers, add the exponents"
+   - Walk through ONE concrete example step-by-step
+   - Teacher-like, supportive tone
+
+3. **applications** (150-250 words):
+   - Real-world contexts where these concepts appear
+   - Practical problems students encounter
+   - Connect math to everyday life
+
+4. **common_mistakes** (150-200 words):
+   - List 2-3 frequent student errors
+   - Explain WHY these errors happen
+   - Give tips to avoid them
+
+5. **guided_reflections** (2-3 reflections, array format):
+   - Each reflection has 3 fields: question, pause_seconds, short_answer
+   - Format: Question → Pause → Brief answer/hint (all in SOURCE language with SPOKEN math)
+   - pause_seconds: 3-8 seconds (time for student to think)
+   - Total per reflection: <20 seconds when spoken
+   - Keep answers concise (1-2 sentences) with SPOKEN math notation
+   - Limit to 2-3 reflections total to maintain engagement
+   - NO LaTeX symbols in short_answer field
+
+TARGET LENGTH: 600-1000 words total (approximately 2.5-4 minutes at 0.8x speaking rate)
+ESTIMATED DURATION: Calculate based on ~150 words per minute at 0.8x speed, plus pause_seconds from guided_reflections
+TONE: Friendly mathematics teacher speaking directly to student - conversational, clear, encouraging
+
+EXPLANATIONS: Max 3 sentences/500 chars. State formula + ONE example + ONE common error. No repetition/loops. If ambiguity detected, skip to next question.
+
+QUALITY REQUIREMENTS:
+□ Questions test understanding, not just memorization
+□ Mix of computational and conceptual questions
+□ Progressive difficulty (easy → medium → hard)
+□ Each question tests a DIFFERENT skill or concept
+□ Only ONE correct answer per question
+□ correct_answer EXACTLY matches one option
+□ ALL questions in the SAME language as source material (detected from images)
+□ ALL explanations in the SAME language as questions
+□ No references to images or page numbers in questions
+□ Audio summary has NO LaTeX notation (spoken form only)
+□ Audio summary is in SAME language as questions and source material
+□ Guided reflections use SPOKEN math notation (no LaTeX)
+□ Clear and unambiguous wording
+
+CRITICAL VALIDATION RULES:
+These errors will cause AUTOMATIC REJECTION - verify before finalizing each question:
+
+❌ FORBIDDEN ERROR 1: Duplicate options
+   - Bad: options = ["$y^{37}$", "$y^{31 \\\\cdot 6}$", "$y^0$", "$y^{37}$"]
+   - Fix: Verify all 4 options are UNIQUE strings
+
+❌ FORBIDDEN ERROR 2: "Closest answer" logic
+   - Bad explanation: "oikea vastaus on 0,25... Koska 0,5 on lähin vastaus, valitaan se"
+   - Fix: If NO option matches your calculation, SKIP the question entirely. NEVER choose "closest"
+
+❌ FORBIDDEN ERROR 3: Wrong formula calculations (STEP-BY-STEP VERIFICATION REQUIRED)
+
+   Geometry sector area: MUST use (angle/360) × π × r²
+   Geometry arc length: MUST use (angle/360) × 2π × r
+
+   CRITICAL: After stating the formula, verify EACH ARITHMETIC STEP:
+
+   ✅ CORRECT EXAMPLE (r=87cm, angle=90°):
+   Formula: (90/360) × π × 87²
+   Step 1: 87² = 7569 ✓
+   Step 2: 90/360 = 0.25 ✓
+   Step 3: 0.25 × π = 0.7854 ✓
+   Step 4: 0.7854 × 7569 = 5944.7 cm² ✓
+
+   ❌ WRONG (this error appears in failed exams):
+   Formula: (90/360) × π × 87² = (1/4) × π × 7569 ≈ 18960 cm² ← INCORRECT ARITHMETIC
+
+   VERIFICATION RULE:
+   Before finalizing ANY geometry answer, manually verify:
+   - For r=87, angle=90°: answer MUST be ~5945 cm² (NOT 18960)
+   - For r=5.3, angle=56°: answer MUST be ~13.7 cm² (NOT 19.8)
+   - If your calculated value is 3× expected, STOP and recalculate
+
+❌ FORBIDDEN ERROR 4: Visual references
+   - Never write: "kuva", "sivu", "taulukko", "kaavio" in questions
+
+SELF-VALIDATION CHECKLIST:
+After generating EACH question, complete this checklist:
+
+□ Step 1: Calculate answer independently and verify it's mathematically correct
+□ Step 2: For geometry sector problems, verify EACH arithmetic step:
+   - Compute r² correctly
+   - Compute angle/360 as decimal
+   - Multiply step-by-step: (angle/360) × π × r²
+   - If r=87 and angle=90°, answer MUST be ~5945, verify this explicitly
+□ Step 3: Verify correct_answer EXACTLY matches one option (character-for-character)
+□ Step 4: Confirm all 4 options are UNIQUE (no duplicates)
+□ Step 5: Ensure ONLY ONE option is mathematically correct
+□ Step 6: Check explanation does NOT contain: "oikea vastaus", "lähin vastaus", "valitaan"
+□ Step 7: Verify no visual references in question text
+□ Step 8: If calculated value seems too large (3×+ expected), RECALCULATE before finalizing
+
+IF ANY VALIDATION FAILS:
+- STOP generation of that question immediately
+- Move to next question
+- DO NOT try to "fix" by choosing wrong answer
+
+Begin generating the pedagogically sound exam now.`
+  },
+
+  getHistoryPrompt: (grade?: number, language: string = 'en', imageCount: number = 1): string => {
+    // Calculate expected key concepts: images × 3
+    const expectedKeyConcepts = imageCount * 3;
+
+    return `SYSTEM INSTRUCTION (prepend this before any user content):
+You must treat the uploaded textbook images as your *only factual source*.
+Do not rely on your general history knowledge. Use only information visible in the textbook pages.
+If something is not visible, skip it.
+
+Keep total output under 4000 tokens. Use concise sentences and limit explanations to 1–2 lines.
+
+---
+
+## 🎓 Task
+Create a **history exam for grade ${grade || 8} students** based *only* on the uploaded textbook pages AND extract gamified key concepts.
+
+---
+
+## 🔍 INTERNAL FACT EXTRACTION (do NOT print)
+First, silently read all textbook images and extract:
+- main events with dates
+- people or groups mentioned BY NAME in visible text
+- historical terms defined
+- visible causes and consequences
+
+🔴 CRITICAL GROUNDING RULE:
+- ONLY use information VISIBLE in the textbook pages
+- If a specific name (person, place) is NOT visible, do NOT mention it
+- Use general descriptions instead of specific names from outside knowledge
+- Example: If textbook says "US president" but doesn't name them → use "US president" NOT "Franklin D. Roosevelt"
+- Example: If textbook discusses prohibition/crime but doesn't name criminals → use "organized crime figures" NOT "Al Capone"
+
+Do NOT list or print these facts. Keep them in memory only.
+
+---
+
+## ✍️ QUESTION GENERATION
+Now, using only the information you extracted internally, generate:
+
+- 2 terminology questions ("What does X mean?")
+- 6 event questions ("What happened / when / where?")
+- 4 cause–consequence questions ("Why / what resulted?")
+- 3 people questions ("Who / what did they do?")
+→ Total = 15 questions
+
+Every question must be answerable directly from the textbook pages.
+If a fact, date, or person is not visible, skip it.
+
+---
+
+## 🎯 ADDITIONAL RULES
+
+### Language
+- Auto-detect textbook language and use it everywhere.
+- No translation, no mixing.
+
+### Style
+- Write like a teacher talking to students.
+- Never mention "the text", "material", or "chapter".
+- Use natural, clear sentences.
+
+### Terminology Rule
+- Only ask meanings of *specialized historical terms* (e.g. hyperinflaatio, sisällissota).
+- Never ask about common words (itsenäisyys, demokratia, sota, rauha).
+
+### Validation
+- Exactly 2 terminology questions.
+- No generic vocabulary or invented names.
+- All 15 questions grounded, clear, and answerable from the textbook pages.
+
+### Language-Aware Grounding Rule (CRITICAL)
+BEFORE creating each question, detect the textbook language:
+- **If German**: ONLY use facts from visible INFO boxes, captions, timeline dates, or explicit definitions. Never use general historical knowledge.
+- **If Finnish/Swedish/English**: Use all visible text content from pages.
+- **Common rule**: If a date, name, or event is NOT explicitly written in the textbook, skip it entirely.
+
+Examples of what NOT to do:
+- ❌ "Wann wurde das Deutsche Reich gegründet? 1871" (if 1871 not visible in text)
+- ❌ Questions about countries/people never mentioned in the pages
+- ✅ Only use dates from timelines, INFO boxes, or body text
+
+### Self-Check Compression
+Before finalizing, if output approaches length limit, shorten explanations but keep correctness.
+
+---
+
+## 🧩 JSON OUTPUT
+
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "[Natural question in source language]",
+      "options": [
+        { "id": "A", "text": "[Answer option text]" },
+        { "id": "B", "text": "[Answer option text]" },
+        { "id": "C", "text": "[Answer option text]" },
+        { "id": "D", "text": "[Answer option text]" }
+      ],
+      "correct_answer": "[Exact match: A, B, C, or D]",
+      "explanation": "[1–2 sentences, factual and concise]"
+    }
+  ],
+  "summary": {
+    "introduction": "[100–200 words – introduce the historical topic from the text]",
+    "key_concepts": "[250–400 words – main events, causes, results]",
+    "examples_and_applications": "[150–250 words – help students understand significance]",
+    "summary_conclusion": "[80–150 words – wrap up clearly]",
+    "total_word_count": [number],
+    "language": "[ISO 639-1 code]"
+  },
+  "key_concepts": [
+    {
+      "concept_name": "Short title (2-5 words in source language)",
+      "definition": "Clear, single-sentence explanation grounded ONLY in visible textbook content",
+      "difficulty": "foundational" | "intermediate" | "advanced",
+      "category": "Short category label (e.g., Conflict, Economy, Government, Foreign Policy)",
+      "related_question_ids": [1, 3, 7],
+      "badge_title": "Gamified label (2-4 words in source language)",
+      "mini_game_hint": "Short riddle or clue (1 sentence in source language)"
+    }
+    // Exactly ${expectedKeyConcepts} concepts
+  ],
+  "gamification": {
+    "completion_message": "Brief congratulations in source language",
+    "boss_question_open": "Open-ended synthesis question in source language",
+    "boss_question_multiple_choice": {
+      "question": "MC question linking concepts in source language",
+      "options": ["A", "B", "C", "D"],
+      "correct_answer": "One of A/B/C/D"
+    },
+    "reward_text": "Achievement message in source language"
+  }
+}
+
+---
+
+## 🎮 KEY CONCEPTS REQUIREMENTS
+
+🔴 STRICT GROUNDING REQUIREMENT FOR KEY CONCEPTS:
+- ALL concepts must be 100% grounded in VISIBLE textbook content
+- Do NOT include specific names (people, places) unless they appear in the textbook
+- Use general descriptions if specific names are not visible
+- Students expect key concepts to come directly from their textbook pages
+- Higher grounding standard than questions: NO outside knowledge allowed
+
+Extract exactly ${expectedKeyConcepts} key concepts (images × 3 formula):
+- Concept names: 2-5 words in source language
+  - ❌ AVOID specific names not in textbook (e.g., "Franklin D. Roosevelt" if only "US president" visible)
+  - ✅ USE general terms matching textbook text
+- Definitions: One clear sentence grounded ONLY in visible content
+  - ❌ NO facts from outside knowledge
+  - ✅ ONLY information students can verify by looking at their textbook
+- Difficulty balance: Mix foundational, intermediate, advanced
+- Category diversity: Create varied labels (Conflict, Economy, Government, People, etc.)
+- Ensure EVERY question is referenced by at least one concept
+
+---
+
+## ⚠️ FINAL CHECKLIST
+✅ 15 total questions
+✅ 2 terminology exactly
+✅ No "material/text" references
+✅ No invented facts or external info
+✅ All questions from visible textbook content
+✅ Natural, student-friendly phrasing
+✅ Exactly ${expectedKeyConcepts} key concepts
+✅ All concepts 100% grounded in visible text
+✅ Every question referenced in at least one concept
+✅ Output under 4000 tokens`
   }
 } as const
 

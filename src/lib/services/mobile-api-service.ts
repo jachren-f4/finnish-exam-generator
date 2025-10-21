@@ -2,14 +2,16 @@ import { v4 as uuidv4 } from 'uuid'
 import { FileProcessor, ProcessedFile } from '../utils/file-handler'
 import { OperationTimer } from '../utils/performance-logger'
 import { SupabaseStorageManager } from '../storage'
-import { PROMPTS } from '../config'
-import { processImagesWithGemini } from '../gemini'
+import { PROMPTS, GEMINI_CONFIG, getGeminiApiKey } from '../config'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 // Import ExamGenie services instead of old exam service
 import { supabaseAdmin } from '../supabase'
 import { PromptLogger, ImageReference } from '../utils/prompt-logger'
 import { shuffleQuestionsOptions, getShuffleStats } from '../utils/question-shuffler'
 import { getConfiguredProviderType } from './ai-providers/provider-factory'
 import { MathExamService } from './math-exam-service'
+import { createUsageMetadata } from '../utils/cost-calculator'
+import { safeJsonParse } from '../utils/json-handler'
 
 export interface MobileApiRequest {
   images: File[]
@@ -149,65 +151,15 @@ export class MobileApiService {
 
   /**
    * Handle diagnostic mode processing if enabled
+   * NOTE: Diagnostic mode is disabled in config (DIAGNOSTIC_MODE_ENABLED: false)
+   * This method always returns undefined
    */
   private static async handleDiagnosticMode(
     fileMetadataList: any[],
     timer: OperationTimer
   ): Promise<DiagnosticData | undefined> {
-    const diagnosticModeEnabled = SupabaseStorageManager.isDiagnosticModeEnabled()
-    
-    if (!diagnosticModeEnabled) {
-      return undefined
-    }
-
-    console.log('=== DIAGNOSTIC MODE ENABLED ===')
-    const diagnosticStartTime = Date.now()
-    let diagnosticImageUrls: string[] = []
-    let rawOcrText: string = ''
-
-    try {
-      const examId = uuidv4()
-      console.log('Generated exam ID for diagnostic:', examId)
-
-      // Note: Diagnostic image uploads are disabled to save storage costs
-      console.log('Diagnostic image uploads disabled - keeping OCR text only')
-
-      // Extract raw OCR text separately
-      const fs = require('fs').promises
-      const path = require('path')
-      const imageParts = []
-      
-      for (const fileMetadata of fileMetadataList) {
-        const filePath = path.join('/tmp', `${fileMetadata.id}${path.extname(fileMetadata.filename)}`)
-        const buffer = await fs.readFile(filePath)
-        const base64Data = buffer.toString('base64')
-        
-        imageParts.push({
-          inlineData: {
-            data: base64Data,
-            mimeType: fileMetadata.mimeType
-          }
-        })
-      }
-      
-      const { extractRawTextFromImages } = await import('../gemini')
-      const ocrResult = await extractRawTextFromImages(imageParts)
-      rawOcrText = ocrResult.rawText
-      
-      console.log('Raw OCR text length:', rawOcrText.length)
-      console.log('Raw OCR preview:', rawOcrText.substring(0, 300))
-      console.log(`⏱️  [TIMER] Diagnostic processing: ${Date.now() - diagnosticStartTime}ms`)
-      
-      return {
-        imageUrls: diagnosticImageUrls,
-        rawOcrText,
-        diagnosticEnabled: true
-      }
-      
-    } catch (diagnosticError) {
-      console.error('Diagnostic mode error:', diagnosticError)
-      return undefined
-    }
+    // Diagnostic mode is permanently disabled
+    return undefined
   }
 
   /**
@@ -266,15 +218,22 @@ export class MobileApiService {
       console.log(`⏱️  [MATH-SERVICE] Temperature used: ${mathResult.temperatureUsed}`)
       console.log(`⏱️  [MATH-SERVICE] Validation score: ${mathResult.validationScore}/100`)
       console.log(`⏱️  [MATH-SERVICE] Questions generated: ${mathResult.questions?.length || 0}`)
+      console.log(`⏱️  [MATH-SERVICE] Audio summary present: ${mathResult.audioSummary ? 'YES' : 'NO'}`)
 
       // Format result to match expected structure
       const formattedData = {
         rawText: JSON.stringify({
           questions: mathResult.questions,
+          audio_summary: mathResult.audioSummary,  // NEW: Include audio summary
+          key_concepts: mathResult.keyConcepts,  // NEW: Include key concepts
+          gamification: mathResult.gamification,  // NEW: Include gamification
           topic: mathResult.topic,
           difficulty: 'medium' // Math exams don't have difficulty in the same way
         }),
-        geminiUsage: mathResult.geminiUsage
+        geminiUsage: mathResult.geminiUsage,
+        audioSummary: mathResult.audioSummary,  // NEW: Pass audio summary for TTS generation
+        keyConcepts: mathResult.keyConcepts,  // NEW: Pass key concepts
+        gamification: mathResult.gamification  // NEW: Pass gamification
       }
 
       return {
@@ -326,19 +285,23 @@ export class MobileApiService {
       if (customPrompt && customPrompt.trim() !== '') {
         promptToUse = customPrompt
         promptType = 'CUSTOM'
+      } else if (subject && /historia|history|geschichte/i.test(subject)) {
+        // Use specialized prompt for history subjects (any language)
+        promptToUse = PROMPTS.getHistoryPrompt(grade, language, fileMetadataList.length)
+        promptType = `HISTORY(subject-${subject}, grade-${grade || 'auto'}, images-${fileMetadataList.length})`
       } else if (category) {
         // Use specialized prompt for language studies, category prompt with summary for others
         if (category === 'language_studies') {
           promptToUse = PROMPTS.getLanguageStudiesPrompt(grade, language)
           promptType = `LANGUAGE_STUDIES(grade-${grade || 'auto'}, student-lang-${language})`
         } else {
-          promptToUse = PROMPTS.getCategoryAwarePromptWithSummary(category, grade, language)
-          promptType = `CATEGORY_AWARE_WITH_SUMMARY(${category}, grade-${grade || 'auto'}, lang-${language})`
+          promptToUse = PROMPTS.getCategoryAwarePrompt(category, grade, language, fileMetadataList.length)
+          promptType = `CATEGORY_AWARE_PROMPT(${category}, grade-${grade || 'auto'}, lang-${language}, images-${fileMetadataList.length})`
         }
       } else {
         // Always use category-aware prompt with summary and core_academics as default
-        promptToUse = PROMPTS.getCategoryAwarePromptWithSummary('core_academics', grade, language)
-        promptType = `CATEGORY_AWARE_WITH_SUMMARY(core_academics, grade-${grade || 'auto'}, lang-${language})`
+        promptToUse = PROMPTS.getCategoryAwarePrompt('core_academics', grade, language, fileMetadataList.length)
+        promptType = `CATEGORY_AWARE_PROMPT(core_academics, grade-${grade || 'auto'}, lang-${language}, images-${fileMetadataList.length})`
       }
 
       console.log('Using prompt type:', promptType)
@@ -349,26 +312,58 @@ export class MobileApiService {
       console.log('=== END PROMPT ===')
       console.log('Prompt length:', promptToUse.length, 'characters')
 
-      // Note: File logging disabled - prompts are now saved to database (generation_prompt field)
-      // Legacy logPromptToFile() call removed to prevent filesystem errors on Vercel
-
       console.log('Starting Gemini processing...')
-      console.log('=== USING LEGACY MODE ===')
       const geminiStartTime = Date.now()
       console.log(`⏱️  [TIMER] Gemini processing started with prompt length: ${promptToUse.length} chars`)
 
-      // Use legacy processing method
-      const geminiResults = await processImagesWithGemini(fileMetadataList, promptToUse)
-      const result = geminiResults[0] // Take first result since we process all images together
+      // Load images from temporary files and prepare for Gemini API
+      const fs = require('fs').promises
+      const path = require('path')
+      const imageParts = []
+
+      for (const fileMetadata of fileMetadataList) {
+        const filePath = path.join('/tmp', `${fileMetadata.id}${path.extname(fileMetadata.filename)}`)
+        const buffer = await fs.readFile(filePath)
+        const base64Data = buffer.toString('base64')
+
+        imageParts.push({
+          inlineData: {
+            data: base64Data,
+            mimeType: fileMetadata.mimeType
+          }
+        })
+      }
+
+      // Call Gemini API directly
+      const genAI = new GoogleGenerativeAI(getGeminiApiKey())
+      const model = genAI.getGenerativeModel({
+        model: GEMINI_CONFIG.MODEL_NAME,
+        generationConfig: GEMINI_CONFIG.GENERATION_CONFIG
+      })
+
+      const result = await model.generateContent([promptToUse, ...imageParts])
+      const response = result.response
+      const text = response.text()
+      const usageMetadata = response.usageMetadata
 
       const geminiEndTime = Date.now()
       const geminiProcessingTime = geminiEndTime - geminiStartTime
+
+      // Create usage metadata for cost tracking
+      const usage = createUsageMetadata(promptToUse, text, usageMetadata)
+
       console.log(`⏱️  [TIMER] Gemini processing completed: ${geminiProcessingTime}ms`)
-      console.log(`⏱️  [TIMER] Gemini tokens - Input: ${result.geminiUsage?.promptTokenCount}, Output: ${result.geminiUsage?.candidatesTokenCount}, Cost: $${result.geminiUsage?.estimatedCost?.toFixed(6)}`)
+      console.log(`⏱️  [TIMER] Gemini tokens - Input: ${usage.promptTokenCount}, Output: ${usage.candidatesTokenCount}, Cost: $${usage.estimatedCost.toFixed(6)}`)
+
+      // Format result in expected structure
+      const formattedResult = {
+        rawText: text,
+        geminiUsage: usage
+      }
 
       return {
         success: true,
-        data: result,
+        data: formattedResult,
         processingTime: geminiProcessingTime,
         promptUsed: promptToUse
       }
@@ -434,37 +429,97 @@ export class MobileApiService {
       let parsedQuestions = []
       let summaryData: any = null
       let summaryText: string | null = null
+      let audioSummaryData: any = null  // NEW: For math audio summaries
 
-      try {
-        const parsedResult = JSON.parse(geminiData.rawText)
-        parsedQuestions = parsedResult.questions || []
+      // Use safeJsonParse to handle markdown code fences (```json ... ```)
+      const parseResult = safeJsonParse(geminiData.rawText)
 
-        // Extract summary if present
-        if (parsedResult.summary) {
-          summaryData = parsedResult.summary
-          console.log('=== SUMMARY EXTRACTED ===')
-          console.log('Summary language:', summaryData.language || 'not specified')
-          console.log('Summary word count:', summaryData.total_word_count || 'not specified')
-
-          // Combine all summary sections into single text for TTS
-          summaryText = [
-            summaryData.introduction || '',
-            summaryData.key_concepts || '',
-            summaryData.examples_and_applications || '',
-            summaryData.summary_conclusion || ''
-          ].filter(s => s.trim()).join('\n\n')
-
-          // Remove bold markdown formatting for TTS (e.g., **text** → text)
-          summaryText = summaryText.replace(/\*\*([^*]+)\*\*/g, '$1')
-
-          console.log('Combined summary length:', summaryText.length, 'characters')
-          console.log('Summary preview:', summaryText.substring(0, 200))
-        } else {
-          console.log('No summary found in response (may be language_studies or custom prompt)')
-        }
-      } catch (parseError) {
-        console.error('Failed to parse Gemini JSON response:', parseError)
+      if (!parseResult.success) {
+        console.error('Failed to parse Gemini JSON response:', parseResult.error)
+        console.error('Parse method attempted:', parseResult.method)
+        console.error('Response preview:', geminiData.rawText?.substring(0, 500))
         return null
+      }
+
+      console.log(`✅ JSON parsed successfully using method: ${parseResult.method}`)
+
+      const parsedResult = parseResult.data
+      parsedQuestions = parsedResult.questions || []
+
+      // NEW: Extract key concepts and gamification from response
+      let keyConcepts: any[] | null = null
+      let gamification: any | null = null
+
+      if (geminiData.keyConcepts || parsedResult.key_concepts) {
+        keyConcepts = geminiData.keyConcepts || parsedResult.key_concepts
+        console.log('=== KEY CONCEPTS EXTRACTED ===')
+        console.log('Concepts count:', keyConcepts?.length || 0)
+      }
+
+      if (geminiData.gamification || parsedResult.gamification) {
+        gamification = geminiData.gamification || parsedResult.gamification
+        console.log('=== GAMIFICATION EXTRACTED ===')
+        console.log('Boss question type:', gamification?.boss_question_multiple_choice ? 'Multiple Choice' : 'Open')
+      }
+
+      // NEW: Check for math audio_summary (from Math Service)
+      if (geminiData.audioSummary || parsedResult.audio_summary) {
+        audioSummaryData = geminiData.audioSummary || parsedResult.audio_summary
+        console.log('=== MATH AUDIO SUMMARY EXTRACTED ===')
+        console.log('Language:', audioSummaryData.language || 'not specified')
+        console.log('Word count:', audioSummaryData.total_word_count || 'not specified')
+        console.log('Reflections:', audioSummaryData.guided_reflections?.length || 0)
+
+        // Flatten audio summary sections into summaryText for database storage
+        console.log('[SUMMARY_TEXT DEBUG] Starting to flatten math audio summary...')
+        console.log('[SUMMARY_TEXT DEBUG] audioSummaryData keys:', Object.keys(audioSummaryData))
+
+        const mathSections = [
+          audioSummaryData.overview || '',
+          audioSummaryData.key_ideas || '',
+          audioSummaryData.applications || '',
+          audioSummaryData.common_mistakes || ''
+        ].filter(s => s.trim())
+
+        console.log('[SUMMARY_TEXT DEBUG] Math sections count:', mathSections.length)
+        console.log('[SUMMARY_TEXT DEBUG] Section lengths:', mathSections.map(s => s.length))
+
+        // Add guided reflections to text summary
+        if (audioSummaryData.guided_reflections && audioSummaryData.guided_reflections.length > 0) {
+          console.log('[SUMMARY_TEXT DEBUG] Adding', audioSummaryData.guided_reflections.length, 'guided reflections')
+          audioSummaryData.guided_reflections.forEach((reflection: any) => {
+            if (reflection.question) {
+              mathSections.push(`${reflection.question} ${reflection.short_answer || ''}`)
+            }
+          })
+        }
+
+        summaryText = mathSections.join('\n\n')
+        console.log('[SUMMARY_TEXT DEBUG] ✅ Math summary flattened to text:', summaryText.length, 'characters')
+        console.log('[SUMMARY_TEXT DEBUG] Summary preview (first 200 chars):', summaryText.substring(0, 200))
+      }
+      // Extract summary if present (core_academics format)
+      else if (parsedResult.summary) {
+        summaryData = parsedResult.summary
+        console.log('=== SUMMARY EXTRACTED ===')
+        console.log('Summary language:', summaryData.language || 'not specified')
+        console.log('Summary word count:', summaryData.total_word_count || 'not specified')
+
+        // Combine all summary sections into single text for TTS
+        summaryText = [
+          summaryData.introduction || '',
+          summaryData.key_concepts || '',
+          summaryData.examples_and_applications || '',
+          summaryData.summary_conclusion || ''
+        ].filter(s => s.trim()).join('\n\n')
+
+        // Remove bold markdown formatting for TTS (e.g., **text** → text)
+        summaryText = summaryText.replace(/\*\*([^*]+)\*\*/g, '$1')
+
+        console.log('Combined summary length:', summaryText.length, 'characters')
+        console.log('Summary preview:', summaryText.substring(0, 200))
+      } else {
+        console.log('No summary found in response (may be language_studies or custom prompt)')
       }
 
       if (!parsedQuestions || parsedQuestions.length === 0) {
@@ -577,6 +632,10 @@ export class MobileApiService {
         }
       }
 
+      // Extract detected language from Gemini response (ISO 639-1 code like 'fi', 'en', 'de')
+      const detectedLanguage = audioSummaryData?.language || summaryData?.language || 'en'
+      console.log('[LANGUAGE DETECTION] Detected language from textbook:', detectedLanguage)
+
       const examData: any = {
         id: examId,
         user_id: userId,
@@ -588,7 +647,11 @@ export class MobileApiService {
         created_at: new Date().toISOString(),
         generation_prompt: promptUsed || null,
         ai_provider: getConfiguredProviderType(),
-        summary_text: summaryText || null
+        summary_text: summaryText || null,
+        detected_language: detectedLanguage,  // AUTO-DETECT: Language from textbook images for UI localization
+        key_concepts: keyConcepts || null,  // NEW: Save key concepts as JSONB
+        gamification: gamification || null,  // NEW: Save gamification as JSONB
+        creation_gemini_usage: geminiData.geminiUsage || null  // Track Gemini API costs
         // completed_at is NULL by default - will be set when student completes the exam
         // audio_url and audio_metadata will be set later by async audio generation
       }
@@ -596,6 +659,11 @@ export class MobileApiService {
       // Note: user_id is already set in examData above
       // No need for separate student_id handling - we use user_id directly
 
+      console.log('[SUMMARY_TEXT DEBUG] 📝 About to insert exam with summary_text:', {
+        summary_text_length: summaryText ? summaryText.length : 0,
+        summary_text_is_null: summaryText === null,
+        summary_text_preview: summaryText ? summaryText.substring(0, 100) : 'NULL'
+      })
       console.log('Creating ExamGenie exam:', examData)
 
       if (!supabaseAdmin) {
@@ -615,6 +683,10 @@ export class MobileApiService {
         console.error('Failed to create examgenie_exams record:', examError)
         return null
       }
+
+      console.log('[SUMMARY_TEXT DEBUG] ✅ Exam inserted successfully')
+      console.log('[SUMMARY_TEXT DEBUG] DB returned summary_text length:', exam?.[0]?.summary_text?.length || 0)
+      console.log('[SUMMARY_TEXT DEBUG] DB returned summary_text preview:', exam?.[0]?.summary_text?.substring(0, 100) || 'NULL')
 
       // Create questions in examgenie_questions table
       const questionsData = parsedQuestions.map((q: any, index: number) => ({
@@ -646,8 +718,12 @@ export class MobileApiService {
       timer.endPhase('ExamGenie Exam Creation')
       console.log(`⏱️  [TIMER] ExamGenie exam creation: ${Date.now() - examCreationStartTime}ms`)
 
-      // Generate audio summary if available (synchronous to ensure completion)
-      if (summaryText && summaryData?.language) {
+      // Generate audio summary if available
+      // NEW: Handle both math audio summaries and core_academics summaries
+      if (audioSummaryData && audioSummaryData.language) {
+        console.log('=== GENERATING MATH AUDIO SUMMARY ===')
+        await this.generateMathAudioSummaryAsync(examId, audioSummaryData)
+      } else if (summaryText && summaryData?.language) {
         console.log('=== GENERATING AUDIO SUMMARY ===')
         await this.generateAudioSummaryAsync(examId, summaryText, summaryData.language)
       } else {
@@ -686,6 +762,7 @@ export class MobileApiService {
   ): Promise<void> {
     console.log('[Audio Generation] Starting async audio generation for exam:', examId)
     console.log('[Audio Generation] Language:', languageCode)
+    console.log('[Audio Generation] Original summary length:', summaryText.length, 'characters')
 
     try {
       // Import TTS service
@@ -695,8 +772,28 @@ export class MobileApiService {
       const ttsLanguageCode = TTSService.getLanguageCodeForTTS(languageCode)
       console.log('[Audio Generation] TTS language code:', ttsLanguageCode)
 
+      // Truncate summary to fit within 5000 bytes (Google Cloud TTS limit)
+      // Must check BYTE length, not character length, due to multi-byte UTF-8 characters
+      const MAX_TTS_BYTES = 4900 // Use 4900 to be safe (leave 100 bytes buffer)
+      let processedSummaryText = summaryText
+      const originalByteLength = Buffer.byteLength(summaryText, 'utf8')
+
+      if (originalByteLength > MAX_TTS_BYTES) {
+        // Truncate by bytes, not characters
+        let truncated = summaryText
+        while (Buffer.byteLength(truncated, 'utf8') > MAX_TTS_BYTES) {
+          truncated = truncated.substring(0, truncated.length - 100) // Remove 100 chars at a time
+        }
+        processedSummaryText = truncated
+        console.log('[Audio Generation] ⚠️  Summary truncated from', originalByteLength, 'bytes to', Buffer.byteLength(processedSummaryText, 'utf8'), 'bytes')
+        console.log('[Audio Generation] Character count:', summaryText.length, '→', processedSummaryText.length)
+        console.log('[Audio Generation] Truncation reason: Google Cloud TTS 5000-byte limit')
+      } else {
+        console.log('[Audio Generation] Summary size within TTS limit:', originalByteLength, 'bytes')
+      }
+
       // Generate audio using TTS service
-      const audioResult = await ttsService.generateAudio(summaryText, {
+      const audioResult = await ttsService.generateAudio(processedSummaryText, {
         languageCode: ttsLanguageCode,
         audioEncoding: 'MP3',
         speakingRate: 0.8, // 20% slower for better educational clarity
@@ -733,11 +830,22 @@ export class MobileApiService {
         generatedAt: audioResult.metadata.generatedAt,
       }
 
+      const audioCost = {
+        characterCount: audioResult.costMetadata.characterCount,
+        voiceType: audioResult.costMetadata.voiceType,
+        estimatedCost: audioResult.costMetadata.estimatedCost,
+        pricePerMillion: audioResult.costMetadata.pricePerMillion,
+        generatedAt: new Date().toISOString()
+      }
+
+      console.log(`[Audio Generation] TTS cost: $${audioCost.estimatedCost.toFixed(6)} (${audioCost.characterCount} chars, ${audioCost.voiceType})`)
+
       const { error: updateError } = await supabaseAdmin
         .from('examgenie_exams')
         .update({
           audio_url: uploadResult.url,
           audio_metadata: audioMetadata,
+          audio_generation_cost: audioCost,  // Store TTS costs
         })
         .eq('id', examId)
 
@@ -762,6 +870,151 @@ export class MobileApiService {
       }
 
       // Don't throw - this is a background operation that shouldn't block exam creation
+    }
+  }
+
+  /**
+   * Generate math audio summary asynchronously (non-blocking)
+   * Handles math-specific audio with 5 sections + guided reflections
+   * @param examId - Exam ID to update
+   * @param audioSummary - Math audio summary data from MathExamService
+   */
+  static async generateMathAudioSummaryAsync(
+    examId: string,
+    audioSummary: any
+  ): Promise<void> {
+    console.log('[Math Audio] Starting async math audio generation for exam:', examId)
+    console.log('[Math Audio] Language:', audioSummary.language)
+    console.log('[Math Audio] Estimated duration:', audioSummary.estimated_duration_seconds, 'seconds')
+
+    try {
+      // Step 1: Concatenate all audio sections (Option A: simple concatenation)
+      const sections = [
+        audioSummary.overview || '',
+        audioSummary.key_ideas || '',
+        audioSummary.applications || '',
+        audioSummary.common_mistakes || ''
+      ].filter(s => s.trim())
+
+      // Step 2: Add guided reflections (question + answer, ignore pause_seconds)
+      if (audioSummary.guided_reflections && audioSummary.guided_reflections.length > 0) {
+        console.log('[Math Audio] Adding', audioSummary.guided_reflections.length, 'guided reflections')
+
+        audioSummary.guided_reflections.forEach((reflection: any, index: number) => {
+          sections.push(`${reflection.question || ''} ${reflection.short_answer || ''}`)
+        })
+      }
+
+      const fullAudioText = sections.join('\n\n')
+      console.log('[Math Audio] Total audio text length:', fullAudioText.length, 'characters')
+
+      // Import TTS service
+      const { ttsService, TTSService } = await import('./tts-service')
+
+      // Convert ISO 639-1 code to Google Cloud language code
+      const ttsLanguageCode = TTSService.getLanguageCodeForTTS(audioSummary.language)
+      console.log('[Math Audio] TTS language code:', ttsLanguageCode)
+
+      // Truncate to fit within 5000 bytes (Google Cloud TTS limit)
+      const MAX_TTS_BYTES = 4900 // Use 4900 to be safe (leave 100 bytes buffer)
+      let processedAudioText = fullAudioText
+      const originalByteLength = Buffer.byteLength(fullAudioText, 'utf8')
+
+      if (originalByteLength > MAX_TTS_BYTES) {
+        // Truncate by bytes, not characters
+        let truncated = fullAudioText
+        while (Buffer.byteLength(truncated, 'utf8') > MAX_TTS_BYTES) {
+          truncated = truncated.substring(0, truncated.length - 100) // Remove 100 chars at a time
+        }
+        processedAudioText = truncated
+        console.log('[Math Audio] ⚠️  Audio text truncated from', originalByteLength, 'bytes to', Buffer.byteLength(processedAudioText, 'utf8'), 'bytes')
+        console.log('[Math Audio] Character count:', fullAudioText.length, '→', processedAudioText.length)
+        console.log('[Math Audio] Truncation reason: Google Cloud TTS 5000-byte limit')
+      } else {
+        console.log('[Math Audio] Audio text size within TTS limit:', originalByteLength, 'bytes')
+      }
+
+      // Generate audio using TTS service
+      const audioResult = await ttsService.generateAudio(processedAudioText, {
+        languageCode: ttsLanguageCode,
+        audioEncoding: 'MP3',
+        speakingRate: 0.8, // 20% slower for better educational clarity
+        pitch: 0.0,
+      })
+
+      console.log('[Math Audio] Audio generated, size:', audioResult.audioBuffer.length, 'bytes')
+
+      // Upload audio to Supabase Storage
+      const uploadResult = await SupabaseStorageManager.uploadAudioSummary(
+        audioResult.audioBuffer,
+        examId,
+        audioSummary.language
+      )
+
+      if (uploadResult.error || !uploadResult.url) {
+        console.error('[Math Audio] Upload failed:', uploadResult.error)
+        return
+      }
+
+      console.log('[Math Audio] Audio uploaded:', uploadResult.url)
+
+      // Update exam record with audio URL and metadata
+      if (!supabaseAdmin) {
+        console.error('[Math Audio] Supabase admin client not available')
+        return
+      }
+
+      const audioMetadata = {
+        durationSeconds: audioResult.metadata.durationSeconds,
+        fileSizeBytes: audioResult.metadata.fileSizeBytes,
+        voiceUsed: audioResult.metadata.voiceUsed,
+        languageCode: audioResult.metadata.languageCode,
+        generatedAt: audioResult.metadata.generatedAt,
+        audioType: 'math_summary', // NEW: Identify this as math audio summary
+        reflectionsCount: audioSummary.guided_reflections?.length || 0
+      }
+
+      const audioCost = {
+        characterCount: audioResult.costMetadata.characterCount,
+        voiceType: audioResult.costMetadata.voiceType,
+        estimatedCost: audioResult.costMetadata.estimatedCost,
+        pricePerMillion: audioResult.costMetadata.pricePerMillion,
+        generatedAt: new Date().toISOString()
+      }
+
+      console.log(`[Math Audio] TTS cost: $${audioCost.estimatedCost.toFixed(6)} (${audioCost.characterCount} chars, ${audioCost.voiceType})`)
+
+      const { error: updateError } = await supabaseAdmin
+        .from('examgenie_exams')
+        .update({
+          audio_url: uploadResult.url,
+          audio_metadata: audioMetadata,
+          audio_generation_cost: audioCost,  // Store TTS costs
+        })
+        .eq('id', examId)
+
+      if (updateError) {
+        console.error('[Math Audio] Failed to update exam with audio URL:', updateError)
+        // Clean up uploaded file
+        await SupabaseStorageManager.deleteAudioSummary(uploadResult.url)
+        return
+      }
+
+      console.log('[Math Audio] Exam updated with audio URL successfully')
+      console.log('[Math Audio] Math audio summary generation complete for exam:', examId)
+
+    } catch (error) {
+      console.error('[Math Audio] Failed to generate math audio summary')
+      console.error('[Math Audio] Error type:', error?.constructor?.name)
+      console.error('[Math Audio] Error message:', error instanceof Error ? error.message : String(error))
+      console.error('[Math Audio] Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+
+      if (error && typeof error === 'object' && 'code' in error) {
+        console.error('[Math Audio] Error code:', (error as any).code)
+      }
+
+      // Don't throw - this is a background operation that shouldn't block exam creation
+      // Per user's instruction: "Just skip audio" on failure
     }
   }
 

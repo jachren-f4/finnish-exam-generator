@@ -39,6 +39,108 @@ export async function getExamForTaking(examId: string): Promise<ExamData | null>
   return ExamRepository.findForTaking(examId)
 }
 
+// Get next attempt number for an exam
+export async function getNextAttemptNumber(examId: string): Promise<number> {
+  try {
+    // Try ExamGenie grading table first - use supabaseAdmin to bypass RLS
+    let gradingResult = null
+    if (supabaseAdmin) {
+      gradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabaseAdmin!
+            .from('examgenie_grading')
+            .select('attempt_number')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+        },
+        'Get Latest ExamGenie Attempt Number'
+      )
+    }
+
+    // Fall back to legacy grading table if not found
+    if (!gradingResult || gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+      gradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabase
+            .from('grading')
+            .select('attempt_number')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+        },
+        'Get Latest Legacy Attempt Number'
+      )
+    }
+
+    if (gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+      return 1 // First attempt
+    }
+
+    const latestAttempt = gradingResult.data[0].attempt_number || 1
+    return latestAttempt + 1
+  } catch (error) {
+    console.error('Error getting next attempt number:', error)
+    return 1
+  }
+}
+
+// Get IDs of questions that were answered incorrectly in the latest attempt
+export async function getWrongQuestionIds(examId: string): Promise<string[]> {
+  try {
+    // Try ExamGenie grading table first - use supabaseAdmin to bypass RLS
+    let gradingResult = null
+    if (supabaseAdmin) {
+      gradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabaseAdmin!
+            .from('examgenie_grading')
+            .select('grading_json')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+        },
+        'Get Latest ExamGenie Grading for Wrong Questions'
+      )
+    }
+
+    // Fall back to legacy grading table if not found
+    if (!gradingResult || gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+      gradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabase
+            .from('grading')
+            .select('grading_json')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+        },
+        'Get Latest Legacy Grading for Wrong Questions'
+      )
+    }
+
+    if (gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+      return []
+    }
+
+    const grading = gradingResult.data[0].grading_json
+    if (!grading || !grading.questions) {
+      return []
+    }
+
+    // Filter questions where points_awarded < max_points
+    const wrongQuestionIds = grading.questions
+      .filter((q: any) => q.points_awarded < q.max_points)
+      .map((q: any) => q.id)
+
+    console.log(`Found ${wrongQuestionIds.length} wrong questions for exam ${examId}`)
+    return wrongQuestionIds
+  } catch (error) {
+    console.error('Error getting wrong question IDs:', error)
+    return []
+  }
+}
+
 // Get exam state for reuse/review - checks if exam has been completed at least once
 export async function getExamState(examId: string): Promise<{
   exam: ExamData | null,
@@ -54,17 +156,36 @@ export async function getExamState(examId: string): Promise<{
     }
 
     // Check if exam has been completed (has grading data)
-    const gradingResult = await DatabaseManager.executeQuery(
-      async () => {
-        return await supabase
-          .from('grading')
-          .select('*')
-          .eq('exam_id', examId)
-          .order('graded_at', { ascending: false })
-          .limit(1)
-      },
-      'Get Latest Grading'
-    )
+    // Try ExamGenie grading table first - use supabaseAdmin to bypass RLS
+    let gradingResult = null
+    if (supabaseAdmin) {
+      gradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabaseAdmin!
+            .from('examgenie_grading')
+            .select('*')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+        },
+        'Get Latest ExamGenie Grading'
+      )
+    }
+
+    // Fall back to legacy grading table if not found
+    if (!gradingResult || gradingResult.error || !gradingResult.data || gradingResult.data.length === 0) {
+      gradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabase
+            .from('grading')
+            .select('*')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+        },
+        'Get Latest Legacy Grading'
+      )
+    }
 
     const hasBeenCompleted = !gradingResult.error && !!gradingResult.data && gradingResult.data.length > 0
     const latestGrading = hasBeenCompleted && gradingResult.data ? gradingResult.data[0] : null
@@ -89,8 +210,10 @@ export async function getExamState(examId: string): Promise<{
 }
 
 // Submit student answers and trigger grading
-export async function submitAnswers(examId: string, answers: StudentAnswer[]): Promise<GradingResult | null> {
+export async function submitAnswers(examId: string, answers: StudentAnswer[], attemptNumber?: number): Promise<GradingResult | null> {
   try {
+    console.log(`[submitAnswers] Starting for exam ${examId}, answers count: ${answers.length}`)
+
     // First, try to get the original exam from legacy table
     let exam = null
     let examgenieResult = null
@@ -110,8 +233,9 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
       exam = legacyExamResult.data
     } else {
       // If not found in legacy table, try ExamGenie table
+      console.log(`[submitAnswers] Legacy exam not found, trying ExamGenie. supabaseAdmin available: ${!!supabaseAdmin}`)
       if (!supabaseAdmin) {
-        console.error('supabaseAdmin not available for ExamGenie exam submission')
+        console.error('[submitAnswers] FAILED: supabaseAdmin not available for ExamGenie exam submission')
         return null
       }
 
@@ -121,11 +245,19 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
             .from('examgenie_exams')
             .select('*')
             .eq('id', examId)
-            .eq('status', 'READY')
             .maybeSingle()
         },
         'Get ExamGenie Exam for Submission'
       )
+
+      // Check if exam exists and has valid status
+      if (examgenieResult.data) {
+        const status = (examgenieResult.data as any).status
+        if (status !== 'READY' && status !== 'created') {
+          console.log(`Exam ${examId} has invalid status for submission: ${status}`)
+          return null
+        }
+      }
 
       if (examgenieResult.error || !examgenieResult.data) {
         console.log('Exam not found in either table:', examId)
@@ -180,48 +312,28 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
       return null
     }
 
-    // For ExamGenie exams, we need to create a bridge record in the legacy exams table
-    // since the answers table has a foreign key constraint to exams, not examgenie_exams
-    let isExamGenieExam = false
-    if (!legacyExamResult.data && examgenieResult?.data) {
-      isExamGenieExam = true
-      console.log('Creating bridge record for ExamGenie exam in legacy table')
+    // Determine if this is an ExamGenie exam or legacy exam
+    const isExamGenieExam = !legacyExamResult.data && !!examgenieResult?.data
 
-      // Create a minimal record in the legacy exams table for foreign key compatibility
-      const bridgeResult = await DatabaseManager.executeQuery(
-        async () => {
-          return await supabase
-            .from('exams')
-            .insert({
-              exam_id: examId,
-              subject: exam.subject,
-              grade: exam.grade,
-              exam_json: exam.exam_json,
-              status: 'created'
-            })
-            .select('exam_id')
-            .single()
-        },
-        'Create Bridge Record for ExamGenie Exam'
+    // For legacy exams only: insert answers into answers table and create bridge record if needed
+    if (!isExamGenieExam) {
+      console.log('Processing legacy exam - inserting into answers table')
+
+      // Insert student answers
+      const answerResult = await DatabaseManager.insert(
+        'answers',
+        {
+          exam_id: examId,
+          answers_json: { answers }
+        }
       )
 
-      if (bridgeResult.error) {
-        console.error('Failed to create bridge record:', bridgeResult.error)
+      if (answerResult.error) {
+        console.error('Failed to insert answers for legacy exam:', answerResult.error)
         return null
       }
-    }
-
-    // Insert student answers
-    const answerResult = await DatabaseManager.insert(
-      'answers',
-      {
-        exam_id: examId,
-        answers_json: { answers }
-      }
-    )
-
-    if (answerResult.error) {
-      return null
+    } else {
+      console.log('Processing ExamGenie exam - skipping answers table and bridge record')
     }
 
     // Grade the exam using new grading service with personalized feedback
@@ -234,25 +346,64 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
       return null
     }
 
-    // Use transaction to save grading and update status atomically
-    const transactionResult = await DatabaseManager.transaction([
-      // Save grading results
-      () => DatabaseManager.insert('grading', {
-        exam_id: examId,
-        grade_scale: '4-10',
-        grading_json: gradingResult,
-        final_grade: gradingResult.final_grade,
-        grading_prompt: getGradingPrompt()
-      }),
-      // Update exam status to graded
-      () => DatabaseManager.update('exams',
-        { status: 'graded' },
-        { exam_id: examId }
-      )
-    ], 'Submit Answers Transaction')
+    // Save grading results
+    const finalAttemptNumber = attemptNumber || 1
 
-    if (transactionResult.error) {
-      return null
+    console.log(`[submitAnswers] About to save grading for ${isExamGenieExam ? 'ExamGenie' : 'legacy'} exam`)
+    console.log(`[submitAnswers] Grading data keys: ${Object.keys(gradingResult)}`)
+
+    if (isExamGenieExam) {
+      // For ExamGenie exams, use supabaseAdmin directly to bypass RLS
+      console.log('[submitAnswers] Using supabaseAdmin for ExamGenie grading insert')
+      const { data, error } = await supabaseAdmin!
+        .from('examgenie_grading')
+        .insert({
+          exam_id: examId,
+          grade_scale: '4-10',
+          grading_json: gradingResult,
+          final_grade: gradingResult.final_grade,
+          grading_prompt: getGradingPrompt(),
+          attempt_number: finalAttemptNumber
+          // grading_gemini_usage: null  // TODO: Add cost tracking (separate feature)
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('[submitAnswers] ExamGenie grading insert failed:', error)
+        return null
+      }
+
+      console.log('[submitAnswers] ExamGenie grading saved successfully')
+      // TODO: Add cost tracking logging when feature is implemented
+      // if (gradingResult.grading_gemini_usage) {
+      //   console.log(`[submitAnswers] Grading cost: $${gradingResult.grading_gemini_usage.estimatedCost.toFixed(6)}`)
+      // }
+    } else {
+      // For legacy exams, use transaction with DatabaseManager
+      console.log('[submitAnswers] Using transaction for legacy exam')
+      const transactionResult = await DatabaseManager.transaction([
+        () => DatabaseManager.insert('grading', {
+          exam_id: examId,
+          grade_scale: '4-10',
+          grading_json: gradingResult,
+          final_grade: gradingResult.final_grade,
+          grading_prompt: getGradingPrompt(),
+          attempt_number: finalAttemptNumber
+        }),
+        () => DatabaseManager.update('exams',
+          { status: 'graded' },
+          { exam_id: examId }
+        )
+      ], 'Submit Answers Transaction')
+
+      if (transactionResult.error) {
+        console.error('[submitAnswers] Transaction failed with error:', transactionResult.error)
+        console.error('[submitAnswers] Transaction metadata:', transactionResult.metadata)
+        return null
+      }
+
+      console.log('[submitAnswers] Legacy grading saved successfully')
     }
 
     // Update completed_at timestamp for ExamGenie exams
@@ -276,7 +427,11 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
       }
     }
 
-    return gradingResult
+    // Add attempt number to the result
+    return {
+      ...gradingResult,
+      attempt_number: finalAttemptNumber
+    }
 
   } catch (error) {
     return null
@@ -286,7 +441,28 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[]): P
 // Get grading results
 export async function getGradingResults(examId: string): Promise<GradingResult | null> {
   try {
-    const gradingResult = await DatabaseManager.executeQuery(
+    // Try ExamGenie grading table first (modern) - use supabaseAdmin to bypass RLS
+    if (supabaseAdmin) {
+      const examGenieGradingResult = await DatabaseManager.executeQuery(
+        async () => {
+          return await supabaseAdmin!
+            .from('examgenie_grading')
+            .select('*')
+            .eq('exam_id', examId)
+            .order('attempt_number', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        },
+        'Get ExamGenie Grading Results'
+      )
+
+      if (!examGenieGradingResult.error && examGenieGradingResult.data) {
+        return (examGenieGradingResult.data as any).grading_json as GradingResult
+      }
+    }
+
+    // Fall back to legacy grading table (for production)
+    const legacyGradingResult = await DatabaseManager.executeQuery(
       async () => {
         return await supabase
           .from('grading')
@@ -295,16 +471,18 @@ export async function getGradingResults(examId: string): Promise<GradingResult |
             exams!inner(*)
           `)
           .eq('exam_id', examId)
-          .single()
+          .order('attempt_number', { ascending: false })
+          .limit(1)
+          .maybeSingle()
       },
-      'Get Grading Results'
+      'Get Legacy Grading Results'
     )
 
-    if (gradingResult.error || !gradingResult.data) {
+    if (legacyGradingResult.error || !legacyGradingResult.data) {
       return null
     }
 
-    return (gradingResult.data as any).grading_json as GradingResult
+    return (legacyGradingResult.data as any).grading_json as GradingResult
 
   } catch (error) {
     return null

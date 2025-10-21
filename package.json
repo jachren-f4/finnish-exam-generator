@@ -18,10 +18,12 @@
     "formidable": "^3.5.1",
     "isomorphic-dompurify": "^2.26.0",
     "jsonwebtoken": "^9.0.2",
+    "katex": "^0.16.25",
     "next": "15.0.3",
     "openai": "^6.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "recharts": "^3.3.0",
     "uuid": "^10.0.0",
     "zod": "^4.1.8"
   },
@@ -39,7 +41,9 @@
     "eslint": "^8.57.0",
     "eslint-config-next": "15.0.3",
     "postcss": "^8.4.24",
+    "supabase": "^2.51.0",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vercel": "^48.3.0"
   }
 }

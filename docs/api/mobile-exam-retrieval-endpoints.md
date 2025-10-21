@@ -28,7 +28,7 @@ All endpoints:
 ### Request
 
 ```
-GET https://exam-generator.vercel.app/api/mobile/exams?user_id={userId}
+GET https://examgenie.app/api/mobile/exams?user_id={userId}
 ```
 
 **Query Parameters:**
@@ -55,8 +55,8 @@ Content-Type: application/json
         "grade": "5",
         "status": "READY",
         "question_count": 10,
-        "exam_url": "https://exam-generator.vercel.app/exam/550e8400-e29b-41d4-a716-446655440000",
-        "grading_url": "https://exam-generator.vercel.app/grading/550e8400-e29b-41d4-a716-446655440000",
+        "exam_url": "https://examgenie.app/exam/550e8400-e29b-41d4-a716-446655440000",
+        "grading_url": "https://examgenie.app/grading/550e8400-e29b-41d4-a716-446655440000",
         "created_at": "2025-09-30T12:00:00Z",
         "completed_at": "2025-09-30T12:05:00Z"
       }
@@ -121,7 +121,7 @@ Exams are sorted by **most recent first** (`created_at DESC`)
 ### Example cURL Command
 
 ```bash
-curl -X GET "https://exam-generator.vercel.app/api/mobile/exams?user_id=660e8400-e29b-41d4-a716-446655440001"
+curl -X GET "https://examgenie.app/api/mobile/exams?user_id=660e8400-e29b-41d4-a716-446655440001"
 ```
 
 ---
@@ -131,7 +131,7 @@ curl -X GET "https://exam-generator.vercel.app/api/mobile/exams?user_id=660e8400
 ### Request
 
 ```
-GET https://exam-generator.vercel.app/api/mobile/exams/{examId}
+GET https://examgenie.app/api/mobile/exams/{examId}
 ```
 
 **Path Parameters:**
@@ -177,8 +177,8 @@ Content-Type: application/json
           "max_points": 2
         }
       ],
-      "exam_url": "https://exam-generator.vercel.app/exam/550e8400-e29b-41d4-a716-446655440000",
-      "grading_url": "https://exam-generator.vercel.app/grading/550e8400-e29b-41d4-a716-446655440000",
+      "exam_url": "https://examgenie.app/exam/550e8400-e29b-41d4-a716-446655440000",
+      "grading_url": "https://examgenie.app/grading/550e8400-e29b-41d4-a716-446655440000",
       "created_at": "2025-09-30T12:00:00Z",
       "completed_at": "2025-09-30T12:05:00Z"
     }
@@ -229,7 +229,7 @@ Content-Type: application/json
 ### Example cURL Command
 
 ```bash
-curl -X GET "https://exam-generator.vercel.app/api/mobile/exams/550e8400-e29b-41d4-a716-446655440000"
+curl -X GET "https://examgenie.app/api/mobile/exams/550e8400-e29b-41d4-a716-446655440000"
 ```
 
 ---
@@ -239,7 +239,7 @@ curl -X GET "https://exam-generator.vercel.app/api/mobile/exams/550e8400-e29b-41
 ### Request
 
 ```
-GET https://exam-generator.vercel.app/api/mobile/stats?user_id={userId}
+GET https://examgenie.app/api/mobile/stats?user_id={userId}
 ```
 
 **Query Parameters:**
@@ -316,7 +316,7 @@ Content-Type: application/json
 ### Example cURL Command
 
 ```bash
-curl -X GET "https://exam-generator.vercel.app/api/mobile/stats?user_id=660e8400-e29b-41d4-a716-446655440001"
+curl -X GET "https://examgenie.app/api/mobile/stats?user_id=660e8400-e29b-41d4-a716-446655440001"
 ```
 
 ---
@@ -328,7 +328,7 @@ curl -X GET "https://exam-generator.vercel.app/api/mobile/stats?user_id=660e8400
 You need at least one exam created for the user. Create one via:
 
 ```bash
-curl -X POST "https://exam-generator.vercel.app/api/mobile/exam-questions" \
+curl -X POST "https://examgenie.app/api/mobile/exam-questions" \
   -F "images=@test.jpg" \
   -F "subject=Matematiikka" \
   -F "grade=5" \
@@ -348,7 +348,7 @@ curl -X POST "https://exam-generator.vercel.app/api/mobile/exam-questions" \
 ```bash
 # Set your user ID
 USER_ID="660e8400-e29b-41d4-a716-446655440001"
-BASE_URL="https://exam-generator.vercel.app"
+BASE_URL="https://examgenie.app"
 
 # Test 1: List exams
 echo "=== Test 1: List Exams ==="

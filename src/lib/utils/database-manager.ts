@@ -250,7 +250,10 @@ export class DatabaseManager {
         for (const operation of operations) {
           const result = await operation()
           if (result.error) {
-            throw new Error(`Transaction failed: ${result.error.message}`)
+            // Handle error objects that might not have a .message property
+            const errorMsg = result.error?.message ||
+                           (typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
+            throw new Error(`Transaction failed: ${errorMsg}`)
           }
           results.push(result.data)
         }
