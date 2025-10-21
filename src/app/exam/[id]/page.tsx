@@ -334,19 +334,19 @@ export default function ExamMenuPage() {
             gap: '8px',
           }}>
             {/* Audio Summary Card */}
-          <div
-            onClick={hasAudio ? handleListenAudio : undefined}
-            style={{
-              background: COLORS.background.primary,
-              border: `2px solid ${COLORS.border.light}`,
-              borderRadius: '12px',
-              padding: '12px 8px',
-              textAlign: 'center',
-              cursor: hasAudio ? 'pointer' : 'default',
-              opacity: hasAudio ? 1 : 0.5,
-              transition: TRANSITIONS.normal,
-            }}
-          >
+          {hasAudio && (
+            <div
+              onClick={handleListenAudio}
+              style={{
+                background: COLORS.background.primary,
+                border: `2px solid ${COLORS.border.light}`,
+                borderRadius: '12px',
+                padding: '12px 8px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: TRANSITIONS.normal,
+              }}
+            >
             <div style={{
               fontSize: '28px',
               marginBottom: '6px',
@@ -361,49 +361,35 @@ export default function ExamMenuPage() {
             }}>
               {t('examMenu.audio')}
             </div>
-            {hasAudio ? (
-              rewardStatus.audioEligible ? (
-                <div style={{
-                  display: 'inline-block',
-                  background: '#fef3c7',
-                  color: '#92400e',
-                  padding: '2px 6px',
-                  borderRadius: '8px',
-                  fontSize: '10px',
-                  fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                  marginTop: '4px',
-                }}>
-                  {t('examMenu.rewardAmount', { amount: GENIE_DOLLAR_REWARDS.AUDIO })}
-                </div>
-              ) : (
-                <div style={{
-                  display: 'inline-block',
-                  background: '#d1fae5',
-                  color: '#065f46',
-                  padding: '2px 6px',
-                  borderRadius: '8px',
-                  fontSize: '10px',
-                  fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                  marginTop: '4px',
-                }}>
-                  ✓
-                </div>
-              )
-            ) : (
+            {rewardStatus.audioEligible ? (
               <div style={{
                 display: 'inline-block',
-                background: '#f3f4f6',
-                color: '#6b7280',
+                background: '#fef3c7',
+                color: '#92400e',
                 padding: '2px 6px',
                 borderRadius: '8px',
                 fontSize: '10px',
                 fontWeight: TYPOGRAPHY.fontWeight.semibold,
                 marginTop: '4px',
               }}>
-                {t('examMenu.na')}
+                {t('examMenu.rewardAmount', { amount: GENIE_DOLLAR_REWARDS.AUDIO })}
+              </div>
+            ) : (
+              <div style={{
+                display: 'inline-block',
+                background: '#d1fae5',
+                color: '#065f46',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                fontSize: '10px',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                marginTop: '4px',
+              }}>
+                ✓
               </div>
             )}
           </div>
+          )}
 
           {/* Exam Card */}
           <div
@@ -462,34 +448,33 @@ export default function ExamMenuPage() {
           </div>
 
           {/* Results Card */}
-          <div
-            onClick={isCompleted ? handleViewResults : undefined}
-            style={{
-              background: COLORS.background.primary,
-              border: `2px solid ${COLORS.border.light}`,
-              borderRadius: '12px',
-              padding: '12px 8px',
-              textAlign: 'center',
-              cursor: isCompleted ? 'pointer' : 'default',
-              opacity: isCompleted ? 1 : 0.5,
-              transition: TRANSITIONS.normal,
-            }}
-          >
-            <div style={{
-              fontSize: '28px',
-              marginBottom: '6px',
-            }}>
-              📊
-            </div>
-            <div style={{
-              fontSize: '11px',
-              fontWeight: TYPOGRAPHY.fontWeight.semibold,
-              marginBottom: '2px',
-              color: '#1a1a1a',
-            }}>
-              {t('examMenu.results')}
-            </div>
-            {isCompleted ? (
+          {isCompleted && (
+            <div
+              onClick={handleViewResults}
+              style={{
+                background: COLORS.background.primary,
+                border: `2px solid ${COLORS.border.light}`,
+                borderRadius: '12px',
+                padding: '12px 8px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: TRANSITIONS.normal,
+              }}
+            >
+              <div style={{
+                fontSize: '28px',
+                marginBottom: '6px',
+              }}>
+                📊
+              </div>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                marginBottom: '2px',
+                color: '#1a1a1a',
+              }}>
+                {t('examMenu.results')}
+              </div>
               <div style={{
                 display: 'inline-block',
                 background: '#dbeafe',
@@ -502,52 +487,38 @@ export default function ExamMenuPage() {
               }}>
                 {t('examMenu.view')}
               </div>
-            ) : (
-              <div style={{
-                display: 'inline-block',
-                background: '#f3f4f6',
-                color: '#6b7280',
-                padding: '2px 6px',
-                borderRadius: '8px',
-                fontSize: '10px',
-                fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                marginTop: '4px',
-              }}>
-                {t('examMenu.pending')}
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Retake Full Exam Card */}
-          <div
-            onClick={isCompleted ? () => router.push(`/exam/${examId}/take?mode=retake`) : undefined}
-            style={{
-              background: COLORS.background.primary,
-              border: `2px solid ${COLORS.border.light}`,
-              borderRadius: '12px',
-              padding: '12px 8px',
-              textAlign: 'center',
-              cursor: isCompleted ? 'pointer' : 'default',
-              opacity: isCompleted ? 1 : 0.5,
-              transition: TRANSITIONS.normal,
-            }}
-          >
-            <div style={{
-              fontSize: '28px',
-              marginBottom: '6px',
-            }}>
-              🔄
-            </div>
-            <div style={{
-              fontSize: '11px',
-              fontWeight: TYPOGRAPHY.fontWeight.semibold,
-              marginBottom: '2px',
-              color: '#1a1a1a',
-            }}>
-              {t('examMenu.retake')}
-            </div>
-            {isCompleted ? (
-              rewardStatus.retakeEligible ? (
+          {isCompleted && (
+            <div
+              onClick={() => router.push(`/exam/${examId}/take?mode=retake`)}
+              style={{
+                background: COLORS.background.primary,
+                border: `2px solid ${COLORS.border.light}`,
+                borderRadius: '12px',
+                padding: '12px 8px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: TRANSITIONS.normal,
+              }}
+            >
+              <div style={{
+                fontSize: '28px',
+                marginBottom: '6px',
+              }}>
+                🔄
+              </div>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                marginBottom: '2px',
+                color: '#1a1a1a',
+              }}>
+                {t('examMenu.retake')}
+              </div>
+              {rewardStatus.retakeEligible ? (
                 <div style={{
                   display: 'inline-block',
                   background: '#fb923c',
@@ -573,52 +544,38 @@ export default function ExamMenuPage() {
                 }}>
                   ✓
                 </div>
-              )
-            ) : (
-              <div style={{
-                display: 'inline-block',
-                background: '#f3f4f6',
-                color: '#6b7280',
-                padding: '2px 6px',
-                borderRadius: '8px',
-                fontSize: '10px',
-                fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                marginTop: '4px',
-              }}>
-                {t('examMenu.pending')}
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Practice Mistakes Card */}
-          <div
-            onClick={isCompleted && wrongQuestionCount > 0 ? () => router.push(`/exam/${examId}/take?mode=wrong-only`) : undefined}
-            style={{
-              background: COLORS.background.primary,
-              border: `2px solid ${COLORS.border.light}`,
-              borderRadius: '12px',
-              padding: '12px 8px',
-              textAlign: 'center',
-              cursor: isCompleted && wrongQuestionCount > 0 ? 'pointer' : 'default',
-              opacity: isCompleted && wrongQuestionCount > 0 ? 1 : 0.5,
-              transition: TRANSITIONS.normal,
-            }}
-          >
-            <div style={{
-              fontSize: '28px',
-              marginBottom: '6px',
-            }}>
-              🎯
-            </div>
-            <div style={{
-              fontSize: '11px',
-              fontWeight: TYPOGRAPHY.fontWeight.semibold,
-              marginBottom: '2px',
-              color: '#1a1a1a',
-            }}>
-              {t('examMenu.mistakes')}
-            </div>
-            {isCompleted && wrongQuestionCount > 0 ? (
+          {isCompleted && wrongQuestionCount > 0 && (
+            <div
+              onClick={() => router.push(`/exam/${examId}/take?mode=wrong-only`)}
+              style={{
+                background: COLORS.background.primary,
+                border: `2px solid ${COLORS.border.light}`,
+                borderRadius: '12px',
+                padding: '12px 8px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: TRANSITIONS.normal,
+              }}
+            >
+              <div style={{
+                fontSize: '28px',
+                marginBottom: '6px',
+              }}>
+                🎯
+              </div>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+                marginBottom: '2px',
+                color: '#1a1a1a',
+              }}>
+                {t('examMenu.mistakes')}
+              </div>
               <div style={{
                 display: 'inline-block',
                 background: '#dbeafe',
@@ -631,62 +588,8 @@ export default function ExamMenuPage() {
               }}>
                 {wrongQuestionCount} Q
               </div>
-            ) : (
-              <div style={{
-                display: 'inline-block',
-                background: '#f3f4f6',
-                color: '#6b7280',
-                padding: '2px 6px',
-                borderRadius: '8px',
-                fontSize: '10px',
-                fontWeight: TYPOGRAPHY.fontWeight.semibold,
-                marginTop: '4px',
-              }}>
-                {isCompleted && wrongQuestionCount === 0 ? t('examMenu.perfect') : t('examMenu.pending')}
-              </div>
-            )}
-          </div>
-
-          {/* Leaderboard Card */}
-          <div
-            style={{
-              background: COLORS.background.primary,
-              border: `2px solid ${COLORS.border.light}`,
-              borderRadius: '12px',
-              padding: '12px 8px',
-              textAlign: 'center',
-              cursor: 'default',
-              opacity: 0.5,
-              transition: TRANSITIONS.normal,
-            }}
-          >
-            <div style={{
-              fontSize: '28px',
-              marginBottom: '6px',
-            }}>
-              🏆
             </div>
-            <div style={{
-              fontSize: '11px',
-              fontWeight: TYPOGRAPHY.fontWeight.semibold,
-              marginBottom: '2px',
-              color: '#1a1a1a',
-            }}>
-              {t('examMenu.ranking')}
-            </div>
-            <div style={{
-              display: 'inline-block',
-              background: '#f3f4f6',
-              color: '#6b7280',
-              padding: '2px 6px',
-              borderRadius: '8px',
-              fontSize: '10px',
-              fontWeight: TYPOGRAPHY.fontWeight.semibold,
-              marginTop: '4px',
-            }}>
-              {t('examMenu.soon')}
-            </div>
-          </div>
+          )}
 
           {/* Help Card */}
           <div
@@ -904,47 +807,46 @@ export default function ExamMenuPage() {
             )}
 
             {/* Results Card */}
-            <div
-              onClick={isCompleted ? handleViewResults : undefined}
-              style={{
-                background: COLORS.background.primary,
-                borderRadius: RADIUS.lg,
-                padding: SPACING.lg,
-                boxShadow: SHADOWS.card,
-                cursor: isCompleted ? 'pointer' : 'default',
-                opacity: isCompleted ? 1 : 0.6,
-                transition: TRANSITIONS.normal,
-                border: `1px solid ${COLORS.border.light}`,
-              }}
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: SPACING.md,
-                marginBottom: SPACING.md,
-              }}>
-                <div style={{ fontSize: '48px' }}>📊</div>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{
-                    fontSize: TYPOGRAPHY.fontSize.lg,
-                    fontWeight: TYPOGRAPHY.fontWeight.bold,
-                    color: COLORS.primary.text,
-                    margin: 0,
-                    marginBottom: SPACING.xs,
-                  }}>
-                    {t('examMenu.results')}
-                  </h3>
-                  <p style={{
-                    fontSize: TYPOGRAPHY.fontSize.sm,
-                    color: COLORS.primary.medium,
-                    margin: 0,
-                    lineHeight: TYPOGRAPHY.lineHeight.relaxed,
-                  }}>
-                    {isCompleted ? t('examMenu.resultsDescription') : t('examMenu.resultsLocked')}
-                  </p>
+            {isCompleted && (
+              <div
+                onClick={handleViewResults}
+                style={{
+                  background: COLORS.background.primary,
+                  borderRadius: RADIUS.lg,
+                  padding: SPACING.lg,
+                  boxShadow: SHADOWS.card,
+                  cursor: 'pointer',
+                  transition: TRANSITIONS.normal,
+                  border: `1px solid ${COLORS.border.light}`,
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: SPACING.md,
+                  marginBottom: SPACING.md,
+                }}>
+                  <div style={{ fontSize: '48px' }}>📊</div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontSize: TYPOGRAPHY.fontSize.lg,
+                      fontWeight: TYPOGRAPHY.fontWeight.bold,
+                      color: COLORS.primary.text,
+                      margin: 0,
+                      marginBottom: SPACING.xs,
+                    }}>
+                      {t('examMenu.results')}
+                    </h3>
+                    <p style={{
+                      fontSize: TYPOGRAPHY.fontSize.sm,
+                      color: COLORS.primary.medium,
+                      margin: 0,
+                      lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+                    }}>
+                      {t('examMenu.resultsDescription')}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              {isCompleted && (
                 <button
                   onClick={handleViewResults}
                   style={{
@@ -963,51 +865,50 @@ export default function ExamMenuPage() {
                 >
                   {t('examMenu.viewResults')}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Retake Full Exam Card */}
-            <div
-              onClick={isCompleted ? () => router.push(`/exam/${examId}/take?mode=retake`) : undefined}
-              style={{
-                background: COLORS.background.primary,
-                borderRadius: RADIUS.lg,
-                padding: SPACING.lg,
-                boxShadow: SHADOWS.card,
-                cursor: isCompleted ? 'pointer' : 'default',
-                opacity: isCompleted ? 1 : 0.6,
-                transition: TRANSITIONS.normal,
-                border: `1px solid ${COLORS.border.light}`,
-              }}
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: SPACING.md,
-                marginBottom: SPACING.md,
-              }}>
-                <div style={{ fontSize: '48px' }}>🔄</div>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{
-                    fontSize: TYPOGRAPHY.fontSize.lg,
-                    fontWeight: TYPOGRAPHY.fontWeight.bold,
-                    color: COLORS.primary.text,
-                    margin: 0,
-                    marginBottom: SPACING.xs,
-                  }}>
-                    {t('examMenu.retake')} {t('examMenu.fullExam')}
-                  </h3>
-                  <p style={{
-                    fontSize: TYPOGRAPHY.fontSize.sm,
-                    color: COLORS.primary.medium,
-                    margin: 0,
-                    lineHeight: TYPOGRAPHY.lineHeight.relaxed,
-                  }}>
-                    {isCompleted ? t('examMenu.retakeDescription') : t('examMenu.retakeLocked')}
-                  </p>
+            {isCompleted && (
+              <div
+                onClick={() => router.push(`/exam/${examId}/take?mode=retake`)}
+                style={{
+                  background: COLORS.background.primary,
+                  borderRadius: RADIUS.lg,
+                  padding: SPACING.lg,
+                  boxShadow: SHADOWS.card,
+                  cursor: 'pointer',
+                  transition: TRANSITIONS.normal,
+                  border: `1px solid ${COLORS.border.light}`,
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: SPACING.md,
+                  marginBottom: SPACING.md,
+                }}>
+                  <div style={{ fontSize: '48px' }}>🔄</div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontSize: TYPOGRAPHY.fontSize.lg,
+                      fontWeight: TYPOGRAPHY.fontWeight.bold,
+                      color: COLORS.primary.text,
+                      margin: 0,
+                      marginBottom: SPACING.xs,
+                    }}>
+                      {t('examMenu.retake')} {t('examMenu.fullExam')}
+                    </h3>
+                    <p style={{
+                      fontSize: TYPOGRAPHY.fontSize.sm,
+                      color: COLORS.primary.medium,
+                      margin: 0,
+                      lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+                    }}>
+                      {t('examMenu.retakeDescription')}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              {isCompleted && (
                 <button
                   onClick={() => router.push(`/exam/${examId}/take?mode=retake`)}
                   style={{
@@ -1042,55 +943,50 @@ export default function ExamMenuPage() {
                     </span>
                   )}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Practice Mistakes Card */}
-            <div
-              onClick={isCompleted && wrongQuestionCount > 0 ? () => router.push(`/exam/${examId}/take?mode=wrong-only`) : undefined}
-              style={{
-                background: COLORS.background.primary,
-                borderRadius: RADIUS.lg,
-                padding: SPACING.lg,
-                boxShadow: SHADOWS.card,
-                cursor: isCompleted && wrongQuestionCount > 0 ? 'pointer' : 'default',
-                opacity: isCompleted && wrongQuestionCount > 0 ? 1 : 0.6,
-                transition: TRANSITIONS.normal,
-                border: `1px solid ${COLORS.border.light}`,
-              }}
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: SPACING.md,
-                marginBottom: SPACING.md,
-              }}>
-                <div style={{ fontSize: '48px' }}>🎯</div>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{
-                    fontSize: TYPOGRAPHY.fontSize.lg,
-                    fontWeight: TYPOGRAPHY.fontWeight.bold,
-                    color: COLORS.primary.text,
-                    margin: 0,
-                    marginBottom: SPACING.xs,
-                  }}>
-                    {t('examMenu.practiceMistakes')}
-                  </h3>
-                  <p style={{
-                    fontSize: TYPOGRAPHY.fontSize.sm,
-                    color: COLORS.primary.medium,
-                    margin: 0,
-                    lineHeight: TYPOGRAPHY.lineHeight.relaxed,
-                  }}>
-                    {isCompleted && wrongQuestionCount > 0
-                      ? t('examMenu.reviewWrongQuestions', { count: wrongQuestionCount })
-                      : isCompleted && wrongQuestionCount === 0
-                      ? t('examMenu.perfectScore')
-                      : t('examMenu.mistakesLocked')}
-                  </p>
+            {isCompleted && wrongQuestionCount > 0 && (
+              <div
+                onClick={() => router.push(`/exam/${examId}/take?mode=wrong-only`)}
+                style={{
+                  background: COLORS.background.primary,
+                  borderRadius: RADIUS.lg,
+                  padding: SPACING.lg,
+                  boxShadow: SHADOWS.card,
+                  cursor: 'pointer',
+                  transition: TRANSITIONS.normal,
+                  border: `1px solid ${COLORS.border.light}`,
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: SPACING.md,
+                  marginBottom: SPACING.md,
+                }}>
+                  <div style={{ fontSize: '48px' }}>🎯</div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontSize: TYPOGRAPHY.fontSize.lg,
+                      fontWeight: TYPOGRAPHY.fontWeight.bold,
+                      color: COLORS.primary.text,
+                      margin: 0,
+                      marginBottom: SPACING.xs,
+                    }}>
+                      {t('examMenu.practiceMistakes')}
+                    </h3>
+                    <p style={{
+                      fontSize: TYPOGRAPHY.fontSize.sm,
+                      color: COLORS.primary.medium,
+                      margin: 0,
+                      lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+                    }}>
+                      {t('examMenu.reviewWrongQuestions', { count: wrongQuestionCount })}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              {isCompleted && wrongQuestionCount > 0 && (
                 <button
                   onClick={() => router.push(`/exam/${examId}/take?mode=wrong-only`)}
                   style={{
@@ -1109,49 +1005,8 @@ export default function ExamMenuPage() {
                 >
                   {t('examMenu.practiceNow')}
                 </button>
-              )}
-            </div>
-
-            {/* Leaderboard Card */}
-            <div
-              style={{
-                background: COLORS.background.primary,
-                borderRadius: RADIUS.lg,
-                padding: SPACING.lg,
-                boxShadow: SHADOWS.card,
-                cursor: 'default',
-                opacity: 0.6,
-                transition: TRANSITIONS.normal,
-                border: `1px solid ${COLORS.border.light}`,
-              }}
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: SPACING.md,
-              }}>
-                <div style={{ fontSize: '48px' }}>🏆</div>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{
-                    fontSize: TYPOGRAPHY.fontSize.lg,
-                    fontWeight: TYPOGRAPHY.fontWeight.bold,
-                    color: COLORS.primary.text,
-                    margin: 0,
-                    marginBottom: SPACING.xs,
-                  }}>
-                    {t('examMenu.leaderboard')}
-                  </h3>
-                  <p style={{
-                    fontSize: TYPOGRAPHY.fontSize.sm,
-                    color: COLORS.primary.medium,
-                    margin: 0,
-                    lineHeight: TYPOGRAPHY.lineHeight.relaxed,
-                  }}>
-                    {t('examMenu.rankingComingSoon')}
-                  </p>
-                </div>
               </div>
-            </div>
+            )}
 
             {/* Help Card */}
             <div
