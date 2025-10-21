@@ -340,6 +340,12 @@ curl -X POST https://exam-generator-staging.vercel.app/api/mobile/exam-questions
 3. Import in `/src/i18n/locales/index.ts`
 4. Update type in `/src/i18n/types.ts`
 
+**Subject Localization:**
+- Subject names auto-translate based on exam language
+- Example: "History" → "Historia" (Finnish), "Mathematics" → "Matematiikka"
+- 14+ subjects supported (math, science, languages, history, etc.)
+- Falls back to original string if translation missing
+
 ### 5. Mobile-First Design
 - **Design System:** Extracted from ExamGenie Flutter app for visual consistency
 - **Design Tokens:** Centralized in `/src/constants/design-tokens.ts`
@@ -475,7 +481,7 @@ To:
 
 ### 9. Genie Dollars Gamification System
 - **Purpose:** Gamified reward system encouraging spaced repetition learning through virtual currency
-- **Rewards:** 5 Genie Dollars for audio summary completion • 10 Genie Dollars for exam completion
+- **Rewards:** 🎧 +5 audio summary • 📝 +10 exam completion • 🔄 +5 exam retake • 🏆 +5 key concepts
 - **Storage:** Browser localStorage (per-device) • No database changes required
 - **Header Display:** Total balance shown in pill-shaped badge in main menu header
 - **Implementation:** `/src/lib/utils/genie-dollars.ts`
@@ -557,6 +563,8 @@ Two layout systems allow easy switching between UI variants:
 - Each concept includes: name, definition, difficulty, category, badge, mini-game hint
 - Swipeable card interface with progress tracking (localStorage)
 - Boss challenge unlocks after completing all concepts
+- **Reward:** 🏆 +5 Genie Dollars on completion (12-hour cooldown)
+- Golden gradient celebration badge displays when earned
 
 **Example:** 3 images → 9 concepts (foundational/intermediate/advanced)
 

@@ -207,6 +207,9 @@ This file provides guidance to Claude Code when working with code in this reposi
 - **Design Tokens**: `/src/constants/design-tokens.ts`
 - **Question Shuffler**: `/src/lib/utils/question-shuffler.ts`
 - **Genie Dollars**: `/src/lib/utils/genie-dollars.ts`
+- **Key Concepts Card**: `/src/components/exam/KeyConceptsCard.tsx`
+- **Logo**: `/public/assets/logo.png` (40×40px, 12px rounded, used in menu/grading)
+- **App Icon Source**: `/assets/icon/app_icon.png`
 - **Onboarding**: `/src/components/exam/OnboardingOverlay.tsx`, `/src/lib/utils/onboarding.ts`, `/src/app/dev/reset/page.tsx`
 - **Gemini Client**: `/src/lib/gemini.ts`
 - **Supabase Client**: `/src/lib/supabase.ts`
@@ -416,8 +419,17 @@ npx tsx scripts/verify-costs.ts 30  # Verify costs against Google Cloud (30 days
 ### Genie Dollars System
 - 5 dollars for audio completion (80% threshold)
 - 10 dollars for exam completion
+- 5 dollars for exam retake
+- 5 dollars for key concepts completion
 - 12-hour spaced repetition intervals
 - localStorage only (no DB persistence)
+
+### Key Concepts Reward
+- **File**: `/src/components/exam/KeyConceptsCard.tsx:60-61`, `/src/lib/utils/genie-dollars.ts:321`
+- ✅ Awards 5 dollars when completing all concepts
+- ⚠️ Only shows badge if `dollarsEarned > 0` (prevents 0 display)
+- ✅ Same 12-hour cooldown as other rewards
+- ✅ Tracks via `keyConceptsEarned` and `keyConceptsLastEarnedAt`
 
 ### Exam Menu Architecture
 - Hub page at `/exam/[id]` with cards for Audio/Exam/Results
