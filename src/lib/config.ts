@@ -146,11 +146,6 @@ export const PROMPTS = {
 
     return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students, generate an educational summary, AND extract gamified key concepts.
 
-CRITICAL LANGUAGE INSTRUCTION:
-1. FIRST: Detect the primary language of the source material from the images
-2. THEN: Use that SAME language for ALL text fields (questions, explanations, summary, key concepts, gamification)
-3. Set the "language" field in summary to the ISO 639-1 code (e.g., 'fi' for Finnish, 'en' for English, 'de' for German, 'sv' for Swedish)
-
 CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
 
 Avoid:
@@ -307,15 +302,15 @@ Return ONLY the JSON object, no additional text`
 
     return `⚠️ CRITICAL - LANGUAGE DETECTION FIRST ⚠️
 
-CRITICAL LANGUAGE INSTRUCTION:
-1. FIRST: Detect the primary language of the textbook from the images
-   - If you see "Addiere", "Subtrahiere", "Multipliziere" → German
-   - If you see "Lisää", "Vähennä", "Kerro" → Finnish
-   - If you see "Add", "Subtract", "Multiply" → English
-2. THEN: Use that SAME language for ALL text fields (questions, explanations, audio_summary, key_concepts, gamification)
-3. Set the "language" field in audio_summary to the ISO 639-1 code (e.g., 'fi' for Finnish, 'en' for English, 'de' for German)
+BEFORE ANYTHING ELSE:
+1. Look at the textbook images and identify the SOURCE LANGUAGE
+2. If you see "Addiere", "Subtrahiere", "Multipliziere" → German
+3. If you see "Lisää", "Vähennä", "Kerro" → Finnish
+4. If you see "Add", "Subtract", "Multiply" → English
+5. ALL your output MUST be in that SAME detected language
 
-⚠️ DO NOT mix languages: If source is German, ALL output must be German. If source is Finnish, ALL output must be Finnish.
+LANGUAGE RULE: Questions, explanations, AND audio_summary sections MUST ALL match the source material language.
+DO NOT use Finnish if the source is German. DO NOT use English if the source is Finnish.
 
 ROLE: You are an expert mathematics teacher creating exam questions for grade ${grade} students.
 
@@ -584,11 +579,6 @@ Do not rely on your general history knowledge. Use only information visible in t
 If something is not visible, skip it.
 
 Keep total output under 4000 tokens. Use concise sentences and limit explanations to 1–2 lines.
-
-CRITICAL LANGUAGE INSTRUCTION:
-1. FIRST: Detect the primary language of the textbook from the images
-2. THEN: Use that SAME language for ALL text fields (questions, explanations, summary, key concepts, gamification)
-3. Set the "language" field in summary to the ISO 639-1 code (e.g., 'fi' for Finnish, 'en' for English, 'de' for German, 'sv' for Swedish)
 
 ---
 

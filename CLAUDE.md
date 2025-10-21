@@ -391,7 +391,6 @@ npx tsx scripts/verify-costs.ts 30  # Verify costs against Google Cloud (30 days
 | Math costs underestimated | Math service must accumulate retry costs in `callGeminiWithRetry()` • Check `cumulativeUsage` calculation |
 | SQL migration RAISE NOTICE error | Wrap RAISE NOTICE in `DO $$ BEGIN ... END $$;` block • See migrations 20251021000000-20251021000002 |
 | UI language wrong despite DB | `exam-repository.ts` missing `detected_language` field | Verify line ~242 includes field in return object |
-| Key concepts showing in English for Finnish exam | Gemini not detecting language for key_concepts field • Fixed Oct 21, 2025 with explicit language instructions in prompts | Regenerate exams created before Oct 21, 2025 • All prompts now have CRITICAL LANGUAGE INSTRUCTION |
 | Quota exceeded (429 error) | Hit 1M tokens/day free tier limit • Wait until midnight UTC • Or enable billing in Google AI Studio • Run `check-token-usage.ts` to monitor |
 
 ## Architecture Decisions - Don't Break These
