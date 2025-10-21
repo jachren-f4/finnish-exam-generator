@@ -54,7 +54,7 @@ export default function DevResetPage() {
         margin: '0 auto',
       }}>
         <h1 style={{
-          fontSize: TYPOGRAPHY.fontSize['3xl'],
+          fontSize: TYPOGRAPHY.fontSize['2xl'],
           fontWeight: TYPOGRAPHY.fontWeight.bold,
           color: COLORS.primary.text,
           marginBottom: SPACING.sm,

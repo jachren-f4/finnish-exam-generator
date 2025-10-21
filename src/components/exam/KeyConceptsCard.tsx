@@ -125,7 +125,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
         backgroundColor: COLORS.background.primary,
         borderRadius: RADIUS.lg,
         border: `2px solid ${COLORS.semantic.success}`,
-        boxShadow: SHADOWS.md,
+        boxShadow: SHADOWS.card,
       }}>
         {/* Completion message */}
         <div style={{ marginBottom: SPACING.lg, textAlign: 'center' }}>
@@ -259,7 +259,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
       backgroundColor: COLORS.background.primary,
       borderRadius: RADIUS.lg,
       border: `1px solid ${COLORS.border.light}`,
-      boxShadow: SHADOWS.sm,
+      boxShadow: SHADOWS.card,
     }}>
       {/* Header with progress */}
       <div style={{ marginBottom: SPACING.md }}>

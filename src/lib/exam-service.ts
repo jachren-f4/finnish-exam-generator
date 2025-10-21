@@ -364,6 +364,7 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[], at
           final_grade: gradingResult.final_grade,
           grading_prompt: getGradingPrompt(),
           attempt_number: finalAttemptNumber
+          // grading_gemini_usage: null  // TODO: Add cost tracking (separate feature)
         })
         .select()
         .single()
@@ -374,6 +375,10 @@ export async function submitAnswers(examId: string, answers: StudentAnswer[], at
       }
 
       console.log('[submitAnswers] ExamGenie grading saved successfully')
+      // TODO: Add cost tracking logging when feature is implemented
+      // if (gradingResult.grading_gemini_usage) {
+      //   console.log(`[submitAnswers] Grading cost: $${gradingResult.grading_gemini_usage.estimatedCost.toFixed(6)}`)
+      // }
     } else {
       // For legacy exams, use transaction with DatabaseManager
       console.log('[submitAnswers] Using transaction for legacy exam')
