@@ -3,15 +3,18 @@
 import { useState, useEffect } from 'react'
 import { KeyConcept, GamificationData } from '@/lib/supabase'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '@/constants/design-tokens'
+import { useTranslation } from '@/i18n'
 
 interface KeyConceptsCardProps {
   examId: string
   concepts: KeyConcept[]
   gamification: GamificationData
+  detectedLanguage?: string | null
   onComplete?: () => void
 }
 
-export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: KeyConceptsCardProps) {
+export function KeyConceptsCard({ examId, concepts, gamification, detectedLanguage, onComplete }: KeyConceptsCardProps) {
+  const { t } = useTranslation(detectedLanguage)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [completedConcepts, setCompletedConcepts] = useState<Set<number>>(new Set())
   const [showMiniGame, setShowMiniGame] = useState(false)
@@ -91,11 +94,11 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
   const getDifficultyLabel = (difficulty: KeyConcept['difficulty']) => {
     switch (difficulty) {
       case 'foundational':
-        return 'Perusteet'
+        return t('keyConcepts.difficultyFoundational')
       case 'intermediate':
-        return 'Keskitaso'
+        return t('keyConcepts.difficultyIntermediate')
       case 'advanced':
-        return 'Edistynyt'
+        return t('keyConcepts.difficultyAdvanced')
       default:
         return difficulty
     }
@@ -112,7 +115,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
         border: `1px solid ${COLORS.border.light}`,
       }}>
         <p style={{ color: COLORS.primary.medium, fontSize: TYPOGRAPHY.fontSize.sm }}>
-          No key concepts available
+          {t('keyConcepts.noConceptsAvailable')}
         </p>
       </div>
     )
@@ -158,7 +161,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
             color: COLORS.primary.dark,
             marginBottom: SPACING.sm,
           }}>
-            🎯 Boss Challenge
+            🎯 {t('keyConcepts.bossChallenge')}
           </h3>
 
           {/* Multiple choice question */}
@@ -204,7 +207,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
             color: COLORS.primary.dark,
             marginBottom: SPACING.sm,
           }}>
-            💭 Think About It
+            💭 {t('keyConcepts.thinkAboutIt')}
           </h3>
           <p style={{
             fontSize: TYPOGRAPHY.fontSize.base,
@@ -230,7 +233,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
               fontWeight: TYPOGRAPHY.fontWeight.medium,
             }}
           >
-            Review Concepts
+            {t('keyConcepts.reviewConcepts')}
           </button>
           <button
             onClick={() => setShowMiniGame(false)}
@@ -246,7 +249,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
               fontWeight: TYPOGRAPHY.fontWeight.medium,
             }}
           >
-            Close
+            {t('keyConcepts.close')}
           </button>
         </div>
       </div>
@@ -270,7 +273,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
             color: COLORS.primary.dark,
             margin: 0,
           }}>
-            Key Concepts
+            {t('keyConcepts.title')}
           </h2>
           <span style={{
             fontSize: TYPOGRAPHY.fontSize.sm,
@@ -367,7 +370,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
             color: COLORS.primary.text,
             margin: 0,
           }}>
-            💡 <strong>Hint:</strong> {currentConcept.mini_game_hint}
+            💡 <strong>{t('keyConcepts.hint')}:</strong> {currentConcept.mini_game_hint}
           </p>
         </div>
 
@@ -378,7 +381,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
               fontSize: TYPOGRAPHY.fontSize.xs,
               color: COLORS.primary.light,
             }}>
-              📝 Related questions: {currentConcept.related_question_ids.join(', ')}
+              📝 {t('keyConcepts.relatedQuestions')}: {currentConcept.related_question_ids.join(', ')}
             </p>
           </div>
         )}
@@ -401,7 +404,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
             fontWeight: TYPOGRAPHY.fontWeight.medium,
           }}
         >
-          ← Previous
+          ← {t('keyConcepts.previous')}
         </button>
         <button
           onClick={handleNext}
@@ -417,7 +420,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
             fontWeight: TYPOGRAPHY.fontWeight.medium,
           }}
         >
-          {currentIndex < concepts.length - 1 ? 'Next →' : 'Complete! 🎉'}
+          {currentIndex < concepts.length - 1 ? `${t('keyConcepts.next')} →` : `${t('keyConcepts.complete')} 🎉`}
         </button>
       </div>
 
@@ -429,7 +432,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, onComplete }: 
           color: COLORS.semantic.success,
           textAlign: 'center',
         }}>
-          ✓ {completedConcepts.size} of {concepts.length} concepts reviewed
+          ✓ {t('keyConcepts.progressText', { completed: completedConcepts.size, total: concepts.length })}
         </p>
       )}
     </div>

@@ -265,6 +265,24 @@ export const en: Translations = {
     swipeHint: 'Swipe left/right or use buttons to navigate',
   },
 
+  keyConcepts: {
+    title: 'Key Concepts',
+    noConceptsAvailable: 'No key concepts available',
+    bossChallenge: 'Boss Challenge',
+    thinkAboutIt: 'Think About It',
+    reviewConcepts: 'Review Concepts',
+    close: 'Close',
+    hint: 'Hint',
+    relatedQuestions: 'Related questions',
+    previous: 'Previous',
+    next: 'Next',
+    complete: 'Complete!',
+    progressText: '{completed} of {total} concepts reviewed',
+    difficultyFoundational: 'Foundational',
+    difficultyIntermediate: 'Intermediate',
+    difficultyAdvanced: 'Advanced',
+  },
+
   api: {
     errors: {
       userIdRequired: 'user_id or student_id required',

@@ -238,6 +238,24 @@ export interface Translations {
     swipeHint: string
   }
 
+  keyConcepts: {
+    title: string
+    noConceptsAvailable: string
+    bossChallenge: string
+    thinkAboutIt: string
+    reviewConcepts: string
+    close: string
+    hint: string
+    relatedQuestions: string
+    previous: string
+    next: string
+    complete: string
+    progressText: string // "{completed} of {total} concepts reviewed"
+    difficultyFoundational: string
+    difficultyIntermediate: string
+    difficultyAdvanced: string
+  }
+
   api: {
     errors: {
       userIdRequired: string

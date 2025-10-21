@@ -221,7 +221,7 @@ export default function ExamMenuPage() {
       flexDirection: 'column',
     }}>
       {/* Onboarding Overlay */}
-      {showOnboarding && <OnboardingOverlay onDismiss={dismissOnboarding} />}
+      {showOnboarding && <OnboardingOverlay onDismiss={dismissOnboarding} detectedLanguage={exam?.detected_language} />}
 
       {/* Header */}
       <div style={{
@@ -896,6 +896,7 @@ export default function ExamMenuPage() {
                 examId={examId}
                 concepts={exam.key_concepts}
                 gamification={exam.gamification}
+                detectedLanguage={exam.detected_language}
                 onComplete={() => {
                   console.log('Key concepts completed! User earned 5 Genie Dollars')
                 }}

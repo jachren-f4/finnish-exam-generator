@@ -263,6 +263,24 @@ export const fi: Translations = {
     swipeHint: 'Pyyhkäise vasemmalle/oikealle tai käytä painikkeita',
   },
 
+  keyConcepts: {
+    title: 'Avainkäsitteet',
+    noConceptsAvailable: 'Avainkäsitteitä ei saatavilla',
+    bossChallenge: 'Boss-haaste',
+    thinkAboutIt: 'Mieti asiaa',
+    reviewConcepts: 'Tarkastele käsitteitä',
+    close: 'Sulje',
+    hint: 'Vihje',
+    relatedQuestions: 'Liittyvät kysymykset',
+    previous: 'Edellinen',
+    next: 'Seuraava',
+    complete: 'Valmis!',
+    progressText: '{completed}/{total} käsitettä tarkasteltu',
+    difficultyFoundational: 'Perusteet',
+    difficultyIntermediate: 'Keskitaso',
+    difficultyAdvanced: 'Edistynyt',
+  },
+
   api: {
     errors: {
       userIdRequired: 'user_id tai student_id vaaditaan',

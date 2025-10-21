@@ -6,10 +6,11 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, T
 
 interface OnboardingOverlayProps {
   onDismiss: () => void
+  detectedLanguage?: string | null
 }
 
-export function OnboardingOverlay({ onDismiss }: OnboardingOverlayProps) {
-  const { t } = useTranslation()
+export function OnboardingOverlay({ onDismiss, detectedLanguage }: OnboardingOverlayProps) {
+  const { t } = useTranslation(detectedLanguage)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [touchStartX, setTouchStartX] = useState(0)
   const [touchEndX, setTouchEndX] = useState(0)
