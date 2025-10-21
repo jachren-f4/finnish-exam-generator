@@ -91,7 +91,7 @@ export const fi: Translations = {
 
   examAudio: {
     title: 'Ääniyhteenveto',
-    gradeInfo: 'Luokka {grade} • Ääniyhtee nveto',
+    gradeInfo: 'Ääniyhteenveto',
     backToMenu: 'Takaisin valikkoon',
     summaryText: 'Yhteenvetoteksti',
     play: 'Toista',
