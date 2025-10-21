@@ -134,14 +134,17 @@ export const RATE_LIMIT_CONFIG = {
 
 // Exam Generation Prompts
 export const PROMPTS = {
-  getCategoryAwarePrompt: (category: string, grade?: number, language: string = 'en') => {
+  getCategoryAwarePrompt: (category: string, grade?: number, language: string = 'en', imageCount: number = 1) => {
     const categoryDescriptions = {
       mathematics: 'Mathematics and logic problems',
       core_academics: 'Science, history, geography, biology, physics, chemistry, environmental studies, or social studies',
       language_studies: 'Foreign language learning including vocabulary, grammar, translation, and comprehension'
     }
 
-    return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students AND generate an educational summary.
+    // Calculate expected key concepts: images × 3
+    const expectedKeyConcepts = imageCount * 3;
+
+    return `Create a text-based exam from educational content for grade ${grade || 'appropriate'} students, generate an educational summary, AND extract gamified key concepts.
 
 CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
 
@@ -154,7 +157,9 @@ Avoid:
 
 TARGET: Use the same language as the source material. Subject area: core academics.
 
-TASK: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts in the material.
+TASK 1: Generate exactly ${EXAM_CONFIG.DEFAULT_QUESTION_COUNT} questions that test understanding of the educational concepts in the material.
+
+TASK 2: Extract exactly ${expectedKeyConcepts} key concepts for gamified learning.
 
 REQUIRED FORMAT:
 {
@@ -175,6 +180,28 @@ REQUIRED FORMAT:
     "summary_conclusion": "[100-250 word conclusion summarizing key takeaways in the same language]",
     "total_word_count": [approximate total word count],
     "language": "[ISO 639-1 language code, e.g., 'fi' for Finnish, 'en' for English]"
+  },
+  "key_concepts": [
+    {
+      "concept_name": "Short title (2-5 words in source language)",
+      "definition": "Clear, single-sentence explanation (50-100 words)",
+      "difficulty": "foundational" | "intermediate" | "advanced",
+      "category": "Short category label (1-2 words)",
+      "related_question_ids": [1, 3, 7],
+      "badge_title": "Gamified label (2-4 words in source language)",
+      "mini_game_hint": "Short riddle or clue (1 sentence in source language)"
+    }
+    // Exactly ${expectedKeyConcepts} concepts
+  ],
+  "gamification": {
+    "completion_message": "Brief congratulations message in source language",
+    "boss_question_open": "Open-ended synthesis question in source language",
+    "boss_question_multiple_choice": {
+      "question": "MC question linking multiple concepts in source language",
+      "options": ["A", "B", "C", "D"],
+      "correct_answer": "One of A/B/C/D"
+    },
+    "reward_text": "Achievement message in source language"
   }
 }
 
@@ -185,12 +212,21 @@ SUMMARY REQUIREMENTS:
 - Structure: 4 sections as specified in the JSON format
 - Educational tone: clear, pedagogical, age-appropriate
 - Focus on reinforcing concepts from the exam questions
-- Use proper formatting: **bold** for key terms, numbered lists where appropriate
+
+KEY CONCEPTS REQUIREMENTS:
+- Extract exactly ${expectedKeyConcepts} concepts (images × 3 formula)
+- Ensure EVERY question is referenced by at least one concept
+- Concept names: 2-5 words in source language
+- Definitions: 50-100 words, clear and educational
+- Difficulty balance: mix foundational, intermediate, advanced
+- Category diversity: create varied category labels
+- Badge titles: fun, motivating names in source language
+- Mini-game hints: playful clues for concept matching games
 
 IMPORTANT:
 - The correct_answer field must contain the exact text from the options array
-- The summary must be in the SAME language as the questions and source material
-- Do not reference visual elements in the summary either`
+- The summary and key concepts must be in the SAME language as the questions
+- Do not reference visual elements in questions, summary, or concepts`
   },
 
   getLanguageStudiesPrompt: (grade?: number, studentLanguage: string = 'en') => {
@@ -533,7 +569,10 @@ IF ANY VALIDATION FAILS:
 Begin generating the pedagogically sound exam now.`
   },
 
-  getHistoryPrompt: (grade?: number, language: string = 'en'): string => {
+  getHistoryPrompt: (grade?: number, language: string = 'en', imageCount: number = 1): string => {
+    // Calculate expected key concepts: images × 3
+    const expectedKeyConcepts = imageCount * 3;
+
     return `SYSTEM INSTRUCTION (prepend this before any user content):
 You must treat the uploaded textbook images as your *only factual source*.
 Do not rely on your general history knowledge. Use only information visible in the textbook pages.
@@ -544,16 +583,23 @@ Keep total output under 4000 tokens. Use concise sentences and limit explanation
 ---
 
 ## 🎓 Task
-Create a **history exam for grade ${grade || 8} students** based *only* on the uploaded textbook pages.
+Create a **history exam for grade ${grade || 8} students** based *only* on the uploaded textbook pages AND extract gamified key concepts.
 
 ---
 
 ## 🔍 INTERNAL FACT EXTRACTION (do NOT print)
 First, silently read all textbook images and extract:
 - main events with dates
-- people or groups mentioned
+- people or groups mentioned BY NAME in visible text
 - historical terms defined
 - visible causes and consequences
+
+🔴 CRITICAL GROUNDING RULE:
+- ONLY use information VISIBLE in the textbook pages
+- If a specific name (person, place) is NOT visible, do NOT mention it
+- Use general descriptions instead of specific names from outside knowledge
+- Example: If textbook says "US president" but doesn't name them → use "US president" NOT "Franklin D. Roosevelt"
+- Example: If textbook discusses prohibition/crime but doesn't name criminals → use "organized crime figures" NOT "Al Capone"
 
 Do NOT list or print these facts. Keep them in memory only.
 
@@ -634,8 +680,52 @@ Before finalizing, if output approaches length limit, shorten explanations but k
     "summary_conclusion": "[80–150 words – wrap up clearly]",
     "total_word_count": [number],
     "language": "[ISO 639-1 code]"
+  },
+  "key_concepts": [
+    {
+      "concept_name": "Short title (2-5 words in source language)",
+      "definition": "Clear, single-sentence explanation grounded ONLY in visible textbook content",
+      "difficulty": "foundational" | "intermediate" | "advanced",
+      "category": "Short category label (e.g., Conflict, Economy, Government, Foreign Policy)",
+      "related_question_ids": [1, 3, 7],
+      "badge_title": "Gamified label (2-4 words in source language)",
+      "mini_game_hint": "Short riddle or clue (1 sentence in source language)"
+    }
+    // Exactly ${expectedKeyConcepts} concepts
+  ],
+  "gamification": {
+    "completion_message": "Brief congratulations in source language",
+    "boss_question_open": "Open-ended synthesis question in source language",
+    "boss_question_multiple_choice": {
+      "question": "MC question linking concepts in source language",
+      "options": ["A", "B", "C", "D"],
+      "correct_answer": "One of A/B/C/D"
+    },
+    "reward_text": "Achievement message in source language"
   }
 }
+
+---
+
+## 🎮 KEY CONCEPTS REQUIREMENTS
+
+🔴 STRICT GROUNDING REQUIREMENT FOR KEY CONCEPTS:
+- ALL concepts must be 100% grounded in VISIBLE textbook content
+- Do NOT include specific names (people, places) unless they appear in the textbook
+- Use general descriptions if specific names are not visible
+- Students expect key concepts to come directly from their textbook pages
+- Higher grounding standard than questions: NO outside knowledge allowed
+
+Extract exactly ${expectedKeyConcepts} key concepts (images × 3 formula):
+- Concept names: 2-5 words in source language
+  - ❌ AVOID specific names not in textbook (e.g., "Franklin D. Roosevelt" if only "US president" visible)
+  - ✅ USE general terms matching textbook text
+- Definitions: One clear sentence grounded ONLY in visible content
+  - ❌ NO facts from outside knowledge
+  - ✅ ONLY information students can verify by looking at their textbook
+- Difficulty balance: Mix foundational, intermediate, advanced
+- Category diversity: Create varied labels (Conflict, Economy, Government, People, etc.)
+- Ensure EVERY question is referenced by at least one concept
 
 ---
 
@@ -646,6 +736,9 @@ Before finalizing, if output approaches length limit, shorten explanations but k
 ✅ No invented facts or external info
 ✅ All questions from visible textbook content
 ✅ Natural, student-friendly phrasing
+✅ Exactly ${expectedKeyConcepts} key concepts
+✅ All concepts 100% grounded in visible text
+✅ Every question referenced in at least one concept
 ✅ Output under 4000 tokens`
   }
 } as const

@@ -10,6 +10,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, BUTTONS, TOUCH_TARGETS, T
 import { getTotalGenieDollars, getExamCompletionStatus, GENIE_DOLLAR_REWARDS, awardExamRetakeDollars } from '@/lib/utils/genie-dollars'
 import { hasSeenOnboarding, markOnboardingSeen } from '@/lib/utils/onboarding'
 import { OnboardingOverlay } from '@/components/exam/OnboardingOverlay'
+import { KeyConceptsCard } from '@/components/exam/KeyConceptsCard'
 
 const handleHelpClick = (examId: string, router: any) => {
   router.push(`/exam/${examId}/help`)
@@ -886,6 +887,18 @@ export default function ExamMenuPage() {
                 )}
               </button>
             </div>
+
+            {/* Key Concepts Card */}
+            {exam.key_concepts && exam.key_concepts.length > 0 && exam.gamification && (
+              <KeyConceptsCard
+                examId={examId}
+                concepts={exam.key_concepts}
+                gamification={exam.gamification}
+                onComplete={() => {
+                  console.log('Key concepts completed! User earned 5 Genie Dollars')
+                }}
+              />
+            )}
 
             {/* Results Card */}
             <div

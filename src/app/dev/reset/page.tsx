@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, BUTTONS, TOUCH_TARGETS } from '@/constants/design-tokens'
 
 export default function DevResetPage() {
@@ -254,12 +255,12 @@ export default function DevResetPage() {
             margin: 0,
           }}>
             <li style={{ marginBottom: SPACING.sm }}>
-              <a href="/" style={{ color: COLORS.primary.dark }}>← Back to Home</a>
+              <Link href="/" style={{ color: COLORS.primary.dark }}>← Back to Home</Link>
             </li>
             <li style={{ marginBottom: SPACING.sm }}>
-              <a href="/exam/55220c3a-da62-44b1-840e-3a2bc38cc14d/take" style={{ color: COLORS.primary.dark }}>
+              <Link href="/exam/55220c3a-da62-44b1-840e-3a2bc38cc14d/take" style={{ color: COLORS.primary.dark }}>
                 Test Exam Page (with onboarding)
-              </a>
+              </Link>
             </li>
           </ul>
         </div>

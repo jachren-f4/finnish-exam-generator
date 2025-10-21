@@ -44,6 +44,27 @@ export interface AudioSummary {
   language: string  // ISO 639-1 code
 }
 
+export interface KeyConcept {
+  concept_name: string
+  definition: string
+  difficulty: 'foundational' | 'intermediate' | 'advanced'
+  category: string
+  related_question_ids: number[]
+  badge_title: string
+  mini_game_hint: string
+}
+
+export interface Gamification {
+  completion_message: string
+  boss_question_open: string
+  boss_question_multiple_choice: {
+    question: string
+    options: string[]
+    correct_answer: string
+  }
+  reward_text: string
+}
+
 export interface MathExamGenerationOptions {
   images: ImagePart[]  // Base64 encoded images
   grade: number  // 1-9 (Finnish grades)
@@ -57,7 +78,9 @@ export interface MathExamResult {
   // Success fields
   rawText?: string  // JSON response from Gemini
   questions?: MathQuestion[]
-  audioSummary?: AudioSummary  // NEW: Audio summary for TTS
+  audioSummary?: AudioSummary  // Audio summary for TTS
+  keyConcepts?: KeyConcept[]  // NEW: Gamified key concepts
+  gamification?: Gamification  // NEW: Gamification data
   topic?: string
   grade?: number
   processingTime?: number
@@ -177,12 +200,33 @@ export class MathExamService {
       // Step 5: Calculate usage metadata
       const usage = createUsageMetadata(prompt, geminiResult.text, undefined)
 
-      // Step 6: Return success result
+      // Step 6: Extract key concepts (Stage 2)
+      console.log('[Math Service] Extracting key concepts (Stage 2)...')
+      const conceptsResult = await this.extractKeyConcepts(
+        examData.questions,
+        images.length,
+        language
+      )
+
+      let keyConcepts: KeyConcept[] | undefined
+      let gamification: Gamification | undefined
+
+      if (conceptsResult) {
+        keyConcepts = conceptsResult.key_concepts
+        gamification = conceptsResult.gamification
+        console.log(`[Math Service] ✅ Extracted ${keyConcepts.length} key concepts`)
+      } else {
+        console.warn('[Math Service] ⚠️  Key concepts extraction failed (non-critical)')
+      }
+
+      // Step 7: Return success result
       return {
         success: true,
         rawText: JSON.stringify(examData, null, 2),
         questions: examData.questions,
-        audioSummary: examData.audio_summary,  // NEW: Include audio summary if present
+        audioSummary: examData.audio_summary,
+        keyConcepts,  // NEW
+        gamification,  // NEW
         topic: examData.topic,
         grade: examData.grade || grade,
         processingTime: geminiResult.processingTime,
@@ -269,6 +313,87 @@ export class MathExamService {
     }
 
     return null
+  }
+
+  /**
+   * Extract key concepts from generated math questions (Stage 2 of two-stage approach)
+   * Uses a lightweight prompt to avoid token overflow
+   */
+  private static async extractKeyConcepts(
+    questions: MathQuestion[],
+    imageCount: number,
+    language: string
+  ): Promise<{ key_concepts: KeyConcept[]; gamification: Gamification } | null> {
+
+    const expectedConcepts = imageCount * 3
+
+    const prompt = `Extract ${expectedConcepts} key mathematical concepts from these questions.
+
+CRITICAL: Use SPOKEN NOTATION (no LaTeX) in definitions.
+- "x toiseen" NOT "$x^2$"
+- "puolikas" or "yksi per kaksi" NOT "$\\frac{1}{2}$"
+- "neliöjuuri" NOT "$\\sqrt{}$"
+
+Questions:
+${JSON.stringify(questions.slice(0, 5), null, 2)}
+... (${questions.length} total questions)
+
+Return ONLY valid JSON (no markdown):
+{
+  "key_concepts": [
+    {
+      "concept_name": "2-4 words (${language})",
+      "definition": "SPOKEN notation only, 50-70 words max",
+      "difficulty": "foundational" | "intermediate" | "advanced",
+      "category": "Algebra" | "Geometry" | "Numbers" | "Problem Solving",
+      "related_question_ids": [1, 3, 7],
+      "badge_title": "2-3 words (${language})",
+      "mini_game_hint": "8-12 words (${language})"
+    }
+  ],
+  "gamification": {
+    "completion_message": "Brief congratulations (${language})",
+    "boss_question_open": "Synthesis question (${language})",
+    "boss_question_multiple_choice": {
+      "question": "MC question (${language})",
+      "options": ["A", "B", "C", "D"],
+      "correct_answer": "One of A/B/C/D"
+    },
+    "reward_text": "5-10 words (${language})"
+  }
+}
+
+CRITICAL: Exactly ${expectedConcepts} concepts. NO LaTeX in definitions.`
+
+    const genAI = new GoogleGenerativeAI(getGeminiApiKey())
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_CONFIG.MODEL_NAME,
+      generationConfig: {
+        temperature: 0,
+        maxOutputTokens: 2048  // Lightweight call
+      }
+    })
+
+    try {
+      console.log('[Math Service] [Stage 2] Extracting key concepts...')
+      const result = await model.generateContent(prompt)
+      const text = result.response.text()
+      console.log('[Math Service] [Stage 2] Response received:', text.length, 'chars')
+
+      const parseResult = safeJsonParse(text)
+      if (!parseResult.success) {
+        console.error('[Math Service] [Stage 2] Failed to parse concepts:', parseResult.error)
+        return null
+      }
+
+      const data = parseResult.data as { key_concepts: KeyConcept[]; gamification: Gamification }
+      console.log('[Math Service] [Stage 2] ✅ Extracted', data.key_concepts?.length || 0, 'concepts')
+
+      return data
+    } catch (error) {
+      console.error('[Math Service] [Stage 2] Concept extraction error:', error)
+      return null
+    }
   }
 
   /**

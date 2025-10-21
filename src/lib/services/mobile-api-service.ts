@@ -225,11 +225,15 @@ export class MobileApiService {
         rawText: JSON.stringify({
           questions: mathResult.questions,
           audio_summary: mathResult.audioSummary,  // NEW: Include audio summary
+          key_concepts: mathResult.keyConcepts,  // NEW: Include key concepts
+          gamification: mathResult.gamification,  // NEW: Include gamification
           topic: mathResult.topic,
           difficulty: 'medium' // Math exams don't have difficulty in the same way
         }),
         geminiUsage: mathResult.geminiUsage,
-        audioSummary: mathResult.audioSummary  // NEW: Pass audio summary for TTS generation
+        audioSummary: mathResult.audioSummary,  // NEW: Pass audio summary for TTS generation
+        keyConcepts: mathResult.keyConcepts,  // NEW: Pass key concepts
+        gamification: mathResult.gamification  // NEW: Pass gamification
       }
 
       return {
@@ -283,21 +287,21 @@ export class MobileApiService {
         promptType = 'CUSTOM'
       } else if (subject && /historia|history|geschichte/i.test(subject)) {
         // Use specialized prompt for history subjects (any language)
-        promptToUse = PROMPTS.getHistoryPrompt(grade, language)
-        promptType = `HISTORY(subject-${subject}, grade-${grade || 'auto'})`
+        promptToUse = PROMPTS.getHistoryPrompt(grade, language, fileMetadataList.length)
+        promptType = `HISTORY(subject-${subject}, grade-${grade || 'auto'}, images-${fileMetadataList.length})`
       } else if (category) {
         // Use specialized prompt for language studies, category prompt with summary for others
         if (category === 'language_studies') {
           promptToUse = PROMPTS.getLanguageStudiesPrompt(grade, language)
           promptType = `LANGUAGE_STUDIES(grade-${grade || 'auto'}, student-lang-${language})`
         } else {
-          promptToUse = PROMPTS.getCategoryAwarePrompt(category, grade, language)
-          promptType = `CATEGORY_AWARE_PROMPT(${category}, grade-${grade || 'auto'}, lang-${language})`
+          promptToUse = PROMPTS.getCategoryAwarePrompt(category, grade, language, fileMetadataList.length)
+          promptType = `CATEGORY_AWARE_PROMPT(${category}, grade-${grade || 'auto'}, lang-${language}, images-${fileMetadataList.length})`
         }
       } else {
         // Always use category-aware prompt with summary and core_academics as default
-        promptToUse = PROMPTS.getCategoryAwarePrompt('core_academics', grade, language)
-        promptType = `CATEGORY_AWARE_PROMPT(core_academics, grade-${grade || 'auto'}, lang-${language})`
+        promptToUse = PROMPTS.getCategoryAwarePrompt('core_academics', grade, language, fileMetadataList.length)
+        promptType = `CATEGORY_AWARE_PROMPT(core_academics, grade-${grade || 'auto'}, lang-${language}, images-${fileMetadataList.length})`
       }
 
       console.log('Using prompt type:', promptType)
@@ -441,6 +445,22 @@ export class MobileApiService {
 
       const parsedResult = parseResult.data
       parsedQuestions = parsedResult.questions || []
+
+      // NEW: Extract key concepts and gamification from response
+      let keyConcepts: any[] | null = null
+      let gamification: any | null = null
+
+      if (geminiData.keyConcepts || parsedResult.key_concepts) {
+        keyConcepts = geminiData.keyConcepts || parsedResult.key_concepts
+        console.log('=== KEY CONCEPTS EXTRACTED ===')
+        console.log('Concepts count:', keyConcepts?.length || 0)
+      }
+
+      if (geminiData.gamification || parsedResult.gamification) {
+        gamification = geminiData.gamification || parsedResult.gamification
+        console.log('=== GAMIFICATION EXTRACTED ===')
+        console.log('Boss question type:', gamification?.boss_question_multiple_choice ? 'Multiple Choice' : 'Open')
+      }
 
       // NEW: Check for math audio_summary (from Math Service)
       if (geminiData.audioSummary || parsedResult.audio_summary) {
@@ -623,7 +643,9 @@ export class MobileApiService {
         created_at: new Date().toISOString(),
         generation_prompt: promptUsed || null,
         ai_provider: getConfiguredProviderType(),
-        summary_text: summaryText || null
+        summary_text: summaryText || null,
+        key_concepts: keyConcepts || null,  // NEW: Save key concepts as JSONB
+        gamification: gamification || null  // NEW: Save gamification as JSONB
         // completed_at is NULL by default - will be set when student completes the exam
         // audio_url and audio_metadata will be set later by async audio generation
       }
