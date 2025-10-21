@@ -148,6 +148,10 @@ ENABLE_REQUEST_LOGGING=true # Log API requests to database
 
 # Optional - Vercel CLI
 VERCEL_TOKEN=your_token_here    # CLI log access
+
+# Admin Dashboard (Optional)
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=<long-random-string>
 ```
 
 **Keys:** [Gemini API](https://aistudio.google.com/app/apikey) • [Supabase](https://app.supabase.com/project/_/settings/api) • Set `NEXT_PUBLIC_APP_URL` for exam sharing URLs
@@ -525,6 +529,89 @@ Two layout systems allow easy switching between UI variants:
 **Note:** Toggles are currently hardcoded (not user-facing). Both layouts maintain full feature parity.
 
 **Why this design?** Works well with iOS Safari bottom address bar • Maximizes space for question content • Previous answer available but not intrusive • Tested across 17 variant prototypes (`/public/retake-variants/`)
+
+## Analytics Dashboard
+
+Password-protected admin dashboard for tracking app usage metrics.
+
+**Access:** `/admin/analytics`
+- Username/password via Basic HTTP Auth
+- Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in Vercel environment variables
+
+**Metrics:**
+- Daily Active Users (DAU) with trends
+- New user signups with day-over-day comparison
+- Session length analytics (avg, median, distribution)
+- Platform breakdown (iOS/Android/Web)
+- Active users (7-day, 30-day)
+- Exams generated and top subjects/categories
+- **Cost tracking** (exam creation, grading, audio generation)
+
+**Session Tracking:**
+- Sessions tracked via `/api/session/heartbeat` endpoint
+- 30-minute session windows
+- Automatically detects first-time users
+- Session length: rounded up to nearest minute
+
+**API:**
+```bash
+# Track session (call on app open)
+POST /api/session/heartbeat
+{
+  "user_id": "uuid",
+  "platform": "ios|android|web",
+  "app_version": "1.0.0"
+}
+
+# Get analytics (requires auth)
+GET /api/admin/analytics
+Authorization: Basic <base64(username:password)>
+```
+
+## 💰 Cost Tracking
+
+ExamGenie tracks all LLM and TTS API costs automatically:
+
+- **Exam Creation**: Gemini 2.5 Flash API costs (including math retry attempts)
+- **Grading**: Gemini batch grading costs
+- **Audio**: Google Cloud TTS costs (Standard/Neural2/Wavenet voices)
+
+### Viewing Costs
+
+**Admin Dashboard**: Navigate to `/admin/analytics` to see:
+- Real-time cost metrics (today, last 30 days)
+- Cost trends over time (line charts)
+- Cost breakdown by category (pie chart)
+- Detailed cost table with percentages
+
+**Verification Script**: Run monthly to compare against Google Cloud billing:
+```bash
+npx tsx scripts/verify-costs.ts 30  # Last 30 days
+```
+
+### Expected Costs
+
+**Per Exam (typical)**:
+- Creation: $0.0005 - $0.002
+- Grading: $0.0003 - $0.001
+- Audio: $0.0001 - $0.0005
+- **Total: ~$0.001 - $0.004**
+
+**Monthly (1000 exams)**: ~$1 - $4
+
+### Database Schema
+
+Cost data is stored in:
+- `examgenie_exams.creation_gemini_usage` (JSONB) - Exam generation costs
+- `examgenie_exams.audio_generation_cost` (JSONB) - TTS costs
+- `examgenie_grading.grading_gemini_usage` (JSONB) - Grading costs
+
+### Verification
+
+Monthly reconciliation against Google Cloud Console:
+1. Check Gemini API usage at `console.cloud.google.com/apis/api/generativelanguage.googleapis.com`
+2. Check TTS usage at `console.cloud.google.com/apis/api/texttospeech.googleapis.com`
+3. Expected variance: ±5% (due to rounding, failed requests, timezone differences)
 
 ### 12. Modern Grading System (examgenie_grading)
 - **New Table:** `examgenie_grading` (replaces legacy `grading`)

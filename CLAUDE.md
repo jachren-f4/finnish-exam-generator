@@ -45,6 +45,13 @@ This file provides guidance to Claude Code when working with code in this reposi
 - 📁 **File:** `/src/lib/config.ts:620` (getHistoryPrompt JSON OUTPUT)
 - ⚠️ Fixed Oct 2025 (V7.2) - old exams show text inputs instead of MC buttons
 
+### Session Analytics
+- ❌ NEVER use arbitrary strings for user_id (must be valid UUID)
+- ✅ Session tracking accepts both `user_id` and `student_id` (backward compat)
+- ✅ Sessions expire after 30 minutes of inactivity
+- ⚠️ Session length calculation: `CEIL((last_heartbeat - session_start) / 60)` minutes
+- ⚠️ Uses auth.users.id directly (students table is unused)
+
 ### Production Database Migration (October 2025)
 - ✅ Production schema now matches staging (Oct 20, 2025)
 - ✅ New `examgenie_grading` table created with proper FKs
@@ -52,6 +59,20 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ❌ NEVER use `exam_status` type (DROPPED)
 - ⚠️ Grade scale changed: '1-10' → '4-10' (in new grading system)
 - **Migration Files:** `/supabase/staging_to_prod/` (02_main_migration.sql, 02_rollback.sql, validation queries)
+
+### Cost Tracking (CRITICAL - NEVER BREAK)
+- ✅ **ALWAYS include `creation_gemini_usage` when inserting exams**
+  - Bug was: examData missing this field (100% of exams had null costs)
+  - Fix: Line 649 in `mobile-api-service.ts` must have `creation_gemini_usage: geminiData.geminiUsage`
+  - This is the #1 most critical cost tracking bug
+- ✅ **Math retry costs MUST accumulate across ALL attempts**
+  - Location: `math-exam-service.ts:248-367`
+  - Returns `cumulativeUsage` with `attemptsCount`
+  - Prevents 20-40% cost underestimation
+  - Tracks failed temperature=0 and temperature=0.3 attempts
+- ❌ **NEVER use RAISE NOTICE at top level in SQL migrations**
+  - Must wrap in `DO $$ BEGIN ... END $$;` blocks
+  - Will cause syntax error otherwise
 
 ## Critical Knowledge - Common Pitfalls
 
@@ -65,6 +86,19 @@ This file provides guidance to Claude Code when working with code in this reposi
   - `"mathematics"` → math-exam-service.ts (LaTeX, 3-level validation)
   - `"language_studies"` → getLanguageStudiesPrompt()
   - Everything else → standard prompt via getCategoryAwarePrompt()
+
+### Auto-Language Detection (Web UI)
+- ✅ **Gemini auto-detects textbook language** from images (returns ISO 639-1 code like 'fi', 'en', 'de')
+- ✅ **Stored in DB**: `examgenie_exams.detected_language` field (added Oct 2025)
+- ✅ **Web UI auto-matches**: Exam pages automatically display in textbook's language
+  - Example: Finnish textbook → Finnish UI ("Aloita koe", "Lähetä", etc.)
+  - Overrides `NEXT_PUBLIC_LOCALE` environment variable
+- ✅ **Fallback**: Defaults to 'en' if detection fails
+- **Files modified**:
+  - `/src/lib/supabase.ts` - Added `detected_language` to types
+  - `/src/lib/services/mobile-api-service.ts:636` - Captures language from Gemini response
+  - `/src/i18n/index.ts` - `useTranslation(overrideLocale?)` supports language override
+  - All exam pages (`/exam/[id]`, `/exam/[id]/take`, `/exam/[id]/audio`, `/grading/[id]`)
 
 ### Mathematics Special Handling
 - ✅ `category=mathematics` automatically routes to specialized math service
@@ -169,6 +203,23 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ### Diagnostic Tools
 - **Database Connection Test**: `/src/app/api/test-db/route.ts` - Tests Supabase connection, shows masked env vars
+
+### Analytics
+- **Session Tracking**: `/src/app/api/session/heartbeat/route.ts`
+- **Admin Auth**: `/src/lib/auth/admin-auth.ts`
+- **Analytics API**: `/src/app/api/admin/analytics/route.ts`
+- **Analytics Dashboard**: `/src/app/admin/analytics/page.tsx`
+- **Analytics Plan**: `/SESSION_ANALYTICS_IMPLEMENTATION_PLAN.md`
+
+### Cost Tracking
+- **Exam creation costs**: `/src/lib/services/mobile-api-service.ts:649` (examData insertion - CRITICAL)
+- **Math retry costs**: `/src/lib/services/math-exam-service.ts:200-212` (usage accumulation)
+- **Grading costs**: `/src/lib/services/exam-grading-service.ts:139-150` (batch result)
+- **Audio costs**: `/src/lib/services/tts-service.ts:128-168` (TTS pricing)
+- **Analytics API**: `/src/app/api/admin/analytics/route.ts:376-481` (getCostMetrics)
+- **Dashboard**: `/src/app/admin/analytics/page.tsx:179-297` (cost visualizations)
+- **Verification**: `/scripts/verify-costs.ts` (monthly reconciliation)
+- **Migrations**: `/supabase/migrations/20251021000000_add_cost_tracking.sql`, `20251021000001_add_grading_costs.sql`, `20251021000002_add_audio_costs.sql`
 
 ### API Routes
 - **Mobile Exam Gen**: `/src/app/api/mobile/exam-questions/route.ts`
@@ -288,6 +339,11 @@ npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
   --table=students --data='{"name":"Test","grade":5}'
 ```
 
+### Cost Verification
+```bash
+npx tsx scripts/verify-costs.ts 30  # Verify costs against Google Cloud (30 days)
+```
+
 ## Common Issues & Solutions
 
 | Issue | Solution |
@@ -315,6 +371,12 @@ npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
 | Query references `exam_status` type | Type dropped in Oct 2025 migration • No longer used |
 | History exam shows text inputs | Options stored as string array instead of `{ id, text }` objects • Fixed in V7.2 (Oct 20, 2025) • Old exams need regeneration | Check `processed_text.questions[0].options` format in DB |
 | Onboarding not showing | Integrated into menu page (`/exam/[id]`), not take page • Check localStorage key `examgenie_onboarding_seen` • Use `/dev/reset` to clear |
+| Admin dashboard 401 | Check `ADMIN_USERNAME` and `ADMIN_PASSWORD` in Vercel env vars • Restart dev server after .env.local changes |
+| Session tracking fails | user_id must be valid UUID • Check Supabase connection • Verify user_sessions table exists |
+| Retention data shows 0 | Retention queries are placeholders • Complex SQL needed for Day 1/3/7/14/30 cohort analysis |
+| Cost metrics showing zero | Check `creation_gemini_usage` populated in examData at line 649 • Verify migration applied • Run `/scripts/verify-costs.ts` |
+| Math costs underestimated | Math service must accumulate retry costs in `callGeminiWithRetry()` • Check `cumulativeUsage` calculation |
+| SQL migration RAISE NOTICE error | Wrap RAISE NOTICE in `DO $$ BEGIN ... END $$;` block • See migrations 20251021000000-20251021000002 |
 
 ## Architecture Decisions - Don't Break These
 
@@ -386,6 +448,55 @@ npx tsx db-query.ts --env=".env.local.staging" --operation=insert \
 2. Maintain 48px minimum touch targets for mobile
 3. Test at 640px max-width (mobile first)
 4. Ensure consistency with Flutter app design
+
+## 💰 Cost Tracking Schema
+
+### Database Fields (JSONB)
+
+**examgenie_exams.creation_gemini_usage**:
+```json
+{
+  "promptTokenCount": number,
+  "candidatesTokenCount": number,
+  "totalTokenCount": number,
+  "estimatedCost": number,
+  "inputCost": number,
+  "outputCost": number,
+  "model": "gemini-2.5-flash-lite",
+  "mathRetryAttempts": number (optional)
+}
+```
+
+**examgenie_grading.grading_gemini_usage**:
+```json
+{
+  "promptTokenCount": number,
+  "candidatesTokenCount": number,
+  "totalTokenCount": number,
+  "estimatedCost": number,
+  "inputCost": number,
+  "outputCost": number,
+  "model": string,
+  "questionsGraded": number
+}
+```
+
+**examgenie_exams.audio_generation_cost**:
+```json
+{
+  "characterCount": number,
+  "voiceType": "STANDARD" | "NEURAL2" | "WAVENET",
+  "estimatedCost": number,
+  "pricePerMillion": 4.00 | 16.00,
+  "generatedAt": ISO timestamp
+}
+```
+
+### Pricing (2025)
+- **Gemini Input**: $0.10 per 1M tokens
+- **Gemini Output**: $0.40 per 1M tokens
+- **TTS Standard**: $4.00 per 1M characters
+- **TTS Neural2/Wavenet**: $16.00 per 1M characters
 
 ## Documentation
 

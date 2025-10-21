@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ExamGenie – Key Concepts (Minimalist)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      color: #1a1a1a;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 1.1rem;
+      margin: 0.5rem 0;
+      font-weight: 400;
+    }
+
+    .purpose {
+      max-width: 600px;
+      margin: 1.5rem auto 0;
+      padding: 1.5rem;
+      background: white;
+      border-radius: 8px;
+      border-left: 3px solid #333;
+      color: #444;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .purpose strong {
+      color: #1a1a1a;
+    }
+
+    .stats-bar {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 2rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .stat { text-align: center; }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 0.25rem;
+    }
+
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .concept-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+      border: 1px solid #e0e0e0;
+    }
+
+    .concept-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .concept-card.mastered {
+      border-color: #4CAF50;
+      background: #f9fff9;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 1rem;
+      gap: 1rem;
+    }
+
+    .header-left {
+      flex: 1;
+    }
+
+    h3 {
+      font-size: 1.25rem;
+      color: #1a1a1a;
+      line-height: 1.3;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .category-tag {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background: #f0f0f0;
+      color: #666;
+    }
+
+    .difficulty-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+
+    .difficulty-badge.foundational {
+      background: #e8e8e8;
+      color: #555;
+    }
+    .difficulty-badge.intermediate {
+      background: #d0d0d0;
+      color: #333;
+    }
+    .difficulty-badge.advanced {
+      background: #b0b0b0;
+      color: #1a1a1a;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid #f0f0f0;
+      gap: 1rem;
+    }
+
+    .badge-name {
+      font-weight: 500;
+      color: #444;
+      font-size: 0.9rem;
+    }
+
+    .question-count {
+      color: #888;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .expand-btn {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: #1a1a1a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .expand-btn:hover {
+      background: #333;
+    }
+
+    .btn-icon {
+      transition: transform 0.2s;
+      font-size: 0.8rem;
+    }
+
+    .expand-btn.expanded .btn-icon {
+      transform: rotate(180deg);
+    }
+
+    .definition {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #fafafa;
+      border-radius: 6px;
+      border-left: 3px solid #333;
+      line-height: 1.6;
+    }
+
+    .definition p {
+      margin: 0.5rem 0;
+      color: #444;
+      font-size: 0.95rem;
+    }
+
+    .definition-text {
+      color: #1a1a1a;
+      font-weight: 500;
+    }
+
+    .hint {
+      color: #666;
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+
+    .hidden { display: none; }
+
+    #completion-banner {
+      background: #4CAF50;
+      color: white;
+      padding: 2rem;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: #888;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Key Concepts</h1>
+      <p class="subtitle">Master the essential ideas from your textbook</p>
+      <div class="purpose">
+        <strong>Purpose:</strong> Help students quickly understand and remember the most important ideas from their textbook material before taking the exam.
+      </div>
+    </header>
+
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-value" id="clicked-count">0</div>
+        <div class="stat-label">Concepts Learned</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">9</div>
+        <div class="stat-label">Total Concepts</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="progress-percent">0%</div>
+        <div class="stat-label">Progress</div>
+      </div>
+    </div>
+
+    <section id="key-concepts">
+      <div class="concept-grid">
+    <div class="concept-card" data-clicked="false" data-index="0">
+      <div class="card-header">
+        <div class="header-left">
+          <h3>Sisällissodan osapuolet</h3>
+          <span class="category-tag">Conflict</span>
+        </div>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <div class="card-meta">
+        <span class="badge-name">🏅 Faction Finder</span>
+        <span class="question-count">Asked in 8 questions</span>
+      </div>
+      <button class="expand-btn" onclick="toggleDefinition(this)">
+        <span class="btn-text">Show explanation</span>
+        <span class="btn-icon">▼</span>
+      </button>
+      <div class="definition hidden">
+        <p class="definition-text">Sisällissodan osapuolet olivat punaiset ja valkoiset, jotka edustivat eri yhteiskuntaluokkia ja poliittisia tavoitteita.</p>
+        <p class="hint"><strong>Hint:</strong> Kaksi ryhmää, jotka taistelivat toisiaan vastaan maan hallinnasta.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="1">
+      <div class="card-header">
+        <div class="header-left">
+          <h3>Sodan syyt</h3>
+          <span class="category-tag">Causes</span>
+        </div>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <div class="card-meta">
+        <span class="badge-name">🏅 Root Cause Investigator</span>
+        <span class="question-count">Asked in 1 question</span>
+      </div>
+      <button class="expand-btn" onclick="toggleDefinition(this)">
+        <span class="btn-text">Show explanation</span>
+        <span class="btn-icon">▼</span>
+      </button>
+      <div class="definition hidden">
+        <p class="definition-text">Sisällissodan syyt olivat moninaiset, sisältäen taloudellisia vaikeuksia, työttömyyttä ja poliittista epävakautta.</p>
+        <p class="hint"><strong>Hint:</strong> Miksi jokin asia alkoi tapahtua?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="2">
+      <div class="card-header">
+        <div class="header-left">
+          <h3>Punainen terrori</h3>
+          <span class="category-tag">Violence</span>
+        </div>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <div class="card-meta">
+        <span class="badge-name">🏅 Red Retribution</span>
+        <span class="question-count">Asked in 1 question</span>
+      </div>
+      <button class="expand-btn" onclick="toggleDefinition(this)">
+        <span class="btn-text">Show explanation</span>
+        <span class="btn-icon">▼</span>
+      </button>
+      <div class="definition hidden">
+        <p class="definition-text">Punainen terrori viittaa punaisten tekemiin julmuuksiin ja teloituksiin sisällissodan aikana.</p>
+        <p class="hint"><strong>Hint:</strong> Väkivalta, jonka tekijät olivat punaisia.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="3">
+      <div class="card-header">
+        <div class="header-left">
+          <h3>Valkoinen terrori</h3>
+          <span class="category-tag">Violence</span>
+        </div>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <div class="card-meta">
+        <span class="badge-name">🏅 White Wrath</span>
+        <span class="question-count">Asked in 1 question</span>
+      </div>
+      <button class="expand-btn" onclick="toggleDefinition(this)">
+        <span class="btn-text">Show explanation</span>
+        <span class="btn-icon">▼</span>
+      </button>
+      <div class="definition hidden">
+        <p class="definition-text">Valkoinen terrori viittaa valkoisten tekemiin julmuuksiin ja teloituksiin sisällissodan aikana.</p>
+        <p class="hint"><strong>Hint:</strong> Väkivalta, jonka tekijät olivat valkoisia.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="4">
+      <div class="card-header">
+        <div class="header-left">
+          <h3>Saksan rooli sodassa</h3>
+          <span class="category-tag">Foreign Aid</span>
+        </div>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <div class="card-meta">
+        <span class="badge-name">🏅 German Ally</span>
+        <span class="question-count">Asked in 1 question</span>
+      </div>
+      <button class="expand-btn" onclick="toggleDefinition(this)">
+        <span class="btn-text">Show explanation</span>
+        <span class="btn-icon">▼</span>
+      </button>
+      <div class="definition hidden">
+        <p class="definition-text">Saksa tuki valkoisia sisällissodassa varmistaakseen Suomen itsenäisyyden ja estääkseen Venäjän vaikutusvallan kasvun.</p>
+        <p class="hint"><strong>Hint:</strong> Ulkomaan apu, joka tuli idästä.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="5">
+      <div class="card-header">
+        <div class="header-left">
+          <h3>Sodan seuraukset</h3>
+          <span class="category-tag">Outcomes</span>
+        </div>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <div class="card-meta">
+        <span class="badge-name">🏅 Legacy Keeper</span>
+        <span class="question-count">Asked in 2 questions</span>
+      </div>
+      <button class="expand-btn" onclick="toggleDefinition(this)">
+        <span class="btn-text">Show explanation</span>
+        <span class="btn-icon">▼</span>
+      </button>
+      <div class="definition hidden">
+        <p class="definition-text">Sisällissodan seurauksena Suomen itsenäisyys vahvistui, mutta yhteiskuntaan jäi syviä jakolinjoja.</p>
+        <p class="hint"><strong>Hint:</strong> Mitä tapahtui sodan jälkeen?</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="6">
+      <div class="card-header">
+        <div class="header-left">
+          <h3>Kansanvaltuuskunta</h3>
+          <span class="category-tag">Government</span>
+        </div>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <div class="card-meta">
+        <span class="badge-name">🏅 People's Power</span>
+        <span class="question-count">Asked in 1 question</span>
+      </div>
+      <button class="expand-btn" onclick="toggleDefinition(this)">
+        <span class="btn-text">Show explanation</span>
+        <span class="btn-icon">▼</span>
+      </button>
+      <div class="definition hidden">
+        <p class="definition-text">Kansanvaltuuskunta oli punaisten muodostama hallitus Suomen sisällissodan aikana.</p>
+        <p class="hint"><strong>Hint:</strong> Hallitus, jonka punaiset perustivat.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="7">
+      <div class="card-header">
+        <div class="header-left">
+          <h3>Suomen itsenäisyys</h3>
+          <span class="category-tag">Sovereignty</span>
+        </div>
+        <span class="difficulty-badge advanced">advanced</span>
+      </div>
+      <div class="card-meta">
+        <span class="badge-name">🏅 Independent Spirit</span>
+        <span class="question-count">Asked in 2 questions</span>
+      </div>
+      <button class="expand-btn" onclick="toggleDefinition(this)">
+        <span class="btn-text">Show explanation</span>
+        <span class="btn-icon">▼</span>
+      </button>
+      <div class="definition hidden">
+        <p class="definition-text">Suomen itsenäisyys vahvistui sisällissodan seurauksena, vaikka suhteet Venäjään säilyivät monimutkaisina.</p>
+        <p class="hint"><strong>Hint:</strong> Valtion kyky hallita itseään.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="8">
+      <div class="card-header">
+        <div class="header-left">
+          <h3>Porvarillinen hallitus</h3>
+          <span class="category-tag">Government</span>
+        </div>
+        <span class="difficulty-badge advanced">advanced</span>
+      </div>
+      <div class="card-meta">
+        <span class="badge-name">🏅 Bourgeois Rule</span>
+        <span class="question-count">Asked in 1 question</span>
+      </div>
+      <button class="expand-btn" onclick="toggleDefinition(this)">
+        <span class="btn-text">Show explanation</span>
+        <span class="btn-icon">▼</span>
+      </button>
+      <div class="definition hidden">
+        <p class="definition-text">Porvarillinen hallitus oli sisällissodan jälkeen muodostettu hallitus, jota johtivat pääasiassa porvariston edustajat.</p>
+        <p class="hint"><strong>Hint:</strong> Hallitus, jossa porvarit olivat pääosassa.</p>
+      </div>
+    </div>
+  </div>
+      <div id="completion-banner" class="hidden">
+        🎉 Congratulations! You've mastered all key concepts!
+      </div>
+    </section>
+
+    <footer>
+      <p>Variant: Minimalist Grey/White • ExamGenie Key Concepts</p>
+    </footer>
+  </div>
+
+  <script>
+    function toggleDefinition(btn) {
+      const card = btn.parentElement;
+      const def = btn.nextElementSibling;
+      const wasHidden = def.classList.contains('hidden');
+
+      def.classList.toggle('hidden');
+      btn.classList.toggle('expanded');
+
+      // Update button text
+      const btnText = btn.querySelector('.btn-text');
+      btnText.textContent = wasHidden ? 'Hide explanation' : 'Show explanation';
+
+      // Mark card as mastered on first click
+      if (wasHidden && !card.classList.contains('mastered')) {
+        card.classList.add('mastered');
+        card.dataset.clicked = "true";
+        updateProgress();
+      }
+    }
+
+    function updateProgress() {
+      const all = document.querySelectorAll('.concept-card');
+      const mastered = document.querySelectorAll('.concept-card[data-clicked="true"]');
+      const progress = Math.round((mastered.length / all.length) * 100);
+
+      document.getElementById('clicked-count').textContent = mastered.length;
+      document.getElementById('progress-percent').textContent = progress + '%';
+
+      if (mastered.length === all.length) {
+        document.getElementById('completion-banner').classList.remove('hidden');
+      }
+    }
+  </script>
+</body>
+</html>

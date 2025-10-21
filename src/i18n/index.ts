@@ -11,11 +11,13 @@ import { locales } from './locales'
 import type { Locale, Translations, NestedTranslationKey } from './types'
 
 /**
- * Get the current locale from environment variable
+ * Get the current locale from override or environment variable
  * Defaults to 'en' if not set or invalid
+ * @param overrideLocale - Optional locale override (e.g., from exam's detected_language)
  */
-function getCurrentLocale(): Locale {
-  const locale = process.env.NEXT_PUBLIC_LOCALE as Locale
+function getCurrentLocale(overrideLocale?: string | null): Locale {
+  // Priority: override > environment variable > default
+  const locale = overrideLocale || process.env.NEXT_PUBLIC_LOCALE as Locale
   if (locale === 'en' || locale === 'fi') {
     return locale
   }
@@ -69,9 +71,15 @@ export type TranslateFn = (
  *   const { t } = useTranslation()
  *   <h1>{t('examMenu.title')}</h1>
  *   <p>{t('examMenu.gradeInfo', { grade: 5, count: 15 })}</p>
+ *
+ * With language override (auto-detect from exam):
+ *   const { t } = useTranslation(exam?.detected_language)
+ *   // Will use exam's detected language instead of NEXT_PUBLIC_LOCALE
+ *
+ * @param overrideLocale - Optional locale to use instead of environment variable (e.g., exam.detected_language)
  */
-export function useTranslation() {
-  const locale = getCurrentLocale()
+export function useTranslation(overrideLocale?: string | null) {
+  const locale = getCurrentLocale(overrideLocale)
   const translations = locales[locale]
 
   const t: TranslateFn = (key, params) => {

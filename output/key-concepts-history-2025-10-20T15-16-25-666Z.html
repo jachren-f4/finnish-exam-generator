@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ExamGenie – Key Concepts Prototype (History Edition)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #222;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header { text-align: center; color: white; margin-bottom: 2rem; }
+    h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .test-info { background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 12px; margin-bottom: 2rem; }
+    .test-info p { color: white; margin: 0.25rem 0; font-size: 0.9rem; }
+    h2 { text-align: center; color: white; margin-bottom: 1.5rem; font-size: 1.8rem; }
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .concept-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .concept-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    .concept-card[data-clicked="true"] {
+      border: 2px solid #4CAF50;
+    }
+    .concept-card.mastered {
+      border: 2px solid #4CAF50;
+      background: #e8f5e9;
+      transition: background 0.3s ease, border 0.3s ease;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 1rem;
+      gap: 0.5rem;
+    }
+    h3 {
+      font-size: 1.2rem;
+      color: #333;
+      line-height: 1.3;
+      flex: 1;
+    }
+    .difficulty-badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .difficulty-badge.foundational { background: #E3F2FD; color: #1976D2; }
+    .difficulty-badge.intermediate { background: #FFF3E0; color: #F57C00; }
+    .difficulty-badge.advanced { background: #FCE4EC; color: #C2185B; }
+    .badge {
+      font-weight: 600;
+      color: #667eea;
+      margin: 0.5rem 0;
+      font-size: 0.95rem;
+    }
+    .category, .related-questions {
+      color: #666;
+      font-size: 0.85rem;
+      margin: 0.25rem 0;
+    }
+    .expand-btn {
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    .expand-btn:hover { background: #5568d3; }
+    .definition {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    .definition p { margin: 0.5rem 0; line-height: 1.6; }
+    .definition-text { color: #333; }
+    .hint { color: #555; font-style: italic; }
+    .hidden { display: none; }
+    .progress {
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: white;
+    }
+    #completion-banner {
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+      padding: 2rem;
+      border-radius: 16px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+      animation: fadeIn 1s ease forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .stats-bar {
+      background: rgba(255,255,255,0.95);
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .stat { text-align: center; }
+    .stat-value { font-size: 1.5rem; font-weight: 700; color: #667eea; }
+    .stat-label { font-size: 0.85rem; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎓 ExamGenie Key Concepts</h1>
+      <p style="margin: 0.5rem 0; opacity: 0.95;">History Edition – Interactive Prototype</p>
+      <p style="max-width: 600px; margin: 1rem auto; font-size: 0.95rem; line-height: 1.5; opacity: 0.9;"><strong>Purpose:</strong> Help students quickly understand and remember the most important ideas from their textbook material before taking the exam.</p>
+    </header>
+
+    <div class="test-info">
+      <p><strong>Test Version:</strong> v1.3 (History + Key Concepts)</p>
+      <p><strong>Model:</strong> gemini-2.5-flash-lite (temperature: 0)</p>
+      <p><strong>Images Processed:</strong> 10</p>
+      <p><strong>Questions Generated:</strong> 15</p>
+      <p><strong>Concepts Extracted:</strong> 28 (10 × 3)</p>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-value" id="clicked-count">0</div>
+        <div class="stat-label">Concepts Learned</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">28</div>
+        <div class="stat-label">Total Concepts</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="progress-percent">0%</div>
+        <div class="stat-label">Progress</div>
+      </div>
+    </div>
+
+    <section id="key-concepts">
+      <h2>Avainkäsitteet</h2>
+      <p id="progress" class="progress">0/28 käsitettä opittu</p>
+      <div class="concept-grid">
+    <div class="concept-card" data-clicked="false" data-index="0">
+      <div class="card-header">
+        <h3>Suomen sisällissota</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Sisällissodan Tuntija</p>
+      <p class="category">📂 Conflict</p>
+      <p class="related-questions">🔗 Asked in 3 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Suomen sisällissota oli vuonna 1918 käyty konflikti, joka jakoi kansan kahteen leiriin.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Tämä sota jakoi Suomen kansan kahtia vuonna 1918.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="1">
+      <div class="card-header">
+        <h3>Ensimmäinen maailmansota</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Maailmansodan Mestari</p>
+      <p class="category">📂 Conflict</p>
+      <p class="related-questions">🔗 Asked in 3 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Ensimmäinen maailmansota oli globaali konflikti, joka käytiin pääasiassa Euroopassa vuosina 1914–1918.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Tämä sota mullisti Euroopan ja johti uusien valtioiden syntyyn.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="2">
+      <div class="card-header">
+        <h3>Hyperinflaatio Saksassa 1923</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Inflaation Varoittaja</p>
+      <p class="category">📂 Economy</p>
+      <p class="related-questions">🔗 Asked in 2 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Saksassa koettiin vuonna 1923 erittäin voimakas hintojen nousu ja rahan arvon lasku.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Vuonna 1923 Saksan talous koki valtavan romahduksen.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="3">
+      <div class="card-header">
+        <h3>Neuvosto-Venäjän perustaminen</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Venäjän Muutos</p>
+      <p class="category">📂 Government</p>
+      <p class="related-questions">🔗 Asked in 2 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Neuvosto-Venäjä perustettiin vuonna 1917 Venäjän vallankumouksen seurauksena.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Tämä valtio syntyi Venäjän vallankumouksen jälkeen vuonna 1917.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="4">
+      <div class="card-header">
+        <h3>C. G. E. Mannerheim</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Suomen Kenraali</p>
+      <p class="category">📂 People</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> C. G. E. Mannerheim toimi Suomen sisällissodan ylipäällikkönä.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Hän johti Suomen armeijaa sisällissodassa.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="5">
+      <div class="card-header">
+        <h3>Woodrow Wilson</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Rauhan Suunnittelija</p>
+      <p class="category">📂 People</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Woodrow Wilson oli Yhdysvaltain presidentti, joka esitti rauhansuunnitelmia ensimmäisen maailmansodan jälkeen.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Tämä Yhdysvaltain presidentti esitti 14 kohdan rauhanoohjelman.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="6">
+      <div class="card-header">
+        <h3>Al Capone</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Kieltolain Kuningas</p>
+      <p class="category">📂 People</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Al Capone oli tunnettu rikollinen Yhdysvalloissa kieltolain aikana.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Hänet yhdistetään järjestäytyneeseen rikollisuuteen Yhdysvalloissa kieltolain aikana.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="7">
+      <div class="card-header">
+        <h3>Versailles'n rauha</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Sopimuksen Sinetti</p>
+      <p class="category">📂 Foreign Policy</p>
+      <p class="related-questions">🔗 Asked in 0 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Versailles'n rauha oli yksi ensimmäisen maailmansodan jälkeisistä sopimuksista.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Tämä sopimus päätti ensimmäisen maailmansodan ja muutti Euroopan karttaa.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="8">
+      <div class="card-header">
+        <h3>Kieltolaki Yhdysvalloissa</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Kielletty Juoma</p>
+      <p class="category">📂 Social Issues</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Kieltolaki Yhdysvalloissa kielsi alkoholin valmistuksen ja myynnin.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Tämä laki kielsi alkoholin myynnin Yhdysvalloissa.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="9">
+      <div class="card-header">
+        <h3>Euroopan kartan muutos</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Kartografi</p>
+      <p class="category">📂 Outcomes</p>
+      <p class="related-questions">🔗 Asked in 2 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Ensimmäisen maailmansodan jälkeen Euroopan poliittinen kartta muuttui merkittävästi.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Sodat ja rauhansopimukset muuttivat Euroopan rajat.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="10">
+      <div class="card-header">
+        <h3>Sisällissodan osapuolet</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Faktioiden Etsijä</p>
+      <p class="category">📂 Conflict</p>
+      <p class="related-questions">🔗 Asked in 0 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Suomen sisällissodassa vastakkain olivat punaiset ja valkoiset.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Kaksi pääryhmää taisteli Suomen sisällissodassa.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="11">
+      <div class="card-header">
+        <h3>Sotakorvaukset</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Velan Maksaja</p>
+      <p class="category">📂 Economy</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Sotakorvaukset olivat maksuja, joita hävinnyt valtio joutui maksamaan voittajalle sodan jälkeen.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Nämä maksut rasittivat Saksan taloutta ensimmäisen maailmansodan jälkeen.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="12">
+      <div class="card-header">
+        <h3>Yhteiskunnallinen jakautuminen</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Yhteiskunnan Kahtiajako</p>
+      <p class="category">📂 Social Issues</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Yhteiskunnallinen jakautuminen tarkoittaa syviä eroja ja ristiriitoja yhteiskunnan eri ryhmien välillä.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Tämä ilmiö oli yksi syy Suomen sisällissotaan.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="13">
+      <div class="card-header">
+        <h3>Uudet valtiot Euroopassa</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Valtion Synty</p>
+      <p class="category">📂 Outcomes</p>
+      <p class="related-questions">🔗 Asked in 2 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Ensimmäisen maailmansodan jälkeen Eurooppaan syntyi useita uusia itsenäisiä valtioita.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Monet maat syntyivät uudelleen sodan jälkeen.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="14">
+      <div class="card-header">
+        <h3>Franklin D. Roosevelt</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Uuden Johtaja</p>
+      <p class="category">📂 People</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Franklin D. Roosevelt oli Yhdysvaltain presidentti, joka aloitti virassaan vuonna 1933.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Hän aloitti Yhdysvaltain presidenttinä vuonna 1933.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="15">
+      <div class="card-header">
+        <h3>Taloudellinen epävakaus</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Talousmyrsky</p>
+      <p class="category">📂 Economy</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Taloudellinen epävakaus tarkoittaa tilannetta, jossa maan talous ei ole vakaa.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Hyperinflaatio on esimerkki tästä ilmiöstä.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="16">
+      <div class="card-header">
+        <h3>Järjestäytynyt rikollisuus</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Rikollisverkosto</p>
+      <p class="category">📂 Social Issues</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Järjestäytynyt rikollisuus tarkoittaa rikollisryhmien toimintaa, joka on organisoitua.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Kieltolaki Yhdysvalloissa edisti tätä ilmiötä.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="17">
+      <div class="card-header">
+        <h3>Poliittinen jakautuminen</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Poliittinen Kuilu</p>
+      <p class="category">📂 Government</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Poliittinen jakautuminen tarkoittaa syviä eroja poliittisissa näkemyksissä ja puolueissa.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Tämä oli yksi syy Suomen sisällissotaan.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="18">
+      <div class="card-header">
+        <h3>Rauhanehdotukset</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Rauhan Sanansaattaja</p>
+      <p class="category">📂 Foreign Policy</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Rauhanehdotukset ovat ehdotuksia, joilla pyritään lopettamaan sota.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Woodrow Wilson esitti tällaisia ehdotuksia sodan jälkeen.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="19">
+      <div class="card-header">
+        <h3>Itsenäistyminen</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Vapauden Aamu</p>
+      <p class="category">📂 Government</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Itsenäistyminen tarkoittaa valtion vapautumista ulkopuolisesta vallasta.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Suomi saavutti tämän aseman vuonna 1917.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="20">
+      <div class="card-header">
+        <h3>Vallankumous</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Vallan Vaihto</p>
+      <p class="category">📂 Government</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Vallankumous on suuri ja nopea yhteiskunnallinen muutos, joka usein johtaa hallitusmuodon vaihtumiseen.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Tämä tapahtuma johti Neuvosto-Venäjän syntyyn.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="21">
+      <div class="card-header">
+        <h3>Sodan seuraukset</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Sodan Perintö</p>
+      <p class="category">📂 Outcomes</p>
+      <p class="related-questions">🔗 Asked in 2 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Sodan seuraukset ovat sodan jälkeisiä vaikutuksia, jotka voivat olla poliittisia, taloudellisia tai sosiaalisia.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Ne voivat olla positiivisia tai negatiivisia.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="22">
+      <div class="card-header">
+        <h3>Talouden vakauttaminen</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Talousankkuri</p>
+      <p class="category">📂 Economy</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Talouden vakauttaminen tarkoittaa pyrkimystä saada maan talous toimimaan vakaasti.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Tämä oli haastavaa Saksassa hyperinflaation jälkeen.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="23">
+      <div class="card-header">
+        <h3>Kansainvälinen politiikka</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Maailman Peli</p>
+      <p class="category">📂 Foreign Policy</p>
+      <p class="related-questions">🔗 Asked in 1 question</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Kansainvälinen politiikka käsittelee valtioiden välisiä suhteita ja toimintaa.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Neuvosto-Venäjän synty vaikutti tähän merkittävästi.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="24">
+      <div class="card-header">
+        <h3>Yhteiskunnalliset muutokset</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Yhteiskunnan Uudistaja</p>
+      <p class="category">📂 Social Issues</p>
+      <p class="related-questions">🔗 Asked in 2 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Yhteiskunnalliset muutokset ovat laajoja ja pysyviä muutoksia yhteiskunnan rakenteissa ja toiminnassa.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Sodat ja vallankumoukset aiheuttivat näitä.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="25">
+      <div class="card-header">
+        <h3>Presidentti</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Valtion Päämies</p>
+      <p class="category">📂 Government</p>
+      <p class="related-questions">🔗 Asked in 2 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Presidentti on valtionpäämies, joka valitaan yleensä kansanäänestyksellä.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Woodrow Wilson ja Franklin D. Roosevelt olivat tämän nimikkeen haltijoita.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="26">
+      <div class="card-header">
+        <h3>Rahan arvon lasku</h3>
+        <span class="difficulty-badge foundational">foundational</span>
+      </div>
+      <p class="badge">🏅 Arvon Kadotus</p>
+      <p class="category">📂 Economy</p>
+      <p class="related-questions">🔗 Asked in 3 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Rahan arvon lasku tarkoittaa, että rahalla saa ostettua vähemmän tavaroita.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Hyperinflaatio on äärimmäinen esimerkki tästä.</p>
+      </div>
+    </div>
+  
+    <div class="concept-card" data-clicked="false" data-index="27">
+      <div class="card-header">
+        <h3>Sodan jälkeinen aika</h3>
+        <span class="difficulty-badge intermediate">intermediate</span>
+      </div>
+      <p class="badge">🏅 Sodan Varjo</p>
+      <p class="category">📂 Outcomes</p>
+      <p class="related-questions">🔗 Asked in 3 questions</p>
+      <button class="expand-btn" onclick="toggleDefinition(this)">Näytä selitys</button>
+      <div class="definition hidden">
+        <p class="definition-text"><strong>Määritelmä:</strong> Sodan jälkeinen aika on ajanjakso, joka seuraa sodan päättymistä.</p>
+        <p class="hint">💡 <strong>Vihje:</strong> Tämä aika on usein täynnä haasteita ja muutoksia.</p>
+      </div>
+    </div>
+  </div>
+      <div id="completion-banner" class="hidden">
+        🎉 Onneksi olkoon! Olet oppinut kaikki avainkäsitteet!
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function toggleDefinition(btn) {
+      const card = btn.parentElement;
+      const def = btn.nextElementSibling;
+      const wasHidden = def.classList.contains('hidden');
+
+      def.classList.toggle('hidden');
+
+      // Mark card as mastered on first click
+      if (wasHidden && !card.classList.contains('mastered')) {
+        card.classList.add('mastered');
+        card.dataset.clicked = "true";
+        updateProgress();
+      }
+
+      btn.textContent = wasHidden ? 'Piilota selitys' : 'Näytä selitys';
+    }
+
+    function updateProgress() {
+      const all = document.querySelectorAll('.concept-card');
+      const mastered = document.querySelectorAll('.concept-card[data-clicked="true"]');
+      const progress = Math.round((mastered.length / all.length) * 100);
+
+      // Update stats bar
+      document.getElementById('clicked-count').textContent = mastered.length;
+      document.getElementById('progress-percent').textContent = progress + '%';
+
+      // Update progress text
+      document.getElementById('progress').textContent = mastered.length + '/' + all.length + ' käsitettä opittu';
+
+      // Show completion banner if all mastered
+      if (mastered.length === all.length) {
+        document.getElementById('completion-banner').classList.remove('hidden');
+        confettiEffect();
+      }
+    }
+
+    // Optional: simple confetti animation
+    function confettiEffect() {
+      const banner = document.getElementById('completion-banner');
+      banner.innerHTML += ' 🏆';
+      banner.style.background = 'linear-gradient(135deg, #4CAF50, #66BB6A)';
+    }
+  </script>
+</body>
+</html>

@@ -28,12 +28,14 @@ export default function ExamMenuPage() {
   const params = useParams()
   const router = useRouter()
   const examId = params?.id as string
-  const { t } = useTranslation()
 
   // Layout mode toggle - change this to 'grid' or 'classic'
   const LAYOUT_MODE = 'classic' as 'grid' | 'classic'
 
   const [exam, setExam] = useState<ExamMenuState | null>(null)
+
+  // AUTO-DETECT: Use exam's detected language for UI (overrides NEXT_PUBLIC_LOCALE)
+  const { t } = useTranslation(exam?.detected_language)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [totalGenieDollars, setTotalGenieDollars] = useState(0)

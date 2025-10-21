@@ -632,6 +632,10 @@ export class MobileApiService {
         }
       }
 
+      // Extract detected language from Gemini response (ISO 639-1 code like 'fi', 'en', 'de')
+      const detectedLanguage = audioSummaryData?.language || summaryData?.language || 'en'
+      console.log('[LANGUAGE DETECTION] Detected language from textbook:', detectedLanguage)
+
       const examData: any = {
         id: examId,
         user_id: userId,
@@ -644,8 +648,10 @@ export class MobileApiService {
         generation_prompt: promptUsed || null,
         ai_provider: getConfiguredProviderType(),
         summary_text: summaryText || null,
+        detected_language: detectedLanguage,  // AUTO-DETECT: Language from textbook images for UI localization
         key_concepts: keyConcepts || null,  // NEW: Save key concepts as JSONB
-        gamification: gamification || null  // NEW: Save gamification as JSONB
+        gamification: gamification || null,  // NEW: Save gamification as JSONB
+        creation_gemini_usage: geminiData.geminiUsage || null  // Track Gemini API costs
         // completed_at is NULL by default - will be set when student completes the exam
         // audio_url and audio_metadata will be set later by async audio generation
       }
@@ -824,11 +830,22 @@ export class MobileApiService {
         generatedAt: audioResult.metadata.generatedAt,
       }
 
+      const audioCost = {
+        characterCount: audioResult.costMetadata.characterCount,
+        voiceType: audioResult.costMetadata.voiceType,
+        estimatedCost: audioResult.costMetadata.estimatedCost,
+        pricePerMillion: audioResult.costMetadata.pricePerMillion,
+        generatedAt: new Date().toISOString()
+      }
+
+      console.log(`[Audio Generation] TTS cost: $${audioCost.estimatedCost.toFixed(6)} (${audioCost.characterCount} chars, ${audioCost.voiceType})`)
+
       const { error: updateError } = await supabaseAdmin
         .from('examgenie_exams')
         .update({
           audio_url: uploadResult.url,
           audio_metadata: audioMetadata,
+          audio_generation_cost: audioCost,  // Store TTS costs
         })
         .eq('id', examId)
 
@@ -957,11 +974,22 @@ export class MobileApiService {
         reflectionsCount: audioSummary.guided_reflections?.length || 0
       }
 
+      const audioCost = {
+        characterCount: audioResult.costMetadata.characterCount,
+        voiceType: audioResult.costMetadata.voiceType,
+        estimatedCost: audioResult.costMetadata.estimatedCost,
+        pricePerMillion: audioResult.costMetadata.pricePerMillion,
+        generatedAt: new Date().toISOString()
+      }
+
+      console.log(`[Math Audio] TTS cost: $${audioCost.estimatedCost.toFixed(6)} (${audioCost.characterCount} chars, ${audioCost.voiceType})`)
+
       const { error: updateError } = await supabaseAdmin
         .from('examgenie_exams')
         .update({
           audio_url: uploadResult.url,
           audio_metadata: audioMetadata,
+          audio_generation_cost: audioCost,  // Store TTS costs
         })
         .eq('id', examId)
 

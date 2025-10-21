@@ -24,8 +24,10 @@ export default function AudioSummaryPage() {
   const router = useRouter()
   const examId = params?.id as string
 
-  const { t } = useTranslation()
   const [exam, setExam] = useState<AudioExamState | null>(null)
+
+  // AUTO-DETECT: Use exam's detected language for UI (overrides NEXT_PUBLIC_LOCALE)
+  const { t } = useTranslation(exam?.detected_language)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 

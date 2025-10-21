@@ -22,6 +22,12 @@ export interface AudioResult {
     languageCode: string
     generatedAt: string
   }
+  costMetadata: {
+    characterCount: number
+    voiceType: 'STANDARD' | 'NEURAL2' | 'WAVENET'
+    estimatedCost: number
+    pricePerMillion: number
+  }
 }
 
 export class TTSService {
@@ -119,6 +125,31 @@ export class TTSService {
       console.log('[TTS] Estimated duration:', durationSeconds, 'seconds')
       console.log('[TTS] Generation time:', duration, 'ms')
 
+      // Google Cloud TTS Pricing (2025 rates)
+      // Standard voices: $4.00 per 1M characters
+      // Neural2 voices: $16.00 per 1M characters
+      // Wavenet voices: $16.00 per 1M characters (same as Neural2)
+      const TTS_PRICING = {
+        STANDARD: 4.00,   // per 1M characters
+        NEURAL2: 16.00,   // per 1M characters
+        WAVENET: 16.00,   // per 1M characters (same as Neural2)
+      }
+
+      // Determine voice type from voice name
+      const voiceType = voiceName.includes('Neural2') ? 'NEURAL2' :
+                        voiceName.includes('Wavenet') ? 'WAVENET' : 'STANDARD'
+
+      const pricePerMillion = TTS_PRICING[voiceType]
+      const characterCount = text.length
+      const estimatedCost = (characterCount / 1_000_000) * pricePerMillion
+
+      console.log('[TTS] Cost estimation:', {
+        characterCount,
+        voiceType,
+        pricePerMillion,
+        estimatedCost: estimatedCost.toFixed(6)
+      })
+
       return {
         audioBuffer,
         metadata: {
@@ -128,6 +159,12 @@ export class TTSService {
           languageCode: config.languageCode,
           generatedAt: new Date().toISOString(),
         },
+        costMetadata: {
+          characterCount,
+          voiceType: voiceType as 'STANDARD' | 'NEURAL2' | 'WAVENET',
+          estimatedCost,
+          pricePerMillion
+        }
       }
 
     } catch (error) {

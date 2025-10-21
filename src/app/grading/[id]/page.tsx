@@ -15,8 +15,11 @@ export default function GradingPage() {
   // Results mode toggle - change this to 'story' or 'legacy'
   const RESULTS_MODE = 'story' as 'story' | 'legacy'
 
-  const { t } = useTranslation()
   const [grading, setGrading] = useState<GradingResult | null>(null)
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null)
+
+  // AUTO-DETECT: Use exam's detected language for UI (overrides NEXT_PUBLIC_LOCALE)
+  const { t } = useTranslation(detectedLanguage)
   const [previousGrading, setPreviousGrading] = useState<GradingResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -26,9 +29,24 @@ export default function GradingPage() {
 
   useEffect(() => {
     if (examId) {
+      fetchExamLanguage()
       fetchGrading()
     }
   }, [examId])
+
+  const fetchExamLanguage = async () => {
+    try {
+      const response = await fetch(`/api/exam/${examId}`)
+      if (response.ok) {
+        const data = await response.json()
+        const examData = data.data || data
+        setDetectedLanguage(examData.detected_language || null)
+      }
+    } catch (err) {
+      console.error('Failed to fetch exam language:', err)
+      // Non-critical, continue without language detection
+    }
+  }
 
   const fetchGrading = async () => {
     try {

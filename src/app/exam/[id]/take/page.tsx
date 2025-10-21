@@ -25,8 +25,10 @@ export default function ExamPage() {
   const examId = params?.id as string
   const examMode = searchParams.get('mode') || 'normal' // 'normal', 'retake', or 'wrong-only'
 
-  const { t } = useTranslation()
   const [exam, setExam] = useState<ExamState | null>(null)
+
+  // AUTO-DETECT: Use exam's detected language for UI (overrides NEXT_PUBLIC_LOCALE)
+  const { t } = useTranslation(exam?.detected_language)
   const [filteredQuestions, setFilteredQuestions] = useState<any[]>([])
   const [answers, setAnswers] = useState<{[questionId: string]: string}>({})
   const [currentQuestion, setCurrentQuestion] = useState(0)

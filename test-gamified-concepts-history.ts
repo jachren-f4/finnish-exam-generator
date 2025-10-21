@@ -1,11 +1,11 @@
 /**
- * Test Gamified Key Concepts Generation
- * Tests Gemini's ability to generate exam questions, educational summary, AND gamified key concepts in one call
+ * Test Gamified Key Concepts Generation - History Edition
+ * Combines the specialized history prompt with key concepts generation
  *
  * Expected Output:
- * - 15 exam questions
- * - ~970 word educational summary (4 sections)
- * - 8-12 key concepts with gamification metadata
+ * - 15 history exam questions (grounded in textbook only)
+ * - Educational summary (4 sections)
+ * - Key concepts with gamification metadata (images × 3)
  * - Gamification completion data
  */
 
@@ -32,124 +32,233 @@ if (!GEMINI_API_KEY) {
 const EXAM_QUESTION_COUNT = 15;
 
 // Dynamic key concepts calculation: images × 3
-const IMAGE_COUNT = 3; // Testing with 3 images first
+const IMAGE_COUNT = 10; // Using 10 images for broader coverage
 const KEY_CONCEPTS_MULTIPLIER = 3;
-const EXPECTED_KEY_CONCEPTS_MIN = IMAGE_COUNT * KEY_CONCEPTS_MULTIPLIER; // 3 × 3 = 9
+const EXPECTED_KEY_CONCEPTS_MIN = IMAGE_COUNT * KEY_CONCEPTS_MULTIPLIER; // 10 × 3 = 30
 const EXPECTED_KEY_CONCEPTS_MAX = EXPECTED_KEY_CONCEPTS_MIN; // Exact count
 
 const EXPECTED_SUMMARY_WORDS = 1000; // Target: 900-1100 words
 const SUMMARY_WORD_TOLERANCE = 200;
-const category = 'core_academics';
 const grade = 8;
 
-// Combined prompt: Questions + Summary + Gamified Key Concepts
-// Based on getCategoryAwarePromptWithSummary from config.ts, extended with key concepts
-const prompt = `Create a text-based exam from educational content for grade ${grade} students AND generate an educational summary AND identify and gamify the key learning concepts.
+// History prompt with key concepts generation injected
+// Based on getHistoryPrompt from config.ts + key concepts task
+const prompt = `SYSTEM INSTRUCTION (prepend this before any user content):
+You must treat the uploaded textbook images as your *only factual source*.
+Do not rely on your general history knowledge. Use only information visible in the textbook pages.
+If something is not visible, skip it.
 
-CRITICAL CONSTRAINT: Students will NOT have access to any visual elements during the exam
+Keep total output under 4000 tokens. Use concise sentences and limit explanations to 1–2 lines.
 
-Avoid:
-- Visual references from the material, like images or page or chapter numbers
-- References to graph, table, diagram, or coordinate systems
-- Something that is factually untrue
-- Something that is impossible to answer without the images
-- Questions that aren't explicitly based on the source material
+---
 
-TARGET: Use the same language as the source material. Subject area: ${category}.
+## 🎓 Task
+Create a **history exam for grade ${grade} students** based *only* on the uploaded textbook pages AND extract gamified key concepts.
 
-TASK 1: Generate exactly ${EXAM_QUESTION_COUNT} questions that test understanding of the educational concepts in the material.
+---
 
-TASK 2: Generate a comprehensive educational summary divided into structured sections:
-- introduction (100-250 words): Overview of the topic and why it's important
-- key_concepts (250-500 words): Detailed explanation of main concepts with definitions
-- examples_and_applications (200-400 words): Practical examples and real-world applications
-- summary_conclusion (100-250 words): Review of key points and takeaways
+## 🔍 INTERNAL FACT EXTRACTION (do NOT print)
+First, silently read all textbook images and extract:
+- main events with dates
+- people or groups mentioned BY NAME in visible text
+- historical terms defined
+- visible causes and consequences
+
+🔴 CRITICAL GROUNDING RULE:
+- ONLY use information VISIBLE in the textbook pages
+- If a specific name (person, place) is NOT visible, do NOT mention it
+- Use general descriptions instead of specific names from outside knowledge
+- Example: If textbook says "US president" but doesn't name them → use "US president" NOT "Franklin D. Roosevelt"
+- Example: If textbook discusses prohibition/crime but doesn't name criminals → use "organized crime figures" NOT "Al Capone"
+
+Do NOT list or print these facts. Keep them in memory only.
+
+---
+
+## 🔴 CRITICAL OUTPUT REQUIREMENT
+
+**YOU MUST RETURN ONLY VALID JSON - NO OTHER TEXT OR FORMATTING**
+
+Do NOT create a formatted exam.
+Do NOT add explanatory text before or after the JSON.
+Do NOT use markdown formatting.
+Return ONLY the JSON object specified in the JSON OUTPUT section below.
+
+---
+
+## ✍️ TASK 1: QUESTION GENERATION
+Now, using only the information you extracted internally, generate:
+
+- 2 terminology questions ("What does X mean?")
+- 6 event questions ("What happened / when / where?")
+- 4 cause–consequence questions ("Why / what resulted?")
+- 3 people questions ("Who / what did they do?")
+→ Total = 15 questions
+
+Every question must be answerable directly from the textbook pages.
+If a fact, date, or person is not visible, skip it.
+
+---
+
+## 📚 TASK 2: EDUCATIONAL SUMMARY
+Generate a comprehensive educational summary divided into structured sections:
+- introduction (100-200 words): Overview of the historical topic and why it's important
+- key_concepts (250-400 words): Main events, causes, and results
+- examples_and_applications (150-250 words): Help students understand significance
+- summary_conclusion (80-150 words): Review of key points
 
 SUMMARY REQUIREMENTS:
 - Use a friendly, teacher-like tone suitable for 14-year-olds
 - The writing should feel supportive and conversational, not overly formal or academic
 - Write in the SAME language as the source material
-- Target total length for the summary: approximately 900–1100 words across all four sections combined
+- Target total length: approximately 600–800 words across all sections
 
-TASK 3: Extract and gamify exactly ${EXPECTED_KEY_CONCEPTS_MIN} key concepts that represent the most important ideas in the material.
+---
+
+## 🎮 TASK 3: GAMIFIED KEY CONCEPTS
+Extract and gamify exactly ${EXPECTED_KEY_CONCEPTS_MIN} key concepts that represent the most important historical ideas in the material.
+
+**Purpose:** Help students quickly understand and remember the most important ideas from their textbook material before taking the exam.
+
+🔴 STRICT GROUNDING REQUIREMENT FOR KEY CONCEPTS:
+- ALL concepts must be 100% grounded in VISIBLE textbook content
+- Do NOT include specific names (people, places) unless they appear in the textbook
+- Use general descriptions if specific names are not visible
+- Students expect key concepts to come directly from their textbook pages
+- Higher grounding standard than questions: NO outside knowledge allowed
 
 Each concept must include:
-- "concept_name": 2–5 words
-- "definition": one clear, single-sentence explanation
+- "concept_name": 2–5 words (e.g., "Sisällissodan osapuolet", "Versailles Treaty")
+  - ❌ AVOID specific names not in textbook (e.g., "Franklin D. Roosevelt" if only "US president" visible)
+  - ✅ USE general terms matching textbook text (e.g., "Yhdysvaltain presidentti" if that's what appears)
+- "definition": one clear, single-sentence explanation grounded ONLY in visible textbook content
+  - ❌ NO facts from outside knowledge
+  - ✅ ONLY information students can verify by looking at their textbook
 - "difficulty": "foundational", "intermediate", or "advanced"
-- "category": a short category label (1–2 words) that best represents the group or theme the concept belongs to, such as "Motion", "Forces", or "Energy"
+- "category": a short category label (1–2 words) that best represents the historical theme, such as "Conflict", "Causes", "Outcomes", "Foreign Policy", "Government", etc.
 - "related_question_ids": array of integers referring to the question IDs above
-- "badge_title": a short gamified label, e.g. "Energy Expert" or "Grammar Pro"
-- "mini_game_hint": a short riddle or clue that could be used in a concept-matching or guessing game
+- "badge_title": a short gamified label in the source language, e.g., "Faction Finder" or "Root Cause Investigator"
+- "mini_game_hint": a short riddle or clue in the source language that could be used in a concept-matching game
 
 Each "concept_name" should contain between 2 and 5 words. Avoid single-word names.
 
 Ensure that every exam question is referenced by at least one key concept in the "related_question_ids" array.
 
-Try to create diverse category labels across all key concepts (for example, some under "Motion", some under "Forces", and others under "Energy" or similar). Avoid assigning the same category to all concepts.
+Try to create diverse category labels across all key concepts. Avoid assigning the same category to all concepts.
 
 In the "gamification" object, include two boss question variants:
-- "boss_question_open": one open-ended question that requires written explanation
-- "boss_question_multiple_choice": one multiple-choice question (with 4 options) testing the same concept combination
+- "boss_question_open": one open-ended question in the source language that requires written explanation
+- "boss_question_multiple_choice": one multiple-choice question (with 4 options) in the source language testing the same concept combination
 
-REQUIRED FORMAT:
+---
+
+## 🎯 ADDITIONAL RULES
+
+### Language
+- Auto-detect textbook language and use it everywhere.
+- No translation, no mixing.
+
+### Style
+- Write like a teacher talking to students.
+- Never mention "the text", "material", or "chapter".
+- Use natural, clear sentences.
+
+### Terminology Rule
+- Only ask meanings of *specialized historical terms* (e.g., hyperinflaatio, sisällissota, Versailles).
+- Never ask about common words (itsenäisyys, demokratia, sota, rauha, war, peace).
+
+### Validation
+- Exactly 2 terminology questions.
+- No generic vocabulary or invented names.
+- All 15 questions grounded, clear, and answerable from the textbook pages.
+
+### Language-Aware Grounding Rule (CRITICAL)
+BEFORE creating each question and concept, detect the textbook language:
+- **If German**: ONLY use facts from visible INFO boxes, captions, timeline dates, or explicit definitions. Never use general historical knowledge.
+- **If Finnish/Swedish/English**: Use all visible text content from pages.
+- **Common rule**: If a date, name, or event is NOT explicitly written in the textbook, skip it entirely.
+
+Examples of what NOT to do:
+- ❌ "Wann wurde das Deutsche Reich gegründet? 1871" (if 1871 not visible in text)
+- ❌ Questions about countries/people never mentioned in the pages
+- ✅ Only use dates from timelines, INFO boxes, or body text
+
+### Self-Check Compression
+Before finalizing, if output approaches length limit, shorten explanations but keep correctness.
+
+---
+
+## 🧩 JSON OUTPUT
+
+**CRITICAL: Your response must be ONLY the following JSON object. No additional text or formatting.**
+
 {
   "questions": [
     {
       "id": 1,
       "type": "multiple_choice",
-      "question": "[Question text in same language as source material]",
-      "options": ["[Option A]", "[Option B]", "[Option C]", "[Option D]"],
-      "correct_answer": "[Exact match from options array]",
-      "explanation": "[Brief explanation in same language]"
+      "question": "[Natural question in source language]",
+      "options": [
+        { "id": "A", "text": "[Answer option text]" },
+        { "id": "B", "text": "[Answer option text]" },
+        { "id": "C", "text": "[Answer option text]" },
+        { "id": "D", "text": "[Answer option text]" }
+      ],
+      "correct_answer": "[Exact match: A, B, C, or D]",
+      "explanation": "[1–2 sentences, factual and concise]"
     }
   ],
   "summary": {
-    "introduction": "[100-250 word introduction]",
-    "key_concepts": "[250-500 word detailed explanation]",
-    "examples_and_applications": "[200-400 word practical examples]",
-    "summary_conclusion": "[100-250 word review]",
-    "total_word_count": [approximate total word count],
-    "language": "[ISO 639-1 language code, e.g., 'fi' for Finnish, 'en' for English]"
+    "introduction": "[100–200 words – introduce the historical topic from the text]",
+    "key_concepts": "[250–400 words – main events, causes, results]",
+    "examples_and_applications": "[150–250 words – help students understand significance]",
+    "summary_conclusion": "[80–150 words – wrap up clearly]",
+    "total_word_count": [number],
+    "language": "[ISO 639-1 code]"
   },
   "key_concepts": [
     {
       "concept_name": "...",
       "definition": "...",
       "difficulty": "intermediate",
-      "category": "Forces",
+      "category": "Conflict",
       "related_question_ids": [1, 4, 7],
       "badge_title": "Concept Master",
-      "mini_game_hint": "This happens when plants use sunlight."
+      "mini_game_hint": "This event changed the course of history."
     }
   ],
   "gamification": {
     "completion_message": "You've mastered all key concepts!",
-    "boss_question_open": "Explain how these ideas connect together.",
+    "boss_question_open": "Explain how these historical events connect together.",
     "boss_question_multiple_choice": {
-      "question": "Which statement best describes how these concepts are related?",
+      "question": "Which statement best describes how these historical concepts are related?",
       "options": [
         "They are completely independent",
-        "They describe different aspects of the same phenomenon",
+        "They describe different aspects of the same historical period",
         "They only apply in specific situations",
         "They contradict each other"
       ],
-      "correct_answer": "They describe different aspects of the same phenomenon"
+      "correct_answer": "They describe different aspects of the same historical period"
     },
-    "reward_text": "Concept Master Badge earned!"
+    "reward_text": "History Master Badge earned!"
   }
 }
 
-IMPORTANT:
-- The correct_answer field must contain the exact text from the options array
-- The summary must be in the SAME language as the questions and source material
-- Include the new fields "key_concepts" and "gamification" in the same JSON response
-- Ensure these are aligned with the questions and summary content
-- Do not reference visual elements in the summary either
-- Ensure that all key concept field values are plain text with no Markdown or HTML formatting. Keep them short, clear, and suitable for display in a web interface`;
+---
+
+## ⚠️ FINAL CHECKLIST
+✅ 15 total questions
+✅ 2 terminology exactly
+✅ No "material/text" references
+✅ No invented facts or external info
+✅ All questions from visible textbook content
+✅ Natural, student-friendly phrasing
+✅ Output under 4000 tokens
+✅ ${EXPECTED_KEY_CONCEPTS_MIN} key concepts extracted
+✅ All key concepts grounded in visible textbook content
+✅ Gamification object with boss question variants`;
 
 async function countWords(text: string): Promise<number> {
-  // Simple word count (split by whitespace)
   return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 }
 
@@ -179,7 +288,7 @@ function generateConceptHTML(concepts: any[], testConfig: any): string {
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ExamGenie – Key Concepts Prototype</title>
+  <title>ExamGenie – Key Concepts Prototype (History Edition)</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -321,12 +430,12 @@ function generateConceptHTML(concepts: any[], testConfig: any): string {
   <div class="container">
     <header>
       <h1>🎓 ExamGenie Key Concepts</h1>
-      <p style="margin: 0.5rem 0; opacity: 0.95;">Interactive Prototype – Click cards to learn!</p>
+      <p style="margin: 0.5rem 0; opacity: 0.95;">History Edition – Interactive Prototype</p>
       <p style="max-width: 600px; margin: 1rem auto; font-size: 0.95rem; line-height: 1.5; opacity: 0.9;"><strong>Purpose:</strong> Help students quickly understand and remember the most important ideas from their textbook material before taking the exam.</p>
     </header>
 
     <div class="test-info">
-      <p><strong>Test Version:</strong> v1.3 (History Edition)</p>
+      <p><strong>Test Version:</strong> v1.3 (History + Key Concepts)</p>
       <p><strong>Model:</strong> ${testConfig.model} (temperature: ${testConfig.temperature})</p>
       <p><strong>Images Processed:</strong> ${testConfig.image_count}</p>
       <p><strong>Questions Generated:</strong> ${testConfig.question_count}</p>
@@ -419,21 +528,42 @@ async function validateGamifiedResponse(parsed: any): Promise<{
     unreferencedQuestions: number[];
     categoryDistribution: Record<string, number>;
     hasBossQuestionVariants: boolean;
+    optionsFormat: 'object' | 'array' | 'mixed';
   }
 }> {
   const issues: string[] = [];
   let valid = true;
 
   // Validate questions array
+  let optionsFormat: 'object' | 'array' | 'mixed' = 'array';
   if (!parsed.questions || !Array.isArray(parsed.questions)) {
     issues.push('❌ Missing or invalid questions array');
     valid = false;
   } else if (parsed.questions.length !== EXAM_QUESTION_COUNT) {
     issues.push(`⚠️  Expected ${EXAM_QUESTION_COUNT} questions, got ${parsed.questions.length}`);
     valid = false;
+  } else {
+    // Check options format (should be object with id/text for history)
+    const hasObjectOptions = parsed.questions.some((q: any) =>
+      q.options && Array.isArray(q.options) && q.options[0]?.id && q.options[0]?.text
+    );
+    const hasArrayOptions = parsed.questions.some((q: any) =>
+      q.options && Array.isArray(q.options) && typeof q.options[0] === 'string'
+    );
+
+    if (hasObjectOptions && hasArrayOptions) {
+      optionsFormat = 'mixed';
+      issues.push('⚠️  Mixed options format detected (some object, some array)');
+    } else if (hasObjectOptions) {
+      optionsFormat = 'object';
+      issues.push('✅ Options format: object with id/text (history format)');
+    } else {
+      optionsFormat = 'array';
+      issues.push('✅ Options format: string array');
+    }
   }
 
-  // Validate summary object (same as before)
+  // Validate summary object
   let totalSummaryWords = 0;
   if (!parsed.summary) {
     issues.push('❌ Missing summary object');
@@ -580,7 +710,8 @@ async function validateGamifiedResponse(parsed: any): Promise<{
     questionCoverage,
     unreferencedQuestions,
     categoryDistribution,
-    hasBossQuestionVariants
+    hasBossQuestionVariants,
+    optionsFormat
   };
 
   return { valid, issues, stats };
@@ -597,10 +728,10 @@ async function testGamifiedConceptGeneration() {
     }
   });
 
-  // Load test images (using physics images from assets)
-  const imagesDir = path.join(__dirname, 'assets/images/physics');
+  // Load test images (using history images from assets)
+  const imagesDir = path.join(__dirname, 'assets/images/history_8th_compr');
   const imageFiles = fs.readdirSync(imagesDir)
-    .filter(file => file.endsWith('.jpeg') || file.endsWith('.jpg') || file.endsWith('.JPG'))
+    .filter(file => file.endsWith('.jpeg') || file.endsWith('.jpg'))
     .filter(file => !file.startsWith('.')) // Skip hidden files
     .sort() // Sort alphabetically
     .slice(0, IMAGE_COUNT); // Take only first IMAGE_COUNT images
@@ -623,11 +754,11 @@ async function testGamifiedConceptGeneration() {
   });
 
   console.log('\n📝 Prompt Configuration:');
-  console.log(`   Category: ${category}`);
+  console.log(`   Type: History + Key Concepts (Combined)`);
   console.log(`   Grade: ${grade}`);
   console.log(`   Questions: ${EXAM_QUESTION_COUNT}`);
   console.log(`   Expected summary length: ~${EXPECTED_SUMMARY_WORDS} words (±${SUMMARY_WORD_TOLERANCE})`);
-  console.log(`   Expected key concepts: ${EXPECTED_KEY_CONCEPTS_MIN}-${EXPECTED_KEY_CONCEPTS_MAX}`);
+  console.log(`   Expected key concepts: ${EXPECTED_KEY_CONCEPTS_MIN}`);
   console.log(`   Prompt size: ${prompt.length} characters`);
 
   console.log('\n⏳ Calling Gemini API...');
@@ -665,7 +796,12 @@ async function testGamifiedConceptGeneration() {
     console.log('\n📊 Parsing response...');
     try {
       // Remove markdown code blocks if present
-      const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      let cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+      // Fix common JSON errors from Gemini output
+      // Pattern: { "id": "B": "text" } should be { "id": "B", "text": "text" }
+      cleanedText = cleanedText.replace(/("id"\s*:\s*"[A-D]")\s*:\s*(")/g, '$1, "text": $2');
+
       const parsed = JSON.parse(cleanedText);
 
       console.log('✅ Valid JSON response');
@@ -707,11 +843,20 @@ async function testGamifiedConceptGeneration() {
         console.log('\n📝 Sample Question:');
         console.log(`   ${sampleQ.question}`);
         if (sampleQ.options) {
-          sampleQ.options.forEach((opt: string, i: number) => {
-            const letter = String.fromCharCode(65 + i);
-            const isCorrect = opt === sampleQ.correct_answer ? ' ✓' : '';
-            console.log(`   ${letter}) ${opt}${isCorrect}`);
-          });
+          if (typeof sampleQ.options[0] === 'object') {
+            // Object format (history)
+            sampleQ.options.forEach((opt: any) => {
+              const isCorrect = opt.id === sampleQ.correct_answer ? ' ✓' : '';
+              console.log(`   ${opt.id}) ${opt.text}${isCorrect}`);
+            });
+          } else {
+            // Array format
+            sampleQ.options.forEach((opt: string, i: number) => {
+              const letter = String.fromCharCode(65 + i);
+              const isCorrect = opt === sampleQ.correct_answer ? ' ✓' : '';
+              console.log(`   ${letter}) ${opt}${isCorrect}`);
+            });
+          }
         }
       }
 
@@ -770,7 +915,7 @@ async function testGamifiedConceptGeneration() {
 
       // Save full results to file
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const outputPath = path.join(__dirname, 'prompttests', `test-gamified-concepts-v1.2-${timestamp}.json`);
+      const outputPath = path.join(__dirname, 'prompttests', `test-history-key-concepts-${timestamp}.json`);
 
       // Ensure directory exists
       const outputDir = path.dirname(outputPath);
@@ -780,11 +925,11 @@ async function testGamifiedConceptGeneration() {
 
       fs.writeFileSync(outputPath, JSON.stringify({
         test_config: {
-          category,
+          type: 'history_with_key_concepts',
           grade,
           question_count: EXAM_QUESTION_COUNT,
           expected_summary_words: EXPECTED_SUMMARY_WORDS,
-          expected_key_concepts: `${EXPECTED_KEY_CONCEPTS_MIN}-${EXPECTED_KEY_CONCEPTS_MAX}`,
+          expected_key_concepts: EXPECTED_KEY_CONCEPTS_MIN,
           prompt_size: prompt.length,
           image_count: imagePaths.length,
           model: MODEL_NAME,
@@ -807,7 +952,8 @@ async function testGamifiedConceptGeneration() {
         const htmlOutput = generateConceptHTML(parsed.key_concepts, {
           model: MODEL_NAME,
           temperature: TEMPERATURE,
-          question_count: EXAM_QUESTION_COUNT
+          question_count: EXAM_QUESTION_COUNT,
+          image_count: imagePaths.length
         });
 
         // Ensure output directory exists
@@ -816,7 +962,7 @@ async function testGamifiedConceptGeneration() {
           fs.mkdirSync(htmlOutputDir, { recursive: true});
         }
 
-        const htmlPath = path.join(htmlOutputDir, `key-concepts-${timestamp}.html`);
+        const htmlPath = path.join(htmlOutputDir, `key-concepts-history-${timestamp}.html`);
         fs.writeFileSync(htmlPath, htmlOutput, 'utf-8');
 
         console.log(`✅ HTML prototype saved to: output/${path.basename(htmlPath)}`);
@@ -826,9 +972,9 @@ async function testGamifiedConceptGeneration() {
       // Final summary
       console.log('\n' + '='.repeat(80));
       if (validation.valid) {
-        console.log('✅ TEST PASSED - Ready for integration!');
+        console.log('✅ TEST PASSED - History prompt works with key concepts!');
         console.log(`📊 Generated:`);
-        console.log(`   - ${validation.stats.questionCount} questions`);
+        console.log(`   - ${validation.stats.questionCount} history questions (grounded)`);
         console.log(`   - ${validation.stats.summaryWordCount} word summary`);
         console.log(`   - ${validation.stats.keyConceptsCount} key concepts`);
         console.log(`   - ${validation.stats.questionCoverage}% question coverage`);
@@ -850,7 +996,7 @@ async function testGamifiedConceptGeneration() {
 
       // Save raw response for debugging
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const errorPath = path.join(__dirname, 'prompttests', `test-gamified-concepts-v1.2-ERROR-${timestamp}.txt`);
+      const errorPath = path.join(__dirname, 'prompttests', `test-history-key-concepts-ERROR-${timestamp}.txt`);
       fs.writeFileSync(errorPath, text);
       console.log(`\n💾 Raw response saved to: ${path.basename(errorPath)}`);
     }
@@ -862,6 +1008,7 @@ async function testGamifiedConceptGeneration() {
 }
 
 // Run the test
-console.log('🚀 Starting Gamified Key Concepts Test');
+console.log('🚀 Starting History + Key Concepts Test');
+console.log('Testing if the history prompt can generate key concepts alongside exam questions');
 console.log('='.repeat(80));
 testGamifiedConceptGeneration().catch(console.error);

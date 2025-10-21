@@ -197,8 +197,19 @@ export class MathExamService {
         console.warn('[Math Service] ⚠️  Warnings:', validation.warnings)
       }
 
-      // Step 5: Calculate usage metadata
-      const usage = createUsageMetadata(prompt, geminiResult.text, undefined)
+      // Step 5: Create usage metadata from cumulative retry costs
+      const usage = {
+        promptTokenCount: geminiResult.cumulativeUsage.promptTokenCount,
+        candidatesTokenCount: geminiResult.cumulativeUsage.candidatesTokenCount,
+        totalTokenCount: geminiResult.cumulativeUsage.totalTokenCount,
+        estimatedCost: geminiResult.cumulativeUsage.estimatedCost,
+        inputCost: (geminiResult.cumulativeUsage.promptTokenCount / 1_000_000) * GEMINI_CONFIG.PRICING.INPUT_COST_PER_1M,
+        outputCost: (geminiResult.cumulativeUsage.candidatesTokenCount / 1_000_000) * GEMINI_CONFIG.PRICING.OUTPUT_COST_PER_1M,
+        model: GEMINI_CONFIG.MODEL_NAME,
+        // Math-specific metadata
+        mathRetryAttempts: geminiResult.cumulativeUsage.attemptsCount,
+        temperatureUsed: geminiResult.temperature
+      }
 
       // Step 6: Extract key concepts (Stage 2)
       console.log('[Math Service] Extracting key concepts (Stage 2)...')
@@ -247,16 +258,35 @@ export class MathExamService {
 
   /**
    * Call Gemini with progressive temperature retry
+   * Accumulates costs from ALL attempts (including failed ones) for accurate cost tracking
    */
   private static async callGeminiWithRetry(
     prompt: string,
     images: ImagePart[],
     processingId: string
-  ): Promise<{ text: string; temperature: number; processingTime: number } | null> {
+  ): Promise<{
+    text: string;
+    temperature: number;
+    processingTime: number;
+    cumulativeUsage: {
+      promptTokenCount: number;
+      candidatesTokenCount: number;
+      totalTokenCount: number;
+      estimatedCost: number;
+      attemptsCount: number;
+    }
+  } | null> {
 
     const genAI = new GoogleGenerativeAI(getGeminiApiKey())
     const temperatures = MATH_EXAM_CONFIG.TEMPERATURE_RETRY_STRATEGY // [0, 0.3, 0.5]
     const maxAttempts = MATH_EXAM_CONFIG.MAX_RETRY_ATTEMPTS // 3
+
+    // Accumulate costs across ALL attempts (successful and failed)
+    let cumulativePromptTokens = 0
+    let cumulativeCandidatesTokens = 0
+    let cumulativeCost = 0
+    let attemptCount = 0
+    let totalProcessingTime = 0
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const currentTemp = temperatures[attempt]
@@ -277,13 +307,30 @@ export class MathExamService {
         const startTime = Date.now()
         const result = await model.generateContent([prompt, ...images])
         const text = result.response.text()
-        const processingTime = Date.now() - startTime
+        const attemptTime = Date.now() - startTime
+        totalProcessingTime += attemptTime
 
-        console.log(`[Math Service] Response received: ${text.length} chars in ${processingTime}ms`)
+        console.log(`[Math Service] Response received: ${text.length} chars in ${attemptTime}ms`)
+
+        // Capture usage from this attempt (even if it fails validation)
+        const usage = result.response.usageMetadata
+        if (usage) {
+          const promptTokens = usage.promptTokenCount || 0
+          const candidatesTokens = usage.candidatesTokenCount || 0
+          const inputCost = (promptTokens / 1_000_000) * GEMINI_CONFIG.PRICING.INPUT_COST_PER_1M
+          const outputCost = (candidatesTokens / 1_000_000) * GEMINI_CONFIG.PRICING.OUTPUT_COST_PER_1M
+
+          cumulativePromptTokens += promptTokens
+          cumulativeCandidatesTokens += candidatesTokens
+          cumulativeCost += (inputCost + outputCost)
+          attemptCount++
+
+          console.log(`[Math Service] Attempt ${attempt + 1} cost: $${(inputCost + outputCost).toFixed(6)} (${promptTokens + candidatesTokens} tokens)`)
+        }
 
         // Check for infinite loop BEFORE parsing
         if (this.detectInfiniteLoop(text)) {
-          console.log(`[Math Service] ⚠️  Infinite loop detected`)
+          console.log(`[Math Service] ⚠️  Infinite loop detected - cost accumulated, trying next temperature`)
           if (attempt < maxAttempts - 1) {
             console.log(`[Math Service] Retrying with temperature ${temperatures[attempt + 1]}`)
             continue
@@ -294,7 +341,7 @@ export class MathExamService {
         // Try to parse to verify it's valid JSON before returning
         const parseResult = safeJsonParse(text)
         if (!parseResult.success) {
-          console.log(`[Math Service] ⚠️  JSON parse failed: ${parseResult.error}`)
+          console.log(`[Math Service] ⚠️  JSON parse failed - cost accumulated, trying next temperature`)
           if (attempt < maxAttempts - 1) {
             console.log(`[Math Service] Retrying with temperature ${temperatures[attempt + 1]}`)
             continue
@@ -302,10 +349,25 @@ export class MathExamService {
           return null
         }
 
-        return { text, temperature: currentTemp, processingTime }
+        // SUCCESS - return with cumulative usage from all attempts
+        console.log(`[Math Service] ✅ Success! Total cost from ${attemptCount} attempt(s): $${cumulativeCost.toFixed(6)}`)
+
+        return {
+          text,
+          temperature: currentTemp,
+          processingTime: totalProcessingTime,
+          cumulativeUsage: {
+            promptTokenCount: cumulativePromptTokens,
+            candidatesTokenCount: cumulativeCandidatesTokens,
+            totalTokenCount: cumulativePromptTokens + cumulativeCandidatesTokens,
+            estimatedCost: cumulativeCost,
+            attemptsCount: attemptCount
+          }
+        }
 
       } catch (error) {
         console.error(`[Math Service] Attempt ${attempt + 1} failed:`, error)
+        // Note: Cost not tracked for hard API errors (network failures, etc.)
         if (attempt === maxAttempts - 1) {
           return null
         }

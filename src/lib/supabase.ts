@@ -72,6 +72,7 @@ export interface ExamData {
   diagnostic_enabled?: boolean
   audio_url?: string | null
   summary_text?: string | null
+  detected_language?: string | null  // ISO 639-1 language code (e.g., 'fi', 'en', 'de')
   key_concepts?: KeyConcept[] | null  // NEW: Gamified learning concepts
   gamification?: GamificationData | null  // NEW: Boss questions and rewards
 }
@@ -203,6 +204,7 @@ export interface ExamGenieExam {
   summary_text: string | null
   audio_url: string | null
   audio_metadata: any | null
+  detected_language: string | null  // ISO 639-1 language code detected from textbook (e.g., 'fi', 'en', 'de')
 }
 
 export interface ExamGenieQuestion {
