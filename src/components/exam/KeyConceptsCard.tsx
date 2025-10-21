@@ -373,18 +373,6 @@ export function KeyConceptsCard({ examId, concepts, gamification, detectedLangua
             💡 <strong>{t('keyConcepts.hint')}:</strong> {currentConcept.mini_game_hint}
           </p>
         </div>
-
-        {/* Related questions */}
-        {currentConcept.related_question_ids && currentConcept.related_question_ids.length > 0 && (
-          <div style={{ marginTop: SPACING.sm }}>
-            <p style={{
-              fontSize: TYPOGRAPHY.fontSize.xs,
-              color: COLORS.primary.light,
-            }}>
-              📝 {t('keyConcepts.relatedQuestions')}: {currentConcept.related_question_ids.join(', ')}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Navigation buttons */}
