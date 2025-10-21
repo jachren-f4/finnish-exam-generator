@@ -411,18 +411,6 @@ export function KeyConceptsCard({ examId, concepts, gamification, detectedLangua
           {currentIndex < concepts.length - 1 ? `${t('keyConcepts.next')} →` : `${t('keyConcepts.complete')} 🎉`}
         </button>
       </div>
-
-      {/* Completion status */}
-      {completedConcepts.size > 0 && (
-        <p style={{
-          marginTop: SPACING.sm,
-          fontSize: TYPOGRAPHY.fontSize.sm,
-          color: COLORS.semantic.success,
-          textAlign: 'center',
-        }}>
-          ✓ {t('keyConcepts.progressText', { completed: completedConcepts.size, total: concepts.length })}
-        </p>
-      )}
     </div>
   )
 }
