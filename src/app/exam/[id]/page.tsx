@@ -213,6 +213,13 @@ export default function ExamMenuPage() {
   const isCompleted = exam.hasBeenCompleted && exam.latestGrading
   const hasAudio = exam.audio_url && exam.audio_url.trim() !== ''
 
+  // Localize subject name
+  const getLocalizedSubject = (subject: string): string => {
+    const subjectKey = subject.toLowerCase()
+    // @ts-ignore - dynamic key access for subjects
+    return t(`subjects.${subjectKey}`) || subject
+  }
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -313,7 +320,7 @@ export default function ExamMenuPage() {
             lineHeight: TYPOGRAPHY.lineHeight.tight,
             textTransform: 'capitalize',
           }}>
-            {exam.subject}
+            {getLocalizedSubject(exam.subject)}
           </h2>
           <p style={{
             fontSize: TYPOGRAPHY.fontSize.sm,
@@ -321,7 +328,7 @@ export default function ExamMenuPage() {
             margin: 0,
             lineHeight: TYPOGRAPHY.lineHeight.tight,
           }}>
-            {t('examMenu.gradeInfo', { grade: exam.grade, count: exam.total_questions })}
+            {t('examMenu.questionsCount', { count: exam.total_questions })}
           </p>
         </div>
 
@@ -359,7 +366,7 @@ export default function ExamMenuPage() {
               marginBottom: '2px',
               color: '#1a1a1a',
             }}>
-              {t('examMenu.audio')}
+              {t('examMenu.audioSummary')}
             </div>
             {rewardStatus.audioEligible ? (
               <div style={{
@@ -668,7 +675,7 @@ export default function ExamMenuPage() {
                       margin: 0,
                       marginBottom: SPACING.xs,
                     }}>
-                      {t('examMenu.audio')} {t('common.done')}
+                      {t('examMenu.audioSummary')}
                     </h3>
                     <p style={{
                       fontSize: TYPOGRAPHY.fontSize.sm,

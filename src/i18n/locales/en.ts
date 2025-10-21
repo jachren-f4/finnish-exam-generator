@@ -29,6 +29,7 @@ export const en: Translations = {
     title: 'ExamGenie',
     genieDollars: 'Genie Dollars',
     audio: 'Audio',
+    audioSummary: 'Audio Summary',
     exam: 'Exam',
     results: 'Results',
     retake: 'Retake',
@@ -43,7 +44,7 @@ export const en: Translations = {
     learn: 'Learn',
     gradeInfo: 'Grade {grade} • {count} questions',
     questionsCount: '{count} questions',
-    rewardAmount: '+{amount}',
+    rewardAmount: '💵 +{amount}',
     audioDescription: 'Listen to an overview of the material before taking the exam',
     startExam: 'Start Exam',
     resultsDescription: 'View your exam results and feedback',
@@ -66,6 +67,26 @@ export const en: Translations = {
     fullExam: 'Full Exam',
     leaderboard: 'Leaderboard',
     aboutExamGenie: 'about ExamGenie, Genie Dollars, and get answers to common questions',
+  },
+
+  subjects: {
+    // Common subjects
+    mathematics: 'Mathematics',
+    history: 'History',
+    historia: 'History',
+    geschichte: 'History',
+    english: 'English',
+    finnish: 'Finnish',
+    swedish: 'Swedish',
+    german: 'German',
+    french: 'French',
+    spanish: 'Spanish',
+    physics: 'Physics',
+    chemistry: 'Chemistry',
+    biology: 'Biology',
+    geography: 'Geography',
+    science: 'Science',
+    // Add more as needed
   },
 
   examTaking: {

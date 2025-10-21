@@ -26,6 +26,7 @@ export interface Translations {
     title: string
     genieDollars: string
     audio: string
+    audioSummary: string
     exam: string
     results: string
     retake: string
@@ -40,7 +41,7 @@ export interface Translations {
     learn: string
     gradeInfo: string // "Grade {grade} • {count} questions"
     questionsCount: string // "{count} Q"
-    rewardAmount: string // "+{amount}"
+    rewardAmount: string // "💵 +{amount}"
     audioDescription: string
     startExam: string
     resultsDescription: string
@@ -63,6 +64,10 @@ export interface Translations {
     fullExam: string
     leaderboard: string
     aboutExamGenie: string
+  }
+
+  subjects: {
+    [key: string]: string
   }
 
   examTaking: {

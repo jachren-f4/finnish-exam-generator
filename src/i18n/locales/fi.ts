@@ -26,6 +26,7 @@ export const fi: Translations = {
     title: 'ExamGenie',
     genieDollars: 'Genie-dollarit',
     audio: 'Audio',
+    audioSummary: 'Ääniyhteenveto',
     exam: 'Koe',
     results: 'Tulokset',
     retake: 'Uusintakoe',
@@ -40,7 +41,7 @@ export const fi: Translations = {
     learn: 'Opi',
     gradeInfo: 'Luokka {grade} • {count} kysymystä',
     questionsCount: '{count} kysymystä',
-    rewardAmount: '+{amount}',
+    rewardAmount: '💵 +{amount}',
     audioDescription: 'Kuuntele yleiskatsaus materiaalista ennen kokeen aloittamista',
     startExam: 'Aloita koe',
     resultsDescription: 'Katso kokeesi tulokset ja palaute',
@@ -63,6 +64,26 @@ export const fi: Translations = {
     fullExam: 'Koko koe',
     leaderboard: 'Tulostaulukko',
     aboutExamGenie: 'ExamGenien, Genie-dollareiden käytöstä ja vastaukset yleisiin kysymyksiin',
+  },
+
+  subjects: {
+    // Yleiset oppiaineet
+    mathematics: 'Matematiikka',
+    history: 'Historia',
+    historia: 'Historia',
+    geschichte: 'Historia',
+    english: 'Englanti',
+    finnish: 'Suomi',
+    swedish: 'Ruotsi',
+    german: 'Saksa',
+    french: 'Ranska',
+    spanish: 'Espanja',
+    physics: 'Fysiikka',
+    chemistry: 'Kemia',
+    biology: 'Biologia',
+    geography: 'Maantiede',
+    science: 'Tiede',
+    // Lisää tarvittaessa
   },
 
   examTaking: {
@@ -181,7 +202,7 @@ export const fi: Translations = {
     // Genie Dollars
     genieDollarsWhat: 'Mitä ovat Genie-dollarit?',
     genieDollarsWhatContent:
-      'Genie-dollarit ovat virtuaalisia palkintoja, joita ansaitset suorittamalla opiskelutoimintoja. Ne näytetään merkissä kokeen valikon yläreunassa. Vaikka ne ovat tällä hetkellä vain hauskoja, ne kannustavat johdonmukaisiin opiskelutottumuksiin ja väliajoin toistamiseen.',
+      'Genie-dollarit ovat virtuaalisia palkintoja, joita ansaitset suorittamalla opiskelutoimintoja. Ne näytetään merkissä kokeen valikon yläreunassa. Vaikka ne ovat tällä hetkellä vain hauskoja, ne kannustavat johdonmukaisiin opiskelutottumuksiin ja väliajoin toistamiseen. Vanhemman kanssa voitte sopia jos niiden tienaamisesta saa jonkun palkinnon.',
     genieDollarsHowToEarn: 'Kuinka ansaita Genie-dollareita',
     genieDollarsHowToEarnContent:
       '📝 Tee koe: +10 Genie-dollaria (ensimmäinen kerta 12 tunnin välein)\n🎧 Kuuntele ääniyhteenveto: +5 Genie-dollaria (täytyy kuunnella 80% kestosta)\n🔄 Uusi koe: +5 Genie-dollaria (12 tunnin kuluttua)\n\nVoit ansaita vain kerran toimintoa kohden 12 tunnin aikana. Tämä kannustaa väliajoin toistamiseen, todistettuun opiskelutekniikkaan.',
@@ -268,7 +289,7 @@ export const fi: Translations = {
     noConceptsAvailable: 'Avainkäsitteitä ei saatavilla',
     bossChallenge: 'Boss-haaste',
     thinkAboutIt: 'Mieti asiaa',
-    reviewConcepts: 'Tarkastele käsitteitä',
+    reviewConcepts: 'Alkuun',
     close: 'Sulje',
     hint: 'Vihje',
     relatedQuestions: 'Liittyvät kysymykset',
