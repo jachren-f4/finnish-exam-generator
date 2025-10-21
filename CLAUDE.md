@@ -88,17 +88,18 @@ This file provides guidance to Claude Code when working with code in this reposi
   - Everything else → standard prompt via getCategoryAwarePrompt()
 
 ### Auto-Language Detection (Web UI)
-- ✅ **Gemini auto-detects textbook language** from images (returns ISO 639-1 code like 'fi', 'en', 'de')
-- ✅ **Stored in DB**: `examgenie_exams.detected_language` field (added Oct 2025)
-- ✅ **Web UI auto-matches**: Exam pages automatically display in textbook's language
-  - Example: Finnish textbook → Finnish UI ("Aloita koe", "Lähetä", etc.)
-  - Overrides `NEXT_PUBLIC_LOCALE` environment variable
-- ✅ **Fallback**: Defaults to 'en' if detection fails
-- **Files modified**:
-  - `/src/lib/supabase.ts` - Added `detected_language` to types
-  - `/src/lib/services/mobile-api-service.ts:636` - Captures language from Gemini response
-  - `/src/i18n/index.ts` - `useTranslation(overrideLocale?)` supports language override
-  - All exam pages (`/exam/[id]`, `/exam/[id]/take`, `/exam/[id]/audio`, `/grading/[id]`)
+- ✅ **Gemini auto-detects** language from images → stored in DB → UI auto-matches
+- ✅ **Database**: `examgenie_exams.detected_language` VARCHAR(5) (ISO 639-1 code)
+- ⚠️ **CRITICAL BUG FIX**: `exam-repository.ts:242` MUST include `detected_language` in return
+  - Missing field causes UI to ignore detection and default to English
+  - Always verify field present when modifying exam data transformations
+- ✅ **Fallback chain**: exam language → `NEXT_PUBLIC_LOCALE` → 'en'
+- ✅ **Hook**: `useTranslation(exam?.detected_language)` overrides env variable
+- **Files**:
+  - Capture: `/src/lib/services/mobile-api-service.ts:636`
+  - API: `/src/lib/services/exam-repository.ts:242`
+  - Hook: `/src/i18n/index.ts`
+  - Translations: `/src/i18n/locales/{fi,en}.ts`
 
 ### Mathematics Special Handling
 - ✅ `category=mathematics` automatically routes to specialized math service
@@ -377,6 +378,7 @@ npx tsx scripts/verify-costs.ts 30  # Verify costs against Google Cloud (30 days
 | Cost metrics showing zero | Check `creation_gemini_usage` populated in examData at line 649 • Verify migration applied • Run `/scripts/verify-costs.ts` |
 | Math costs underestimated | Math service must accumulate retry costs in `callGeminiWithRetry()` • Check `cumulativeUsage` calculation |
 | SQL migration RAISE NOTICE error | Wrap RAISE NOTICE in `DO $$ BEGIN ... END $$;` block • See migrations 20251021000000-20251021000002 |
+| UI language wrong despite DB | `exam-repository.ts` missing `detected_language` field | Verify line ~242 includes field in return object |
 
 ## Architecture Decisions - Don't Break These
 

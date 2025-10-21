@@ -320,6 +320,26 @@ curl -X POST https://exam-generator-staging.vercel.app/api/mobile/exam-questions
 - **Output Language:** Matches source material language
 - ⚠️ **Known Limitation:** `language` parameter accepted by API but not used in prompts - system relies 100% on Gemini's auto-detection from image content
 
+### 5. Auto-Language Detection (Web UI)
+**Web UI automatically matches textbook language** (Added Oct 2025)
+
+- Gemini AI detects language from textbook images during exam creation
+- Stored as ISO 639-1 code (`'fi'`, `'en'`, `'de'`, etc.) in database
+- Web pages automatically display in detected language
+- Overrides `NEXT_PUBLIC_LOCALE` environment variable
+
+**Example:** Finnish textbook → Gemini returns `"language": "fi"` → UI shows "Aloita koe", "Tulokset", etc.
+
+**Currently Supported UI Languages:**
+- Finnish (`fi`) ✅
+- English (`en`) ✅
+
+**Adding New Languages:**
+1. Create translation file: `/src/i18n/locales/[code].ts` (copy from `en.ts`)
+2. Translate all strings
+3. Import in `/src/i18n/locales/index.ts`
+4. Update type in `/src/i18n/types.ts`
+
 ### 5. Mobile-First Design
 - **Design System:** Extracted from ExamGenie Flutter app for visual consistency
 - **Design Tokens:** Centralized in `/src/constants/design-tokens.ts`
@@ -721,6 +741,7 @@ vercel logs       # Production logs
 | **Database scripts not working** | Scripts call `db-query.ts` which must exist in project root • Requires `SUPABASE_SERVICE_ROLE_KEY` in env files |
 | **Legacy table query fails** | Tables `exams`, `grading`, `answers` no longer exist (dropped during Oct 2025 migration) • Use `examgenie_exams`, `examgenie_grading`, `examgenie_questions` instead |
 | **Grading returns wrong scale** | New system uses '4-10' not '1-10' • Old `grading` table removed • Use `examgenie_grading` table |
+| **UI not using detected language** | Database shows `detected_language='fi'` but UI displays English • Cause: API endpoint not returning field • Fix: Verify `exam-repository.ts:242` includes `detected_language` in return object |
 
 ## Important Notes
 
