@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { KeyConcept, GamificationData } from '@/lib/supabase'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '@/constants/design-tokens'
 import { useTranslation } from '@/i18n'
+import { awardKeyConceptsDollars, GENIE_DOLLAR_REWARDS } from '@/lib/utils/genie-dollars'
 
 interface KeyConceptsCardProps {
   examId: string
@@ -19,6 +20,7 @@ export function KeyConceptsCard({ examId, concepts, gamification, detectedLangua
   const [completedConcepts, setCompletedConcepts] = useState<Set<number>>(new Set())
   const [showMiniGame, setShowMiniGame] = useState(false)
   const [allConceptsCompleted, setAllConceptsCompleted] = useState(false)
+  const [dollarsEarned, setDollarsEarned] = useState(0)
 
   const storageKey = `examgenie_concepts_${examId}`
 
@@ -54,7 +56,9 @@ export function KeyConceptsCard({ examId, concepts, gamification, detectedLangua
       setCompletedConcepts(newCompleted)
       saveProgress(newCompleted, newIndex, false)
     } else {
-      // All concepts completed
+      // All concepts completed - award Genie Dollars
+      const earned = awardKeyConceptsDollars(examId)
+      setDollarsEarned(earned)
       setCompletedConcepts(newCompleted)
       setAllConceptsCompleted(true)
       setShowMiniGame(true)
@@ -143,9 +147,38 @@ export function KeyConceptsCard({ examId, concepts, gamification, detectedLangua
           <p style={{
             fontSize: TYPOGRAPHY.fontSize.sm,
             color: COLORS.primary.medium,
+            marginBottom: dollarsEarned > 0 ? SPACING.md : 0,
           }}>
             {gamification.reward_text}
           </p>
+
+          {/* Genie Dollars Reward */}
+          {dollarsEarned > 0 && (
+            <div style={{
+              display: 'inline-block',
+              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+              border: '2px solid #f59e0b',
+              borderRadius: RADIUS.lg,
+              padding: `${SPACING.md} ${SPACING.lg}`,
+              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+            }}>
+              <div style={{
+                fontSize: TYPOGRAPHY.fontSize['2xl'],
+                fontWeight: TYPOGRAPHY.fontWeight.bold,
+                color: '#92400e',
+                marginBottom: SPACING.xs,
+              }}>
+                💵 +{dollarsEarned}
+              </div>
+              <div style={{
+                fontSize: TYPOGRAPHY.fontSize.sm,
+                color: '#92400e',
+                fontWeight: TYPOGRAPHY.fontWeight.semibold,
+              }}>
+                Genie Dollars!
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Boss question */}
@@ -373,18 +406,6 @@ export function KeyConceptsCard({ examId, concepts, gamification, detectedLangua
             💡 <strong>{t('keyConcepts.hint')}:</strong> {currentConcept.mini_game_hint}
           </p>
         </div>
-
-        {/* Related questions */}
-        {currentConcept.related_question_ids && currentConcept.related_question_ids.length > 0 && (
-          <div style={{ marginTop: SPACING.sm }}>
-            <p style={{
-              fontSize: TYPOGRAPHY.fontSize.xs,
-              color: COLORS.primary.light,
-            }}>
-              📝 {t('keyConcepts.relatedQuestions')}: {currentConcept.related_question_ids.join(', ')}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Navigation buttons */}
@@ -423,18 +444,6 @@ export function KeyConceptsCard({ examId, concepts, gamification, detectedLangua
           {currentIndex < concepts.length - 1 ? `${t('keyConcepts.next')} →` : `${t('keyConcepts.complete')} 🎉`}
         </button>
       </div>
-
-      {/* Completion status */}
-      {completedConcepts.size > 0 && (
-        <p style={{
-          marginTop: SPACING.sm,
-          fontSize: TYPOGRAPHY.fontSize.sm,
-          color: COLORS.semantic.success,
-          textAlign: 'center',
-        }}>
-          ✓ {t('keyConcepts.progressText', { completed: completedConcepts.size, total: concepts.length })}
-        </p>
-      )}
     </div>
   )
 }
