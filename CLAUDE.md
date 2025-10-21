@@ -431,6 +431,7 @@ npx tsx scripts/verify-costs.ts 30  # Verify costs against Google Cloud (30 days
 - ✅ Same 12-hour cooldown as other rewards
 - ✅ Tracks via `keyConceptsEarned` and `keyConceptsLastEarnedAt`
 
+
 ### Exam Menu Architecture
 - Hub page at `/exam/[id]` with cards for Audio/Exam/Results
 - 3×2 ultra-compact grid layout
