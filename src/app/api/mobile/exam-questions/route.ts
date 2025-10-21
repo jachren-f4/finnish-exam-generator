@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
         processingId,
         // ExamGenie MVP parameters
         category: category || undefined,
-        subject: subject && !category ? subject : undefined, // Only use subject if category not provided
+        subject: subject || undefined, // Store subject from endpoint, category determines prompt routing
         grade,
         language,
         user_id: finalUserId || authContext.user?.id // Use finalUserId (JWT or body) or authenticated user
