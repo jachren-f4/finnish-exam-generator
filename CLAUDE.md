@@ -77,14 +77,15 @@ This file provides guidance to Claude Code when working with code in this reposi
 ## Critical Knowledge - Common Pitfalls
 
 ### Parameter Usage (Important!)
-- **`subject` parameter**: Routes to specialized prompts + stored in DB
-  - **Routing**: If contains "historia", "history", or "geschichte" (case-insensitive) → getHistoryPrompt()
-  - **Storage**: Always stored in DB regardless of routing
-  - **Example**: `subject=Historia` → Finnish history exam with content-focused questions
+- **`subject` parameter**: Stored in DB (used for analytics, NOT routing)
+  - **Storage**: Always stored in DB **regardless of category** → used for analytics
+  - ⚠️ **Previous bug (fixed Oct 21, 2025)**: subject was discarded when category was present, defaulting to 'Yleinen'
+  - **Example**: `category=core_academics&subject=Historia` → stores "Historia" in DB
 - **`language` parameter**: Accepted by API but **NOT used in prompts** (Gemini auto-detects from images)
 - **`category` parameter**: Routes to service-specific prompts
   - `"mathematics"` → math-exam-service.ts (LaTeX, 3-level validation)
   - `"language_studies"` → getLanguageStudiesPrompt()
+  - Special routing: If subject contains "historia", "history", or "geschichte" → getHistoryPrompt()
   - Everything else → standard prompt via getCategoryAwarePrompt()
 
 ### Auto-Language Detection (Web UI)
@@ -100,6 +101,16 @@ This file provides guidance to Claude Code when working with code in this reposi
   - API: `/src/lib/services/exam-repository.ts:242`
   - Hook: `/src/i18n/index.ts`
   - Translations: `/src/i18n/locales/{fi,en}.ts`
+
+### UI Component Language Detection
+- ✅ **KeyConceptsCard** and **OnboardingOverlay** must receive `detectedLanguage` prop
+- ✅ Components use `useTranslation(detectedLanguage)` to match exam language
+- ⚠️ **Key concepts content** from Gemini is already in correct language (no prompt changes needed)
+- ⚠️ **UI strings** (buttons, titles, labels) require i18n translation files
+- **Files**:
+  - Components: `/src/components/exam/KeyConceptsCard.tsx`, `/src/components/exam/OnboardingOverlay.tsx`
+  - Translations: `/src/i18n/locales/{en,fi}.ts` (keyConcepts section)
+  - Types: `/src/i18n/types.ts` (keyConcepts interface)
 
 ### Mathematics Special Handling
 - ✅ `category=mathematics` automatically routes to specialized math service
@@ -391,6 +402,7 @@ npx tsx scripts/verify-costs.ts 30  # Verify costs against Google Cloud (30 days
 | Math costs underestimated | Math service must accumulate retry costs in `callGeminiWithRetry()` • Check `cumulativeUsage` calculation |
 | SQL migration RAISE NOTICE error | Wrap RAISE NOTICE in `DO $$ BEGIN ... END $$;` block • See migrations 20251021000000-20251021000002 |
 | UI language wrong despite DB | `exam-repository.ts` missing `detected_language` field | Verify line ~242 includes field in return object |
+| Key concepts UI in English for Finnish exam | UI components using hardcoded strings instead of i18n • Fixed Oct 21, 2025 | Key concepts content from Gemini already in correct language • Issue was KeyConceptsCard/OnboardingOverlay not using useTranslation(detectedLanguage) |
 | Quota exceeded (429 error) | Hit 1M tokens/day free tier limit • Wait until midnight UTC • Or enable billing in Google AI Studio • Run `check-token-usage.ts` to monitor |
 
 ## Architecture Decisions - Don't Break These
