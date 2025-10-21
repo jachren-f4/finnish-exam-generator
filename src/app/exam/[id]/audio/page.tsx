@@ -73,7 +73,7 @@ export default function AudioSummaryPage() {
 
       // Check if audio is available
       if (!examData.audio_url || examData.audio_url.trim() === '') {
-        throw new Error('Audio summary not available for this exam')
+        throw new Error(t('examAudio.audioNotAvailable'))
       }
     } catch (err) {
       console.error('Error fetching exam:', err)
@@ -145,13 +145,13 @@ export default function AudioSummaryPage() {
     if (listeningPercentage >= REQUIRED_PERCENTAGE) {
       const awarded = awardAudioDollars(examId)
       if (awarded > 0) {
-        setCelebrationMessage(`🎉 You earned ${awarded} Genie Dollars! 💵`)
+        setCelebrationMessage(t('examAudio.earnedReward', { amount: awarded }))
         // Clear message after 3 seconds
         setTimeout(() => setCelebrationMessage(''), 3000)
       }
     } else {
       // Show message if threshold not met
-      setCelebrationMessage(`⏰ Listen to at least ${REQUIRED_PERCENTAGE}% to earn Genie Dollars`)
+      setCelebrationMessage(t('examAudio.listenThreshold', { percent: REQUIRED_PERCENTAGE }))
       setTimeout(() => setCelebrationMessage(''), 3000)
     }
   }
@@ -238,7 +238,7 @@ export default function AudioSummaryPage() {
                 transition: TRANSITIONS.normal,
               }}
             >
-              Back to Menu
+              {t('common.backToMenu')}
             </button>
           </div>
         </div>
@@ -318,7 +318,7 @@ export default function AudioSummaryPage() {
             color: COLORS.primary.text,
             margin: 0,
           }}>
-            Audio Summary
+            {t('examAudio.title')}
           </h1>
         </div>
       </div>
@@ -354,7 +354,7 @@ export default function AudioSummaryPage() {
             margin: 0,
             lineHeight: TYPOGRAPHY.lineHeight.normal,
           }}>
-            Grade {exam.grade} • Audio overview
+            {t('examAudio.gradeInfo', { grade: exam.grade })}
           </p>
         </div>
 
@@ -500,13 +500,13 @@ export default function AudioSummaryPage() {
               flexWrap: 'wrap',
             }}>
               {exam.audio_metadata.duration_seconds && (
-                <span>Duration: {formatDuration(exam.audio_metadata.duration_seconds)}</span>
+                <span>{t('examAudio.duration')} {formatDuration(exam.audio_metadata.duration_seconds)}</span>
               )}
               {exam.audio_metadata.word_count && (
-                <span>• {exam.audio_metadata.word_count} words</span>
+                <span>• {t('examAudio.words', { count: exam.audio_metadata.word_count })}</span>
               )}
               {exam.audio_metadata.language && (
-                <span>• {exam.audio_metadata.language.toUpperCase()}</span>
+                <span>• {t('examAudio.language', { language: exam.audio_metadata.language.toUpperCase() })}</span>
               )}
             </div>
           )}
@@ -528,7 +528,7 @@ export default function AudioSummaryPage() {
               marginBottom: SPACING.md,
               lineHeight: TYPOGRAPHY.lineHeight.normal,
             }}>
-              Summary Text
+              {t('examAudio.summaryText')}
             </h3>
             <div style={{
               fontSize: TYPOGRAPHY.fontSize.base,

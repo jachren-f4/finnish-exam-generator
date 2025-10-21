@@ -550,6 +550,33 @@ Two layout systems allow easy switching between UI variants:
 
 **Why this design?** Works well with iOS Safari bottom address bar • Maximizes space for question content • Previous answer available but not intrusive • Tested across 17 variant prototypes (`/public/retake-variants/`)
 
+### 13. Key Concepts & Gamified Learning
+
+**Auto-Generated Learning Cards**
+- Gemini extracts **imageCount × 3 key concepts** from textbook material
+- Each concept includes: name, definition, difficulty, category, badge, mini-game hint
+- Swipeable card interface with progress tracking (localStorage)
+- Boss challenge unlocks after completing all concepts
+
+**Example:** 3 images → 9 concepts (foundational/intermediate/advanced)
+
+### 14. Cost Monitoring & Free Tier
+
+**Free Tier Limits:**
+- 1,000,000 tokens/day (~140 exams/day)
+- 1,500 requests/day
+- No billing required for development
+
+**Monitoring Scripts:**
+```bash
+npx tsx check-token-usage.ts              # Daily usage
+npx tsx run-cost-verification.ts          # 30-day analysis
+```
+
+**Guides:**
+- `/COST_VERIFICATION_GUIDE.md` - Verify costs match Google billing
+- `/FREE_TIER_MONITORING_GUIDE.md` - When to enable billing
+
 ## Analytics Dashboard
 
 Password-protected admin dashboard for tracking app usage metrics.

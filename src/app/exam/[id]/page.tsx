@@ -797,7 +797,7 @@ export default function ExamMenuPage() {
                     gap: SPACING.sm,
                   }}
                 >
-                  Listen Now
+                  {t('examMenu.listenNow')}
                   {rewardStatus.audioEligible && (
                     <span style={{
                       background: '#fef3c7',
@@ -960,7 +960,7 @@ export default function ExamMenuPage() {
                     transition: TRANSITIONS.normal,
                   }}
                 >
-                  {t('examMenu.view')} Results
+                  {t('examMenu.viewResults')}
                 </button>
               )}
             </div>
@@ -994,7 +994,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     marginBottom: SPACING.xs,
                   }}>
-                    {t('examMenu.retake')} Full Exam
+                    {t('examMenu.retake')} {t('examMenu.fullExam')}
                   </h3>
                   <p style={{
                     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -1138,7 +1138,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     marginBottom: SPACING.xs,
                   }}>
-                    Leaderboard
+                    {t('examMenu.leaderboard')}
                   </h3>
                   <p style={{
                     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -1180,7 +1180,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     marginBottom: SPACING.xs,
                   }}>
-                    {t('examMenu.help')} & FAQ
+                    {t('examMenu.helpFaq')}
                   </h3>
                   <p style={{
                     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -1188,7 +1188,7 @@ export default function ExamMenuPage() {
                     margin: 0,
                     lineHeight: TYPOGRAPHY.lineHeight.relaxed,
                   }}>
-                    {t('examMenu.learn')} about ExamGenie, Genie Dollars, and get answers to common questions
+                    {t('examMenu.learn')} {t('examMenu.aboutExamGenie')}
                   </p>
                 </div>
               </div>
@@ -1208,7 +1208,7 @@ export default function ExamMenuPage() {
                   transition: TRANSITIONS.normal,
                 }}
               >
-                {t('examMenu.view')} Help
+                {t('examMenu.viewHelp')}
               </button>
             </div>
           </div>

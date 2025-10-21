@@ -59,6 +59,10 @@ export const fi: Translations = {
     helpFaq: 'Ohje ja UKK',
     helpDescription: 'Opi ExamGenien, Genie-dollareiden käytöstä ja vastaukset yleisiin kysymyksiin',
     viewHelp: 'Katso ohje',
+    listenNow: 'Kuuntele nyt',
+    fullExam: 'Koko koe',
+    leaderboard: 'Tulostaulukko',
+    aboutExamGenie: 'ExamGenien, Genie-dollareiden käytöstä ja vastaukset yleisiin kysymyksiin',
   },
 
   examTaking: {
@@ -75,6 +79,14 @@ export const fi: Translations = {
     notGraded: 'Ei vielä arvosteltu',
     notGradedDesc: 'Tätä koetta ei ole vielä arvosteltu.',
     start: 'Aloita',
+    submissionFailed: 'Vastausten lähetys epäonnistui',
+    noWrongAnswers: 'Ei vääriä vastauksia harjoiteltavaksi!',
+    previousAnswer: 'Edellinen vastaus',
+    tapToView: 'Napauta nähdäksesi',
+    youAnswered: 'Vastasit:',
+    noAnswer: 'Ei vastausta',
+    close: 'Sulje',
+    previousPoints: 'Edellinen: {status} {points}/{maxPoints} pistettä • {action}',
   },
 
   examAudio: {
@@ -102,6 +114,21 @@ export const fi: Translations = {
     incorrect: 'Väärin',
     total: 'Yhteensä',
     points: '{points} p',
+    excellentWork: 'Erinomaista työtä!',
+    goodJob: 'Hyvää työtä!',
+    keepPracticing: 'Jatka harjoittelua',
+    questionOf: 'Kysymys {current} / {total}',
+    yourAnswer: 'Vastauksesi',
+    correctAnswer: 'Oikea vastaus',
+    resultsReviewed: 'Tulokset tarkistettu!',
+    reviewedAll: 'Olet tarkistanut kaikki {count} kysymystä',
+    attemptNumber: 'Yritys #{number}',
+    improvement: 'Parannusta!',
+    keepTrying: 'Jatka harjoittelua',
+    sameScore: 'Sama tulos',
+    gradeDiff: 'Arvosana: {diff}',
+    pointsDiff: 'Pisteet: {diff}',
+    wrong: 'Väärin',
   },
 
   sharedExam: {

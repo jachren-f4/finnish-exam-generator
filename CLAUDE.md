@@ -140,6 +140,12 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ✅ Math audio uses spoken notation (converts LaTeX to human-readable)
 - ❌ Rewards only given after 80% of audio duration played
 
+### Key Concepts & Cost Tracking
+- ✅ imageCount NOW passed to all prompts (affects concept generation: imageCount × 3)
+- ✅ localStorage key: `examgenie_concepts_{examId}` for progress
+- ⚠️ Free tier: 1M tokens/day = ~140 exams/day (monitor with `check-token-usage.ts`)
+- ⚠️ API returns 429 error when quota exceeded (no auto-billing)
+
 ### Answer Shuffling
 - ✅ Fisher-Yates algorithm in `/src/lib/utils/question-shuffler.ts`
 - ✅ Shuffles AFTER Gemini generates, BEFORE DB storage
@@ -211,6 +217,12 @@ This file provides guidance to Claude Code when working with code in this reposi
 - **Analytics API**: `/src/app/api/admin/analytics/route.ts`
 - **Analytics Dashboard**: `/src/app/admin/analytics/page.tsx`
 - **Analytics Plan**: `/SESSION_ANALYTICS_IMPLEMENTATION_PLAN.md`
+
+### Key Concepts & Gamification
+- **Key Concepts Card**: `/src/components/exam/KeyConceptsCard.tsx`
+- **Database Migration**: `/supabase/migrations/20251021000000_add_key_concepts.sql`
+- **Cost Monitoring**: `/run-cost-verification.ts`, `/check-token-usage.ts`
+- **Guides**: `/COST_VERIFICATION_GUIDE.md`, `/FREE_TIER_MONITORING_GUIDE.md`
 
 ### Cost Tracking
 - **Exam creation costs**: `/src/lib/services/mobile-api-service.ts:649` (examData insertion - CRITICAL)
@@ -379,6 +391,7 @@ npx tsx scripts/verify-costs.ts 30  # Verify costs against Google Cloud (30 days
 | Math costs underestimated | Math service must accumulate retry costs in `callGeminiWithRetry()` • Check `cumulativeUsage` calculation |
 | SQL migration RAISE NOTICE error | Wrap RAISE NOTICE in `DO $$ BEGIN ... END $$;` block • See migrations 20251021000000-20251021000002 |
 | UI language wrong despite DB | `exam-repository.ts` missing `detected_language` field | Verify line ~242 includes field in return object |
+| Quota exceeded (429 error) | Hit 1M tokens/day free tier limit • Wait until midnight UTC • Or enable billing in Google AI Studio • Run `check-token-usage.ts` to monitor |
 
 ## Architecture Decisions - Don't Break These
 

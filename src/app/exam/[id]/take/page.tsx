@@ -176,7 +176,7 @@ export default function ExamPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Answer submission failed')
+        throw new Error(errorData.error || t('examTaking.submissionFailed'))
       }
 
       const result = await response.json()
@@ -189,7 +189,7 @@ export default function ExamPage() {
 
     } catch (error) {
       console.error('Error submitting answers:', error)
-      setError(error instanceof Error ? error.message : 'Answer submission failed')
+      setError(error instanceof Error ? error.message : t('examTaking.submissionFailed'))
     } finally {
       setIsSubmitting(false)
       setShowConfirmDialog(false)
@@ -358,7 +358,7 @@ export default function ExamPage() {
               fontSize: TYPOGRAPHY.fontSize.base,
               color: COLORS.primary.medium,
               marginBottom: SPACING.lg,
-            }}>{examMode === 'wrong-only' ? 'No wrong answers to practice!' : t('common.notFound')}</p>
+            }}>{examMode === 'wrong-only' ? t('examTaking.noWrongAnswers') : t('common.notFound')}</p>
           </div>
         </div>
       </div>
@@ -460,7 +460,7 @@ export default function ExamPage() {
             color: COLORS.primary.text,
             margin: 0,
           }}>
-            Take exam
+            {t('examTaking.title')}
           </h1>
         </div>
       </div>
@@ -830,7 +830,12 @@ export default function ExamPage() {
             zIndex: 100,
           }}
         >
-          Previous: {getPreviousAnswer(currentQ.id)?.points_awarded === getPreviousAnswer(currentQ.id)?.max_points ? '✓' : '✗'} {getPreviousAnswer(currentQ.id)?.points_awarded}/{getPreviousAnswer(currentQ.id)?.max_points} points • Tap to view
+          {t('examTaking.previousPoints', {
+            status: getPreviousAnswer(currentQ.id)?.points_awarded === getPreviousAnswer(currentQ.id)?.max_points ? '✓' : '✗',
+            points: getPreviousAnswer(currentQ.id)?.points_awarded,
+            maxPoints: getPreviousAnswer(currentQ.id)?.max_points,
+            action: t('examTaking.tapToView')
+          })}
         </div>
       )}
 
@@ -882,7 +887,7 @@ export default function ExamPage() {
             fontWeight: TYPOGRAPHY.fontWeight.semibold,
             color: COLORS.primary.text,
           }}>
-            Previous Answer {getPreviousAnswer(currentQ.id)?.points_awarded === getPreviousAnswer(currentQ.id)?.max_points ? '✓' : '✗'}
+            {t('examTaking.previousAnswer')} {getPreviousAnswer(currentQ.id)?.points_awarded === getPreviousAnswer(currentQ.id)?.max_points ? '✓' : '✗'}
           </h3>
 
           <div style={{
@@ -890,14 +895,14 @@ export default function ExamPage() {
             color: COLORS.primary.medium,
             marginBottom: SPACING.sm,
           }}>
-            <p style={{ marginBottom: SPACING.xs }}><strong>You answered:</strong></p>
+            <p style={{ marginBottom: SPACING.xs }}><strong>{t('examTaking.youAnswered')}</strong></p>
             <p style={{
               marginBottom: SPACING.sm,
               fontSize: TYPOGRAPHY.fontSize.base,
               color: COLORS.primary.text,
               fontWeight: TYPOGRAPHY.fontWeight.medium,
             }}>
-              {getPreviousAnswer(currentQ.id)?.student_answer || 'No answer'}
+              {getPreviousAnswer(currentQ.id)?.student_answer || t('examTaking.noAnswer')}
             </p>
             <p style={{
               color: getPreviousAnswer(currentQ.id)?.points_awarded === getPreviousAnswer(currentQ.id)?.max_points
@@ -930,7 +935,7 @@ export default function ExamPage() {
               minHeight: TOUCH_TARGETS.comfortable,
             }}
           >
-            Close
+            {t('examTaking.close')}
           </button>
         </div>
       )}

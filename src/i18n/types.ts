@@ -59,6 +59,10 @@ export interface Translations {
     helpFaq: string
     helpDescription: string
     viewHelp: string
+    listenNow: string
+    fullExam: string
+    leaderboard: string
+    aboutExamGenie: string
   }
 
   examTaking: {
@@ -75,6 +79,14 @@ export interface Translations {
     notGraded: string
     notGradedDesc: string
     start: string
+    submissionFailed: string
+    noWrongAnswers: string
+    previousAnswer: string
+    tapToView: string
+    youAnswered: string
+    noAnswer: string
+    close: string
+    previousPoints: string // "Previous: {status} {points}/{maxPoints} points • {action}"
   }
 
   examAudio: {
@@ -102,6 +114,21 @@ export interface Translations {
     incorrect: string
     total: string
     points: string // "{points} pts"
+    excellentWork: string
+    goodJob: string
+    keepPracticing: string
+    questionOf: string // "Question {current} of {total}"
+    yourAnswer: string
+    correctAnswer: string
+    resultsReviewed: string
+    reviewedAll: string // "You've reviewed all {count} questions"
+    attemptNumber: string // "Attempt #{number}"
+    improvement: string
+    keepTrying: string
+    sameScore: string
+    gradeDiff: string // "Grade: {diff}"
+    pointsDiff: string // "Points: {diff}"
+    wrong: string
   }
 
   sharedExam: {

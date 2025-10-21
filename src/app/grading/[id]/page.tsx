@@ -55,7 +55,7 @@ export default function GradingPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to load results')
+        throw new Error(errorData.error || t('examTaking.noResults'))
       }
 
       const responseData = await response.json()
@@ -370,7 +370,7 @@ export default function GradingPage() {
                   {grading.final_grade}
                 </div>
                 <div style={{ fontSize: TYPOGRAPHY.fontSize.xl, opacity: 0.95, marginBottom: SPACING.lg }}>
-                  Excellent Work!
+                  {t('examGrading.excellentWork')}
                 </div>
                 <div style={{ fontSize: TYPOGRAPHY.fontSize.xl, opacity: 0.95, marginBottom: SPACING.xl }}>
                   {grading.total_points} / {grading.max_total_points} {EXAM_UI.POINTS} ({grading.percentage}%)
@@ -380,19 +380,19 @@ export default function GradingPage() {
                     <div style={{ fontSize: TYPOGRAPHY.fontSize['2xl'], fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.xs }}>
                       {grading.questions_correct}
                     </div>
-                    <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>Correct</div>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>{t('examGrading.correct')}</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: TYPOGRAPHY.fontSize['2xl'], fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.xs }}>
                       {grading.questions_partial}
                     </div>
-                    <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>Partial</div>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>{t('examGrading.partial')}</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: TYPOGRAPHY.fontSize['2xl'], fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.xs }}>
                       {grading.questions_incorrect}
                     </div>
-                    <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>Wrong</div>
+                    <div style={{ fontSize: TYPOGRAPHY.fontSize.sm, opacity: 0.9 }}>{t('examGrading.wrong')}</div>
                   </div>
                 </div>
               </div>
@@ -444,7 +444,7 @@ export default function GradingPage() {
                       fontWeight: TYPOGRAPHY.fontWeight.semibold,
                       marginBottom: SPACING.lg,
                     }}>
-                      Question {index + 1} of {grading.questions.length}
+                      {t('examGrading.questionOf', { current: index + 1, total: grading.questions.length })}
                     </div>
                     <div style={{
                       fontSize: TYPOGRAPHY.fontSize.xl,
@@ -489,7 +489,7 @@ export default function GradingPage() {
                           opacity: 0.7,
                           marginBottom: SPACING.xs,
                         }}>
-                          Your Answer
+                          {t('examGrading.yourAnswer')}
                         </div>
                         <div style={{ fontSize: TYPOGRAPHY.fontSize.base, lineHeight: TYPOGRAPHY.lineHeight.relaxed }}>
                           {question.student_answer || t('examTaking.yourAnswer')}
@@ -503,7 +503,7 @@ export default function GradingPage() {
                           opacity: 0.7,
                           marginBottom: SPACING.xs,
                         }}>
-                          Correct Answer
+                          {t('examGrading.correctAnswer')}
                         </div>
                         <div style={{ fontSize: TYPOGRAPHY.fontSize.base, lineHeight: TYPOGRAPHY.lineHeight.relaxed }}>
                           {question.expected_answer}
@@ -555,10 +555,10 @@ export default function GradingPage() {
               <div>
                 <div style={{ fontSize: '80px', marginBottom: SPACING.lg }}>✨</div>
                 <div style={{ fontSize: TYPOGRAPHY.fontSize['2xl'], fontWeight: TYPOGRAPHY.fontWeight.bold, marginBottom: SPACING.md }}>
-                  Results Reviewed!
+                  {t('examGrading.resultsReviewed')}
                 </div>
                 <div style={{ fontSize: TYPOGRAPHY.fontSize.base, opacity: 0.9, marginBottom: SPACING.xl }}>
-                  You've reviewed all {grading.questions?.length || 0} questions
+                  {t('examGrading.reviewedAll', { count: grading.questions?.length || 0 })}
                 </div>
                 <button
                   onClick={() => window.location.href = `/exam/${examId}`}
@@ -575,7 +575,7 @@ export default function GradingPage() {
                     minHeight: TOUCH_TARGETS.comfortable,
                   }}
                 >
-                  Back to Menu
+                  {t('common.backToMenu')}
                 </button>
               </div>
             </div>
@@ -699,7 +699,7 @@ export default function GradingPage() {
                 marginTop: SPACING.sm,
                 fontStyle: 'italic',
               }}>
-                Attempt #{attemptNumber}
+                {t('examGrading.attemptNumber', { number: attemptNumber })}
               </p>
             )}
           </div>
@@ -726,13 +726,13 @@ export default function GradingPage() {
                 color: COLORS.primary.text,
                 marginBottom: SPACING.xs,
               }}>
-                {isImproved ? '📈 Improvement!' : isWorsened ? '📉 Keep Practicing' : '➡️ Same Score'}
+                {isImproved ? `📈 ${t('examGrading.improvement')}` : isWorsened ? `📉 ${t('examGrading.keepPracticing')}` : `➡️ ${t('examGrading.sameScore')}`}
               </div>
               <div style={{
                 fontSize: TYPOGRAPHY.fontSize.xs,
                 color: COLORS.primary.medium,
               }}>
-                Grade: {gradeDiff > 0 ? '+' : ''}{gradeDiff.toFixed(1)} • Points: {pointsDiff > 0 ? '+' : ''}{pointsDiff}
+                {t('examGrading.gradeDiff', { diff: `${gradeDiff > 0 ? '+' : ''}${gradeDiff.toFixed(1)}` })} • {t('examGrading.pointsDiff', { diff: `${pointsDiff > 0 ? '+' : ''}${pointsDiff}` })}
               </div>
             </div>
           )
@@ -1038,7 +1038,7 @@ export default function GradingPage() {
               cursor: 'pointer',
             }}
           >
-            {ICONS.ARROW_LEFT} Back to Menu
+            {ICONS.ARROW_LEFT} {t('common.backToMenu')}
           </button>
           <button
             onClick={() => window.print()}

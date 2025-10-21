@@ -9,7 +9,9 @@ import { config } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
 
 // Load environment variables
-config({ path: '.env.local.staging' })
+const envFile = process.argv[2] || '.env.local.staging'
+console.log(`📁 Using environment file: ${envFile}\n`)
+config({ path: envFile })
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY

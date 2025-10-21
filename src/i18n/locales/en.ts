@@ -62,6 +62,10 @@ export const en: Translations = {
     helpFaq: 'Help & FAQ',
     helpDescription: 'Learn about ExamGenie, Genie Dollars, and get answers to common questions',
     viewHelp: 'View Help',
+    listenNow: 'Listen Now',
+    fullExam: 'Full Exam',
+    leaderboard: 'Leaderboard',
+    aboutExamGenie: 'about ExamGenie, Genie Dollars, and get answers to common questions',
   },
 
   examTaking: {
@@ -78,6 +82,14 @@ export const en: Translations = {
     notGraded: 'Not graded yet',
     notGradedDesc: 'This exam has not been graded yet.',
     start: 'Start',
+    submissionFailed: 'Answer submission failed',
+    noWrongAnswers: 'No wrong answers to practice!',
+    previousAnswer: 'Previous Answer',
+    tapToView: 'Tap to view',
+    youAnswered: 'You answered:',
+    noAnswer: 'No answer',
+    close: 'Close',
+    previousPoints: 'Previous: {status} {points}/{maxPoints} points • {action}',
   },
 
   examAudio: {
@@ -105,6 +117,21 @@ export const en: Translations = {
     incorrect: 'Incorrect',
     total: 'Total',
     points: '{points} pts',
+    excellentWork: 'Excellent Work!',
+    goodJob: 'Good Job!',
+    keepPracticing: 'Keep Practicing',
+    questionOf: 'Question {current} of {total}',
+    yourAnswer: 'Your Answer',
+    correctAnswer: 'Correct Answer',
+    resultsReviewed: 'Results Reviewed!',
+    reviewedAll: "You've reviewed all {count} questions",
+    attemptNumber: 'Attempt #{number}',
+    improvement: 'Improvement!',
+    keepTrying: 'Keep Practicing',
+    sameScore: 'Same Score',
+    gradeDiff: 'Grade: {diff}',
+    pointsDiff: 'Points: {diff}',
+    wrong: 'Wrong',
   },
 
   sharedExam: {
