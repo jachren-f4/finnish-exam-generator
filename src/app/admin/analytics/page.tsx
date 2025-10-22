@@ -67,12 +67,60 @@ interface AnalyticsData {
     by_date: { date: string; exam: number; grading: number; audio: number; total: number }[]
     by_category: { category: string; cost: number }[]
   }
+  revenue: {
+    total_revenue: number
+    mrr: number
+    arpu: number
+    active_subscriptions: number
+  }
+  subscriptions: {
+    metrics: {
+      active: number
+      weekly: number
+      annual: number
+      change_percent: number
+    }
+    timeline: { date: string; active: number; weekly: number; annual: number }[]
+    churn: {
+      rate: number
+      trend: string
+    }
+  }
+  trials: {
+    metrics: {
+      conversion_rate: number
+      started: number
+      converted: number
+    }
+    funnel: { stage: string; count: number; pct: number }[]
+  }
+  geography: {
+    revenue_by_country: { country: string; revenue: number; arpu: number }[]
+    conversion_by_country: { country: string; conversion_rate: number; trials: number; conversions: number }[]
+  }
+  products: {
+    weekly: {
+      active_subscriptions: number
+      mrr: number
+      arpu: number
+      price: number
+    }
+    annual: {
+      active_subscriptions: number
+      mrr: number
+      arpu: number
+      price: number
+    }
+  }
 }
+
+type TabType = 'exams' | 'users' | 'costs' | 'revenue' | 'subscriptions' | 'trials' | 'geography'
 
 export default function AnalyticsDashboard() {
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<TabType>('exams')
 
   const fetchAnalytics = async () => {
     setLoading(true)
@@ -150,8 +198,32 @@ export default function AnalyticsDashboard() {
         </button>
       </div>
 
-      {/* Metric Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+      {/* Tab Navigation */}
+      <div style={{ marginBottom: '30px', display: 'flex', gap: '10px', borderBottom: '2px solid #ddd', paddingBottom: '10px' }}>
+        {(['exams', 'users', 'costs', 'revenue', 'subscriptions', 'trials', 'geography'] as TabType[]).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '10px 20px',
+              background: activeTab === tab ? '#0070f3' : '#f0f0f0',
+              color: activeTab === tab ? 'white' : '#333',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: activeTab === tab ? 'bold' : 'normal',
+            }}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Existing Tabs: Exams, Users, Costs */}
+      {(activeTab === 'exams' || activeTab === 'users' || activeTab === 'costs') && (
+        <>
+          {/* Metric Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
         <MetricCard
           title="DAU Today"
           value={data.dau.today}
@@ -424,6 +496,123 @@ export default function AnalyticsDashboard() {
           </tbody>
         </table>
       </div>
+        </>
+      )}
+
+      {/* Revenue Tab */}
+      {activeTab === 'revenue' && data.revenue && (
+        <div style={{ marginTop: '40px' }}>
+          <h2 style={{ marginBottom: '20px', fontSize: '24px' }}>💰 Revenue Analytics</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+            <MetricCard title="Total Revenue" value={`$${data.revenue.total_revenue.toFixed(2)}`} />
+            <MetricCard title="MRR" value={`$${data.revenue.mrr.toFixed(2)}`} />
+            <MetricCard title="ARPU" value={`$${data.revenue.arpu.toFixed(2)}`} />
+            <MetricCard title="Active Subscriptions" value={data.revenue.active_subscriptions} />
+          </div>
+        </div>
+      )}
+
+      {/* Subscriptions Tab */}
+      {activeTab === 'subscriptions' && data.subscriptions && (
+        <div style={{ marginTop: '40px' }}>
+          <h2 style={{ marginBottom: '20px', fontSize: '24px' }}>📊 Subscriptions</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+            <MetricCard title="Active Subscriptions" value={data.subscriptions.metrics.active} />
+            <MetricCard title="Weekly Subscriptions" value={data.subscriptions.metrics.weekly} />
+            <MetricCard title="Annual Subscriptions" value={data.subscriptions.metrics.annual} />
+            <MetricCard title="Churn Rate" value={`${data.subscriptions.churn.rate.toFixed(2)}%`} />
+          </div>
+          <div style={{ marginBottom: '40px', background: 'white', padding: '20px', borderRadius: '8px', border: '1px solid #eee' }}>
+            <h3 style={{ marginBottom: '20px' }}>Subscription Growth (Last 30 Days)</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={data.subscriptions.timeline}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* Trials Tab */}
+      {activeTab === 'trials' && data.trials && (
+        <div style={{ marginTop: '40px' }}>
+          <h2 style={{ marginBottom: '20px', fontSize: '24px' }}>🎯 Trial & Conversion</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+            <MetricCard title="Conversion Rate" value={`${data.trials.metrics.conversion_rate.toFixed(1)}%`} />
+            <MetricCard title="Trials Started" value={data.trials.metrics.started} />
+            <MetricCard title="Converted" value={data.trials.metrics.converted} />
+          </div>
+          <div style={{ marginBottom: '40px', background: 'white', padding: '20px', borderRadius: '8px', border: '1px solid #eee' }}>
+            <h3 style={{ marginBottom: '20px' }}>Trial Funnel</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={data.trials.funnel}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="stage" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* Geography Tab */}
+      {activeTab === 'geography' && data.geography && (
+        <div style={{ marginTop: '40px' }}>
+          <h2 style={{ marginBottom: '20px', fontSize: '24px' }}>🌍 Geographic Performance</h2>
+
+          <div style={{ marginBottom: '40px' }}>
+            <h3 style={{ marginBottom: '20px' }}>Revenue by Country</h3>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f0f0f0', borderBottom: '2px solid #ddd' }}>
+                  <th style={{ padding: '10px', textAlign: 'left' }}>Country</th>
+                  <th style={{ padding: '10px', textAlign: 'right' }}>Revenue</th>
+                  <th style={{ padding: '10px', textAlign: 'right' }}>ARPU</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.geography.revenue_by_country.map((item, index) => (
+                  <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
+                    <td style={{ padding: '10px' }}>{item.country}</td>
+                    <td style={{ padding: '10px', textAlign: 'right' }}>${item.revenue.toFixed(2)}</td>
+                    <td style={{ padding: '10px', textAlign: 'right' }}>${item.arpu.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ marginBottom: '40px' }}>
+            <h3 style={{ marginBottom: '20px' }}>Conversion Rate by Country</h3>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f0f0f0', borderBottom: '2px solid #ddd' }}>
+                  <th style={{ padding: '10px', textAlign: 'left' }}>Country</th>
+                  <th style={{ padding: '10px', textAlign: 'right' }}>Conversion Rate</th>
+                  <th style={{ padding: '10px', textAlign: 'right' }}>Trials</th>
+                  <th style={{ padding: '10px', textAlign: 'right' }}>Conversions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.geography.conversion_by_country.map((item, index) => (
+                  <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
+                    <td style={{ padding: '10px' }}>{item.country}</td>
+                    <td style={{ padding: '10px', textAlign: 'right' }}>{item.conversion_rate.toFixed(2)}%</td>
+                    <td style={{ padding: '10px', textAlign: 'right' }}>{item.trials}</td>
+                    <td style={{ padding: '10px', textAlign: 'right' }}>{item.conversions}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
