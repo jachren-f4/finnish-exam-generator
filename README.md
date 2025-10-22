@@ -623,6 +623,17 @@ GET /api/admin/analytics
 Authorization: Basic <base64(username:password)>
 ```
 
+### Subscription Analytics Dashboard (Phase 6)
+
+Admin dashboard now includes 4 new tabs for monitoring subscription metrics:
+
+- **Revenue Tab**: Total revenue, MRR (Monthly Recurring Revenue), ARPU (Average Revenue Per User), active subscriptions
+- **Subscriptions Tab**: Active/weekly/annual subscription counts, churn rate, 30-day growth timeline
+- **Trials Tab**: Conversion rate, started/converted users, trial funnel breakdown
+- **Geography Tab**: Revenue and conversion metrics by country
+
+All metrics use a **30-day lookback window** with fresh queries on each page load. Geographic data is aggregated by country only (no sub-region breakdown).
+
 ## 💰 Cost Tracking
 
 ExamGenie tracks all LLM and TTS API costs automatically:

@@ -184,6 +184,17 @@ This file provides guidance to Claude Code when working with code in this reposi
 - ✅ JSON parameters must be single-quoted: `--filter='{"id":"value"}'`
 - ⚠️ Separate env files: `.env.local.staging` vs `.env.local.production`
 
+### Subscription Analytics (Phase 6)
+- **File locations:**
+  - Backend queries: `/src/app/api/admin/analytics/route.ts` (getRevenueSummary, getSubscriptionMetrics, getSubscriptionTimeline, getChurnRate, getTrialMetrics, getTrialFunnel, getRevenueByCountry, getConversionByCountry, getProductComparison)
+  - Frontend UI: `/src/app/admin/analytics/page.tsx` (tab navigation, KPI cards, AreaChart/BarChart visualizations)
+- **Critical constraint:** All subscription queries use fixed 30-day lookback (hardcoded, not configurable)
+- **Geography limitation:** Country-only breakdown (no city/region detail available)
+- **Common pitfall:** Empty metrics = missing webhook data
+  - Check `subscription_history` table has recent records
+  - Verify `REVENUECAT_PUBLIC_KEY` is configured and webhooks are firing
+- **Recharts note:** AreaChart requires `<Area>` child component (fixed in Phase 6)
+
 ## Tech Stack
 
 ### Core
@@ -230,6 +241,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 - **Admin Auth**: `/src/lib/auth/admin-auth.ts`
 - **Analytics API**: `/src/app/api/admin/analytics/route.ts`
 - **Analytics Dashboard**: `/src/app/admin/analytics/page.tsx`
+- **Subscription query functions (Phase 6)**: `/src/app/api/admin/analytics/route.ts` (getRevenueSummary, getSubscriptionMetrics, getSubscriptionTimeline, getChurnRate, getTrialMetrics, getTrialFunnel, getRevenueByCountry, getConversionByCountry, getProductComparison)
 - **Analytics Plan**: `/SESSION_ANALYTICS_IMPLEMENTATION_PLAN.md`
 
 ### Key Concepts & Gamification
