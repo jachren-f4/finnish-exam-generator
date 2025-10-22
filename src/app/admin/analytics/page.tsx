@@ -6,6 +6,8 @@ import {
   Line,
   BarChart,
   Bar,
+  AreaChart,
+  Area,
   PieChart,
   Pie,
   Cell,
@@ -531,6 +533,7 @@ export default function AnalyticsDashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
+                <Area type="monotone" dataKey="active" stroke="#8884d8" fill="#8884d8" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
